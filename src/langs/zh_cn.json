@@ -268,8 +268,8 @@
   "settings_resetcache_button": "重设",
   "settings_resetcache_notice": "本地同步缓存和数据库已被删除。请手动重新载入此插件。",
 
-  "syncalgov2_title": "Invio 的同步算法得到优化",
-  "syncalgov2_texts": "欢迎使用 Invio!\n从版本 0.3.0 开始，它带来了新的同步算法，但是，除了您的笔记之外，它还需要上传额外的带有元信息的文件 _invio-metadata-on-remote.{json,bin} 到您的云服务目的地上。\n从而，比如说，通过读取这些信息，另一台设备可以知道什么文件或文件夹在第一台设备上被删除了。\n如果您同意此策略，请点击按钮 \"同意\"，然后开始享用此插件！且特别要注意：使用插件之前，请首先备份好您的库（Vault）！\n如果您不同意此策略，您应该停止使用此版本和之后版本的 Invio。您可以考虑手动安装旧版 0.2.14，它使用旧的同步算法，并不上传额外元信息文件。点击 \"不同意\" 之后，插件会自动停止运行（unload），然后您需要 Obsidian 设置里手动停用（disable）此插件。",
+  "syncalgov2_title": "Invio 的同步算法",
+  "syncalgov2_texts": "欢迎使用 Invio!\n 除了您的笔记之外，它还需要上传额外的带有元信息的文件 _invio-metadata-on-remote.{json,bin} 到您的云服务COS上。\n通过读取这些信息，另一台设备可以知道什么文件或文件夹在第一台设备上被删除了。\n如果您同意此策略，请点击按钮 \"同意\"，然后开始享用此插件！且特别要注意：使用插件之前，请首先备份好您的库（Vault）！\n如果您不同意此策略，您应该停止使用此版本和之后版本的 Invio。点击 \"不同意\" 之后，插件会自动停止运行（unload），然后您需要 Obsidian 设置里手动停用（disable）此插件。",
   "syncalgov2_button_agree": "同意",
   "syncalgov2_button_disagree": "不同意"
 }
