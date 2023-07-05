@@ -1,0 +1,49 @@
+# This workflow will do a clean install of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: BuildCI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    environment: env-for-buildci
+
+    env:
+      DROPBOX_APP_KEY: ${{secrets.DROPBOX_APP_KEY}}
+      ONEDRIVE_CLIENT_ID: ${{secrets.ONEDRIVE_CLIENT_ID}}
+      ONEDRIVE_AUTHORITY: ${{secrets.ONEDRIVE_AUTHORITY}}
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+      - name: Checkout codes
+        uses: actions/checkout@v2
+        with:
+          lfs: true
+          submodules: recursive
+      - name: Checkout LFS
+        run: git lfs checkout
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm install
+      - run: npm test
+      - run: npm run build2
+      - uses: actions/upload-artifact@v2
+        with:
+          name: my-dist
+          path: |
+            main.js
+            manifest.json
+            styles.css
