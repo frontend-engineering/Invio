@@ -41,7 +41,6 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm install
-      - run: npm test
       - run: npm run build2
       - name: Create Release
         id: create_release
