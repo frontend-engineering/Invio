@@ -96,7 +96,7 @@ dependencies:
     specifier: ^4.17.21
     version: registry.npmmirror.com/lodash@4.17.21
   loglevel:
-    specifier: ^1.8.0
+    specifier: 1.8.0
     version: registry.npmmirror.com/loglevel@1.8.0
   lucide:
     specifier: ^0.256.0
@@ -245,7 +245,7 @@ devDependencies:
 packages:
 
   github.com/walkthunder/cos-nodejs-sdk-v5/9e2d9acd9d31e202e6627766c41ade884bd298a7:
-    resolution: {commit: 9e2d9acd9d31e202e6627766c41ade884bd298a7, repo: git+ssh://git@github.com/walkthunder/cos-nodejs-sdk-v5.git, type: git}
+    resolution: {tarball: https://codeload.github.com/walkthunder/cos-nodejs-sdk-v5/tar.gz/9e2d9acd9d31e202e6627766c41ade884bd298a7}
     name: tencent-cos-sdk-nodejs-v5
     version: 2.11.16
     engines: {node: '>= 6'}
