@@ -1,6 +1,6 @@
 # Invio
 
-Invio 将你的 Obsidian 文档自动发布到 腾讯云对象存储COS 上，如果对你有用，请点个Star [star ![GitHub Repo stars](https://img.shields.io/github/stars/frontend-engineering/Invio)](https://github.com/frontend-engineering/Invio)
+Invio automatically converts your Obsidian documents into HTML web pages and synchronizes them to AWS S3 or COS compatable like Tencent Cloud Object Storage. If you find it useful, please give it a star. [star ![GitHub Repo stars](https://img.shields.io/github/stars/frontend-engineering/Invio)](https://github.com/frontend-engineering/Invio)
 
 
 [![BuildCI](https://github.com/frontend-engineering/Invio/actions/workflows/auto-build.yml/badge.svg)](https://github.com/frontend-engineering/Invio/actions/workflows/auto-build.yml)
