@@ -42,12 +42,38 @@ You are greatly welcome to ask questions, post any suggestions, or report any bu
 
 ## Usage
 
+### S3
 
-- Prepare your COS (-compatible) service information: [endpoint, region](https://docs.aws.amazon.com/general/latest/gr/s3.html), [access key id, secret access key](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/getting-your-credentials.html), bucket name. The bucket should be empty and solely for publishing webpages.
+0. Prepare your COS (-compatible) service information: [endpoint, region](https://docs.aws.amazon.com/general/latest/gr/s3.html), [access key id, secret access key](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/getting-your-credentials.html), bucket name. The bucket should be empty and solely for publishing webpages.
 
-- Download and enable this plugin.
-- Enter your information to the settings of this plugin.
-- Choose the directory you want to publish in settings. Once it's been done, you'll find the directory you chose decorated with a green icon in the left file tree list.
-- Click the new icon on the ribbon (the left sidebar), **every time** you want to publish your docs to remote. (Or, you could configure auto sync in the settings panel) While publishing, the icon becomes "two half-circle arrows".
+1. Download and enable this plugin.
+2. Enter your information to the settings of this plugin.
+
+    2.1 choose the local directory you want to publish in settings.
+
+    2.2 Input the COS bucket info and data prepared above.
+
+    Once it's been done, you'll find the directory you chose decorated with a green icon in the left file tree list.
+
+3. Click the new icon on the ribbon (the left sidebar), **every time** you want to publish your docs to remote. (Or, you could configure auto sync in the settings panel) While publishing, the icon becomes "two half-circle arrows".
+
+---
 - **Be patient while publishing.** Especially in the first-time publish.
 - You can even share all your config above with your teammates. You can find **Export/Import** in the settings. So your teammates don't have to input such complicated keys or secret strings.
+
+
+### Tencent Cloud (COS)
+
+> If you're using Tencent Cloud(COS), and your bucket region is ap-shanghai, your settings should be like:
+
+- **Endpoint**	cos.ap-shanghai.myqcloud.com
+
+- **Region**	ap-shanghai
+
+- **AccessKeyID**	YourSercretId
+
+- **SecretAccessKey**	YourAccessKey
+
+- **BucketName**	obsidian-123456789
+
+To test your settings, you can click the button **check** in settings to test your COS connectivity.
