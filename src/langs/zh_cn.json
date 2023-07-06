@@ -263,10 +263,10 @@
   "settings_outputbasepathvaultid": "输出资料库对应的位置和随机分配的 ID",
   "settings_outputbasepathvaultid_desc": "用于调试。",
   "settings_outputbasepathvaultid_button": "输出",
-  "settings_resetcache": "重设本地缓存和数据库",
-  "settings_resetcache_desc": "（出于调试原因）重设本地缓存和数据库。您需要在重设之后重新载入此插件。本重设不会删除 s3，密码……等设定。",
+  "settings_resetcache": "清空本地同步缓存数据",
+  "settings_resetcache_desc": "清除本地同步产生的缓存数据，遇到同步问题或者调试时使用。（不会清除密码等本地配置）",
   "settings_resetcache_button": "重设",
-  "settings_resetcache_notice": "本地同步缓存和数据库已被删除。请手动重新载入此插件。",
+  "settings_resetcache_notice": "本地同步缓存数据已删除。请手动重新加载插件。",
 
   "syncalgov2_title": "Invio 的同步算法",
   "syncalgov2_texts": "欢迎使用 Invio!\n 除了您的笔记之外，它还需要上传额外的带有元信息的文件 _invio-metadata-on-remote.{json,bin} 到您的云服务COS上。\n通过读取这些信息，另一台设备可以知道什么文件或文件夹在第一台设备上被删除了。\n如果您同意此策略，请点击按钮 \"同意\"，然后开始享用此插件！且特别要注意：使用插件之前，请首先备份好您的库（Vault）！\n如果您不同意此策略，您应该停止使用此版本和之后版本的 Invio。点击 \"不同意\" 之后，插件会自动停止运行（unload），然后您需要 Obsidian 设置里手动停用（disable）此插件。",

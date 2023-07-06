@@ -264,10 +264,10 @@
   "settings_outputbasepathvaultid": "Output Vault Base Path And Randomly Assigned ID",
   "settings_outputbasepathvaultid_desc": "For debugging purposes.",
   "settings_outputbasepathvaultid_button": "Output",
-  "settings_resetcache": "Reset Local Internal Cache/Databases",
-  "settings_resetcache_desc": "Reset local internal caches/databases (for debugging purposes). You would want to reload the plugin after resetting this. This option will not empty the {s3, password...} settings.",
+  "settings_resetcache": "Reset Local Syncing Cache",
+  "settings_resetcache_desc": "Reset local syncing caches data (if syncing went wrong or debug). This option will not delete your local settings like password or other COS config.",
   "settings_resetcache_button": "Reset",
-  "settings_resetcache_notice": "Local internal cache/databases deleted. Please manually reload the plugin.",
+  "settings_resetcache_notice": "Local syncing cache deleted. Please manually reload the plugin.",
 
   "syncalgov2_title": "Invio has a better sync algorithm",
   "syncalgov2_texts": "Welcome to Invio!\nIn addition to your notes, it also requires uploading additional files with metadata (_invio-metadata-on-remote.{json,bin}) to your cloud service COS. By reading this information, another device can determine which files or folders have been deleted on the first device.\nIf you agree with this policy, please click the 'Agree' button and start enjoying this plugin! Please note that before using the plugin, it's important to back up your vault.\nIf you do not agree with this policy, you should stop using this version and any future versions of Invio. After clicking 'Disagree', the plugin will automatically stop running (unload), and you will need to manually disable it in Obsidian settings.\nPlease let me know if there is anything else I can assist you with!",
