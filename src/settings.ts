@@ -46,7 +46,6 @@ import {
 import { messyConfigToNormal } from "./configPersist";
 import type { TransItemType } from "./i18n";
 import { checkHasSpecialCharForDir, mkdirpInVault } from "./misc";
-import { applyWebdavPresetRulesInplace } from "./presetRules";
 import { ExportSettingsData, DEFAULT_SETTINGS } from './export-settings';
 import icon, { getIconSvg } from './utils/icon';
 import { Utils } from "./utils/utils";
