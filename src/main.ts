@@ -59,7 +59,6 @@ import type { LangType, LangTypeAndAuto, TransItemType } from "./i18n";
 
 import { DeletionOnRemote, MetadataOnRemote } from "./metadataOnRemote";
 import { SyncAlgoV2Modal } from "./syncAlgoV2Notice";
-import { applyPresetRulesInplace } from "./presetRules";
 
 import { applyLogWriterInplace, log } from "./moreOnLog";
 import AggregateError from "aggregate-error";
@@ -347,7 +346,6 @@ export default class InvioPlugin extends Plugin {
             if (decision === 'uploadLocalToRemote') {
               // upload
               pubPathList.push(pathName);
-              // await publishFile(client, this.app.vault, pathName, basePath, '', this.settings, triggerSource);
             } else if (decision === 'uploadLocalDelHistToRemote') {
               // delete
               await unpublishFile(client, this.app.vault, pathName);
@@ -464,7 +462,6 @@ export default class InvioPlugin extends Plugin {
     this.currSyncMsg = "";
 
     await this.loadSettings();
-    await this.checkIfPresetRulesFollowed();
 
     // lang should be load early, but after settings
     this.i18n = new I18n(this.settings.lang, async (lang: LangTypeAndAuto) => {
@@ -865,13 +862,6 @@ export default class InvioPlugin extends Plugin {
     }
     if (this.settings.s3.forcePathStyle === undefined) {
       this.settings.s3.forcePathStyle = false;
-    }
-  }
-
-  async checkIfPresetRulesFollowed() {
-    const res = applyPresetRulesInplace(this.settings);
-    if (res.changed) {
-      await this.saveSettings();
     }
   }
 

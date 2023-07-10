@@ -193,7 +193,7 @@ export namespace MarkdownRenderer
 		renderBrowserWindow.on("close", () =>
 		{
 			cancelled = true;
-			console.log("cancelled");
+			console.log("render browser window closed");
 		});
 
 		// @ts-ignore
