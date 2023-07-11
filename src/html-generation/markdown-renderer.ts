@@ -188,13 +188,15 @@ export namespace MarkdownRenderer
 
 		// @ts-ignore
 		const renderBrowserWindow = window.electron.remote.BrowserWindow.getFocusedWindow();
-		renderBrowserWindow.setAlwaysOnTop(true, "floating", 1);
-		renderBrowserWindow.webContents.setFrameRate(120);
-		renderBrowserWindow.on("close", () =>
-		{
-			cancelled = true;
-			console.log("render browser window closed");
-		});
+		if (renderBrowserWindow) {
+			renderBrowserWindow.setAlwaysOnTop(true, "floating", 1);
+			renderBrowserWindow.webContents.setFrameRate(120);
+			renderBrowserWindow.on("close", () =>
+			{
+				cancelled = true;
+				console.log("render browser window closed");
+			});	
+		}
 
 		// @ts-ignore
 		const allWindows = window.electron.remote.BrowserWindow.getAllWindows()
