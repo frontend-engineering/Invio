@@ -10,11 +10,6 @@ const dialog: Electron.Dialog = require('electron').remote.dialog;
 
 export class Utils
 {
-	static async delay (ms: number)
-	{
-		return new Promise( resolve => setTimeout(resolve, ms) );
-	}
-
 	static padStringBeggining(str: string, length: number, char: string)
 	{
 		return char.repeat(length - str.length) + str;

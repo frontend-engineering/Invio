@@ -1,4 +1,4 @@
-import { Vault } from "obsidian";
+import { Vault, normalizePath } from "obsidian";
 import * as path from "path";
 
 import { base32, base64url } from "rfc4648";
@@ -36,7 +36,7 @@ export const isHiddenPath = (
   if (!(dot || underscore)) {
     throw Error("parameter error for isHiddenPath");
   }
-  const k = path.posix.normalize(item); // TODO: only unix path now
+  const k = normalizePath(item); // TODO: only unix path now
   const k2 = k.split("/"); // TODO: only unix path now
   // log.info(k2)
   for (const singlePart of k2) {

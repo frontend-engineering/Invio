@@ -4,6 +4,7 @@ import {
   Notice,
   PluginSettingTab,
   Setting,
+  setIcon,
   Platform,
   requireApiVersion,
 } from "obsidian";
@@ -158,7 +159,7 @@ class ChangeRemoteBaseDirModal extends Modal {
           );
           button.onClick(async () => {
             // in the settings, the value is reset to the special case ""
-            this.plugin.settings[this.service].remoteBaseDir = "";
+            (this.plugin.settings as any)[this.service].remoteBaseDir = "";
             await this.plugin.saveSettings();
             new Notice(t("modal_remotebasedir_notice"));
             this.close();
@@ -186,7 +187,7 @@ class ChangeRemoteBaseDirModal extends Modal {
         .addButton((button) => {
           button.setButtonText(t("modal_remotebasedir_secondconfirm_change"));
           button.onClick(async () => {
-            this.plugin.settings[this.service].remoteBaseDir =
+            (this.plugin.settings as any)[this.service].remoteBaseDir =
               this.newRemoteBaseDir;
             await this.plugin.saveSettings();
             new Notice(t("modal_remotebasedir_notice"));
@@ -322,27 +323,19 @@ class ExportSettingsQrCodeModal extends Modal {
   }
 }
 
-const getEyesElements = () => {
-  const eyeEl = createElement(Eye);
-  const eyeOffEl = createElement(EyeOff);
-  return {
-    eye: eyeEl.outerHTML,
-    eyeOff: eyeOffEl.outerHTML,
-  };
-};
-
 const wrapTextWithPasswordHide = (text: TextComponent) => {
-  const { eye, eyeOff } = getEyesElements();
-  const hider = text.inputEl.insertAdjacentElement("afterend", createSpan());
-  // the init type of hider is "hidden" === eyeOff === password
-  hider.innerHTML = eyeOff;
-  hider.addEventListener("click", (e) => {
+	const hider = text.inputEl.insertAdjacentElement("afterend", createSpan()) as HTMLSpanElement;
+	setIcon(hider, "eye-off");
+	hider.addEventListener("click", (e) => {
     const isText = text.inputEl.getAttribute("type") === "text";
-    hider.innerHTML = isText ? eyeOff : eye;
-    text.inputEl.setAttribute("type", isText ? "password" : "text");
-    text.inputEl.focus();
+    if(isText) {
+      setIcon(hider, "eye-off");
+      text.inputEl.setAttribute("type", "password");
+    } else {
+      setIcon(hider, "eye");
+      text.inputEl.setAttribute("type", "text");
+    }
   });
-
   // the init type of text el is password
   text.inputEl.setAttribute("type", "password");
   return text;
@@ -397,9 +390,7 @@ export class InvioSettingTab extends PluginSettingTab {
 
     // ===============Exporter Settings ======================
 
-		const header = containerEl.createEl('h2', { text: 'Publish Settings' });
-		header.style.display = 'block';
-		header.style.marginBottom = '15px';
+		containerEl.createEl('h2', { text: 'Publish Settings', cls: 'settings-pub-header' });
 
     // ===============Exporter Settings End===================
     

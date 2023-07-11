@@ -117,3 +117,9 @@
   align-self: center;
   margin: auto 0;
 }
+
+
+.settings-pub-header {
+  display: block;
+  margin-bottom: 15px;
+}

@@ -12,15 +12,6 @@ logger.info = console.log;
 // import Trace from './trace';
 const CONFIG_FILE_NAME = '.fp.config.json';
 
-const sleep = (time: number) => {
-    return new Promise(resolve => {
-        logger.log('sleep time: ', time);
-        setTimeout(() => {
-            resolve('')
-        }, time || 0);
-    });
-}
-
 const getAppDataDir = () => {
     return app.getPath('userData');
 }
@@ -84,7 +75,6 @@ const Utils = {
     getFileIcon,
     getMachineId,
     getUserId,
-    sleep,
     showNotification,
     // getTracert
 };

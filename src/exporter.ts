@@ -1,5 +1,5 @@
 // imports from obsidian API
-import { MarkdownView, Notice, Plugin, TFile, TFolder} from 'obsidian';
+import { MarkdownView, Notice, TFile, TFolder } from 'obsidian';
 
 // modules that are part of the plugin
 import { InvioSettingTab } from './settings';
@@ -130,7 +130,7 @@ export const publishFiles = async (
     log.info('download files to: ', htmlPath, externalFiles);
     HTMLGenerator.endBatch();
 
-    await Utils.delay(200);
+    await sleep(200);
 
     try {
         const resPromise = toUploads.map(upload => {

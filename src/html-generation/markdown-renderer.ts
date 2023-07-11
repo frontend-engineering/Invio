@@ -98,7 +98,7 @@ export namespace MarkdownRenderer
 
 		if (dataviewCount > 0)
 		{
-			await Utils.delay(InvioSettingTab.settings.dataviewBlockWaitTime * dataviewCount);
+			await sleep(InvioSettingTab.settings.dataviewBlockWaitTime * dataviewCount);
 		}
 
 		if (cancelled) throw new Error("Markdown rendering cancelled");

@@ -3,7 +3,7 @@
   "name": "Invio",
   "version": "0.1.4",
   "minAppVersion": "0.13.21",
-  "description": "Invio is a plugin for Obsidian which lets you export docs as HTML websites / webpages. It is similar to publish, but you get the .html files to your own COS and then you can do whatever you want with. Its goal is to support as many features of obsidian possible including themes, dataview, graph view, and more.",
+  "description": "Export Obsidian docs as websites and deploy them to AWS S3 or compatible COS. Invio streamlines the process of publishing, enabling users to easily share their work online.",
   "author": "frontend-engineering",
   "authorUrl": "https://github.com/frontend-engineering",
   "isDesktopOnly": true

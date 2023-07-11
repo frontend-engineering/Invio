@@ -68,9 +68,6 @@ dependencies:
   crypto-browserify:
     specifier: ^3.12.0
     version: registry.npmmirror.com/crypto-browserify@3.12.0
-  delay:
-    specifier: ^5.0.0
-    version: registry.npmmirror.com/delay@5.0.0
   dropbox:
     specifier: ^10.28.0
     version: registry.npmmirror.com/dropbox@10.28.0(@types/node-fetch@2.6.4)
@@ -239,7 +236,7 @@ devDependencies:
 packages:
 
   github.com/walkthunder/cos-nodejs-sdk-v5/9e2d9acd9d31e202e6627766c41ade884bd298a7:
-    resolution: {commit: 9e2d9acd9d31e202e6627766c41ade884bd298a7, repo: git+ssh://git@github.com/walkthunder/cos-nodejs-sdk-v5.git, type: git}
+    resolution: {tarball: https://codeload.github.com/walkthunder/cos-nodejs-sdk-v5/tar.gz/9e2d9acd9d31e202e6627766c41ade884bd298a7}
     name: tencent-cos-sdk-nodejs-v5
     version: 2.11.16
     engines: {node: '>= 6'}
@@ -1801,7 +1798,6 @@ packages:
     resolution: {integrity: sha512-ql+4dw4PlPFBP495k8JzUX/oMNRI2Ei4PrMHgj8oT4VhGlYUzF4EYr0qk2fW+XBVGIrq8Zzk13m4cvyXZuv4pA==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/@types/node/-/node-16.18.37.tgz}
     name: '@types/node'
     version: 16.18.37
-    dev: false
 
   registry.npmmirror.com/@types/parse5@7.0.0:
     resolution: {integrity: sha512-f2SeAxumolBmhuR62vNGTsSAvdz/Oj0k682xNrcKJ4dmRnTPODB74j6CPoNPzBPTHsu7Y7W7u93Mgp8Ovo8vWw==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/@types/parse5/-/parse5-7.0.0.tgz}
@@ -2178,7 +2174,7 @@ packages:
       acorn-walk: registry.npmmirror.com/acorn-walk@7.2.0
     dev: true
 
-  registry.npmmirror.com/acorn-import-assertions@1.9.0(acorn@8.7.1):
+  registry.npmmirror.com/acorn-import-assertions@1.9.0(acorn@8.9.0):
     resolution: {integrity: sha512-cmMwop9x+8KFhxvKrKfPYmN6/pKTYYHBqLa0DfvVZcKMJWNyWLnaqND7dx/qn66R7ewM1UX5XMaDVP5wlVTaVA==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/acorn-import-assertions/-/acorn-import-assertions-1.9.0.tgz}
     id: registry.npmmirror.com/acorn-import-assertions/1.9.0
     name: acorn-import-assertions
@@ -2186,7 +2182,7 @@ packages:
     peerDependencies:
       acorn: ^8
     dependencies:
-      acorn: registry.npmmirror.com/acorn@8.7.1
+      acorn: registry.npmmirror.com/acorn@8.9.0
     dev: true
 
   registry.npmmirror.com/acorn-jsx@5.3.2(acorn@8.9.0):
@@ -3373,13 +3369,6 @@ packages:
     dependencies:
       has-property-descriptors: registry.npmmirror.com/has-property-descriptors@1.0.0
       object-keys: registry.npmmirror.com/object-keys@1.1.1
-    dev: false
-
-  registry.npmmirror.com/delay@5.0.0:
-    resolution: {integrity: sha512-ReEBKkIfe4ya47wlPYf/gu5ib6yUG0/Aez0JQZQz94kiWtRQvZIQbTiehsnwHvLSWJnQdhVeqYue7Id1dKr0qw==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/delay/-/delay-5.0.0.tgz}
-    name: delay
-    version: 5.0.0
-    engines: {node: '>=10'}
     dev: false
 
   registry.npmmirror.com/delayed-stream@1.0.0:
@@ -5088,7 +5077,7 @@ packages:
     version: 27.5.1
     engines: {node: '>= 10.13.0'}
     dependencies:
-      '@types/node': registry.npmmirror.com/@types/node@16.11.6
+      '@types/node': registry.npmmirror.com/@types/node@16.18.37
       merge-stream: registry.npmmirror.com/merge-stream@2.0.0
       supports-color: registry.npmmirror.com/supports-color@8.1.1
     dev: true
@@ -7604,8 +7593,8 @@ packages:
       '@webassemblyjs/ast': registry.npmmirror.com/@webassemblyjs/ast@1.11.1
       '@webassemblyjs/wasm-edit': registry.npmmirror.com/@webassemblyjs/wasm-edit@1.11.1
       '@webassemblyjs/wasm-parser': registry.npmmirror.com/@webassemblyjs/wasm-parser@1.11.1
-      acorn: registry.npmmirror.com/acorn@8.7.1
-      acorn-import-assertions: registry.npmmirror.com/acorn-import-assertions@1.9.0(acorn@8.7.1)
+      acorn: registry.npmmirror.com/acorn@8.9.0
+      acorn-import-assertions: registry.npmmirror.com/acorn-import-assertions@1.9.0(acorn@8.9.0)
       browserslist: registry.npmmirror.com/browserslist@4.21.9
       chrome-trace-event: registry.npmmirror.com/chrome-trace-event@1.0.3
       enhanced-resolve: registry.npmmirror.com/enhanced-resolve@5.15.0
