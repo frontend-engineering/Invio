@@ -94,6 +94,11 @@ export const publishFiles = async (
     }
 
     log.info('start publishing file list: ', pathList);
+    if (!pathList || (pathList.length === 0)) {
+        return {
+            success: true,
+        }
+    }
     await HTMLGenerator.beginBatch(allFiles);
     let externalFiles: Downloadable[] = [];
     let toUploads: any[] = [];
