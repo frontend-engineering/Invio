@@ -284,9 +284,6 @@ export default class InvioPlugin extends Plugin {
       );
       log.info('plan.mixedStates: ', plan.mixedStates, touchedFileMap); // for debugging
 
-      // The operations above are almost read only and kind of safe.
-      // The operations below begins to write or delete (!!!) something.
-
       try {
         await new Promise((resolve, reject) => {
           const touchedPlanModel = new TouchedPlanModel(this.app, this, touchedFileMap, (pub: boolean) => {
@@ -297,10 +294,17 @@ export default class InvioPlugin extends Plugin {
         })
       } catch (error) {
         log.info('user cancelled');
+        this.syncStatus = "idle";
+        getNotice('user cancelled')
+        if (this.syncRibbon !== undefined) {
+          setIcon(this.syncRibbon, iconNameSyncLogo);
+          this.syncRibbon.setAttribute("aria-label", originLabel);
+        }
         return;
       }
 
-
+      // The operations above are almost read only and kind of safe.
+      // The operations below begins to write or delete (!!!) something.
       await insertSyncPlanRecordByVault(this.db, plan, this.vaultRandomID);
       if (triggerSource !== "dry") {
         getNotice(
