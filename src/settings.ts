@@ -33,16 +33,6 @@ import {
 } from "./localdb";
 import type InvioPlugin from "./main"; // unavoidable
 import { RemoteClient } from "./remote";
-import {
-  DEFAULT_DROPBOX_CONFIG,
-  getAuthUrlAndVerifier as getAuthUrlAndVerifierDropbox,
-  sendAuthReq as sendAuthReqDropbox,
-  setConfigBySuccessfullAuthInplace,
-} from "./remoteForDropbox";
-import {
-  DEFAULT_ONEDRIVE_CONFIG,
-  getAuthUrlAndVerifier as getAuthUrlAndVerifierOnedrive,
-} from "./remoteForOnedrive";
 import { messyConfigToNormal } from "./configPersist";
 import type { TransItemType } from "./i18n";
 import { checkHasSpecialCharForDir, mkdirpInVault } from "./misc";

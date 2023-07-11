@@ -35,20 +35,7 @@ import {
   clearExpiredSyncPlanRecords,
 } from "./localdb";
 import { RemoteClient } from "./remote";
-import {
-  DEFAULT_DROPBOX_CONFIG,
-  getAuthUrlAndVerifier as getAuthUrlAndVerifierDropbox,
-  sendAuthReq as sendAuthReqDropbox,
-  setConfigBySuccessfullAuthInplace as setConfigBySuccessfullAuthInplaceDropbox,
-} from "./remoteForDropbox";
-import {
-  AccessCodeResponseSuccessfulType,
-  DEFAULT_ONEDRIVE_CONFIG,
-  sendAuthReq as sendAuthReqOnedrive,
-  setConfigBySuccessfullAuthInplace as setConfigBySuccessfullAuthInplaceOnedrive,
-} from "./remoteForOnedrive";
 import { DEFAULT_S3_CONFIG } from "./remoteForS3";
-import { DEFAULT_WEBDAV_CONFIG } from "./remoteForWebdav";
 import { InvioSettingTab } from "./settings";
 import { fetchMetadataFile, parseRemoteItems, SyncStatusType, RemoteSrcPrefix } from "./sync";
 import { doActualSync, getSyncPlan, isPasswordOk } from "./sync";
@@ -75,9 +62,6 @@ const { iconNameSyncWait, iconNameSyncPending, iconNameSyncRunning, iconNameLogs
 
 const DEFAULT_SETTINGS: InvioPluginSettings = {
   s3: DEFAULT_S3_CONFIG,
-  webdav: DEFAULT_WEBDAV_CONFIG,
-  dropbox: DEFAULT_DROPBOX_CONFIG,
-  onedrive: DEFAULT_ONEDRIVE_CONFIG,
   password: "",
   serviceType: "s3",
   currLogLevel: "info",
@@ -203,9 +187,6 @@ export default class InvioPlugin extends Plugin {
       const client = new RemoteClient(
         this.settings.serviceType,
         this.settings.s3,
-        this.settings.webdav,
-        this.settings.dropbox,
-        this.settings.onedrive,
         this.app.vault.getName(),
         () => self.saveSettings()
       );
@@ -676,30 +657,6 @@ export default class InvioPlugin extends Plugin {
       cloneDeep(DEFAULT_SETTINGS),
       messyConfigToNormal(rawConf)
     );
-    if (this.settings.dropbox.clientID === "") {
-      this.settings.dropbox.clientID = DEFAULT_SETTINGS.dropbox.clientID;
-    }
-    if (this.settings.dropbox.remoteBaseDir === undefined) {
-      this.settings.dropbox.remoteBaseDir = "";
-    }
-    if (this.settings.onedrive.clientID === "") {
-      this.settings.onedrive.clientID = DEFAULT_SETTINGS.onedrive.clientID;
-    }
-    if (this.settings.onedrive.authority === "") {
-      this.settings.onedrive.authority = DEFAULT_SETTINGS.onedrive.authority;
-    }
-    if (this.settings.onedrive.remoteBaseDir === undefined) {
-      this.settings.onedrive.remoteBaseDir = "";
-    }
-    if (this.settings.webdav.manualRecursive === undefined) {
-      this.settings.webdav.manualRecursive = false;
-    }
-    if (this.settings.webdav.depth === undefined) {
-      this.settings.webdav.depth = "auto_unknown";
-    }
-    if (this.settings.webdav.remoteBaseDir === undefined) {
-      this.settings.webdav.remoteBaseDir = "";
-    }
     if (this.settings.s3.partsConcurrency === undefined) {
       this.settings.s3.partsConcurrency = 20;
     }
@@ -712,75 +669,7 @@ export default class InvioPlugin extends Plugin {
     await this.saveData(normalConfigToMessy(this.settings));
   }
 
-  async checkIfOauthExpires() {
-    let needSave: boolean = false;
-    const current = Date.now();
-
-    // fullfill old version settings
-    if (
-      this.settings.dropbox.refreshToken !== "" &&
-      this.settings.dropbox.credentialsShouldBeDeletedAtTime === undefined
-    ) {
-      // It has a refreshToken, but not expire time.
-      // Likely to be a setting from old version.
-      // we set it to a month.
-      this.settings.dropbox.credentialsShouldBeDeletedAtTime =
-        current + 1000 * 60 * 60 * 24 * 30;
-      needSave = true;
-    }
-    if (
-      this.settings.onedrive.refreshToken !== "" &&
-      this.settings.onedrive.credentialsShouldBeDeletedAtTime === undefined
-    ) {
-      this.settings.onedrive.credentialsShouldBeDeletedAtTime =
-        current + 1000 * 60 * 60 * 24 * 30;
-      needSave = true;
-    }
-
-    // check expired or not
-    let dropboxExpired = false;
-    if (
-      this.settings.dropbox.refreshToken !== "" &&
-      current >= this.settings.dropbox.credentialsShouldBeDeletedAtTime
-    ) {
-      dropboxExpired = true;
-      this.settings.dropbox = cloneDeep(DEFAULT_DROPBOX_CONFIG);
-      needSave = true;
-    }
-
-    let onedriveExpired = false;
-    if (
-      this.settings.onedrive.refreshToken !== "" &&
-      current >= this.settings.onedrive.credentialsShouldBeDeletedAtTime
-    ) {
-      onedriveExpired = true;
-      this.settings.onedrive = cloneDeep(DEFAULT_ONEDRIVE_CONFIG);
-      needSave = true;
-    }
-
-    // save back
-    if (needSave) {
-      await this.saveSettings();
-    }
-
-    // send notice
-    if (dropboxExpired && onedriveExpired) {
-      new Notice(
-        `${this.manifest.name}: You haven't manually auth Dropbox and OneDrive for a while, you need to re-auth them again.`,
-        6000
-      );
-    } else if (dropboxExpired) {
-      new Notice(
-        `${this.manifest.name}: You haven't manually auth Dropbox for a while, you need to re-auth it again.`,
-        6000
-      );
-    } else if (onedriveExpired) {
-      new Notice(
-        `${this.manifest.name}: You haven't manually auth OneDrive for a while, you need to re-auth it again.`,
-        6000
-      );
-    }
-  }
+  async checkIfOauthExpires() {}
 
   async getVaultRandomIDFromOldConfigFile() {
     let vaultRandomID = "";

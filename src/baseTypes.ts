@@ -71,9 +71,6 @@ export interface OnedriveConfig {
 
 export interface InvioPluginSettings {
   s3: S3Config;
-  webdav: WebdavConfig;
-  dropbox: DropboxConfig;
-  onedrive: OnedriveConfig;
   password: string;
   serviceType: SUPPORTED_SERVICES_TYPE;
   currLogLevel?: string;
