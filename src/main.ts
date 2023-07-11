@@ -316,6 +316,7 @@ export default class InvioPlugin extends Plugin {
         this.syncStatus = "syncing";
         // TODO: Delete all remote html files if triggerSource === force
         const pubPathList: string[] = [];
+        const unPubList: string[] = [];
         await doActualSync(
           client,
           this.db,
@@ -341,14 +342,18 @@ export default class InvioPlugin extends Plugin {
           },
           async (i: number, totalCount: number, pathName: string, decision: string) => {
             self.setCurrSyncMsg(i, totalCount, pathName, decision);
-            log.info('publishing ', pathName, decision);
+
+            log.info('syncing ', pathName, decision);
+            if (touchedFileMap?.pathName) {
+              touchedFileMap.pathName.syncStatus = 'syncing';
+            }
             // TODO: Wrap in transation and do alert when publish failed
             if (decision === 'uploadLocalToRemote') {
               // upload
               pubPathList.push(pathName);
             } else if (decision === 'uploadLocalDelHistToRemote') {
               // delete
-              await unpublishFile(client, this.app.vault, pathName);
+              unPubList.push(pathName);
             } else {
               log.info('ignore decision ', decision, pathName);
             } 
@@ -357,12 +362,44 @@ export default class InvioPlugin extends Plugin {
             log.warn('Remote files conflicts when syncing ... ', key);
           }
         );
+
+        log.info('sync done with touched file map: ', JSON.stringify(touchedFileMap));
+
+        for (const pathName of unPubList) {
+          if (touchedFileMap?.pathName) {
+            touchedFileMap.pathName.syncStatus = 'publishing';
+          }
+          await unpublishFile(client, this.app.vault, pathName, (pathName: string, status: string) => {
+            log.info('publishing ', pathName, status);
+            if (touchedFileMap?.pathName) {
+              if (status === 'START') {
+                touchedFileMap.pathName.syncStatus = 'publishing';
+              } else if (status === 'DONE') {
+                touchedFileMap.pathName.syncStatus = 'done';
+              } else if (status === 'FAIL') {
+                touchedFileMap.pathName.syncStatus = 'fail';
+              }
+            }
+          });
+        }
+
         const basePath = new Path(this.settings.localWatchDir);
         // get files to export
         let allFiles = this.app.vault.getMarkdownFiles();
         // if we are at the root path export all files, otherwise only export files in the folder we are exporting
         allFiles = allFiles.filter((file: TFile) => new Path(file.path).directory.asString.startsWith(basePath.asString) && (file.extension === "md") && (!file.name.endsWith('.conflict.md')));
-        await publishFiles(client, this.app.vault, pubPathList, allFiles, '', this.settings, triggerSource);
+        await publishFiles(client, this.app.vault, pubPathList, allFiles, '', this.settings, triggerSource, (pathName: string, status: string) => {
+          log.info('publishing ', pathName, status);
+          if (touchedFileMap?.pathName) {
+            if (status === 'START') {
+              touchedFileMap.pathName.syncStatus = 'publishing';
+            } else if (status === 'DONE') {
+              touchedFileMap.pathName.syncStatus = 'done';
+            } else if (status === 'FAIL') {
+              touchedFileMap.pathName.syncStatus = 'fail';
+            }
+          }
+        });
 
         if (triggerSource === 'force') {
           const forceList: string[] = [];
@@ -405,6 +442,9 @@ export default class InvioPlugin extends Plugin {
           this.manifest.id
         }-${Date.now()}: finish sync, triggerSource=${triggerSource}`
       );
+
+      // TODO: Show stats model
+      return touchedFileMap;
     } catch (error) {
       const msg = t("syncrun_abort", {
         manifestID: this.manifest.id,

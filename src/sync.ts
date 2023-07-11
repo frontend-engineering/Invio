@@ -1084,16 +1084,16 @@ export const getSyncPlan = async (
     }
   }
 
-  const touchedFileMap: FileOrFolderMixedState[] = [];
+  const touchedFileMap: Record<string, FileOrFolderMixedState> = {};
   for (let i = 0; i < sortedKeys.length; ++i) {
     const key = sortedKeys[i];
     const val = mixedStates[key];
 
     if (RemoteFileTouchedDecisions.includes(val.decision)) {
-      touchedFileMap.push(val);
+      touchedFileMap[key] = val;
     }
     if (LocalFileTouchedDecisions.includes(val.decision)) {
-      touchedFileMap.push(val);
+      touchedFileMap[key] = val;
     }
   }
 

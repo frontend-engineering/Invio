@@ -9,8 +9,8 @@ export class TouchedPlanModel extends Modal {
   agree: boolean;
   readonly plugin: InvioPlugin;
   hook: (agree: boolean) => void;
-  readonly files: FileOrFolderMixedState[];
-  constructor(app: App, plugin: InvioPlugin, fileMap: FileOrFolderMixedState[], cb: (agree: boolean) => void) {
+  readonly files: Record<string, FileOrFolderMixedState>;
+  constructor(app: App, plugin: InvioPlugin, fileMap: Record<string, FileOrFolderMixedState>, cb: (agree: boolean) => void) {
     super(app);
     this.plugin = plugin;
     this.agree = false;
@@ -31,7 +31,8 @@ export class TouchedPlanModel extends Modal {
     const toLocalFiles: FileOrFolderMixedState[] = [];
     const conflictFiles: FileOrFolderMixedState[] = [];
 
-    this.files.forEach(f => {
+    [ ...Object.keys(this.files) ].forEach(key => {
+      const f = this.files[key];
       if ((f.decision === 'uploadLocalDelHistToRemote') && f.existRemote) {
         toRemoteFiles.push(f);
       }

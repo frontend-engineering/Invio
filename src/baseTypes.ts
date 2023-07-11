@@ -140,6 +140,13 @@ export type DecisionType =
   | DecisionTypeForFileSize
   | DecisionTypeForFolder;
 
+export type TSyncStatus =
+  | "pending"
+  | "syncing"
+  | "publishing"
+  | "done"
+  | "fail"
+
 export interface FileOrFolderMixedState {
   key: string;
   existLocal?: boolean;
@@ -160,6 +167,9 @@ export interface FileOrFolderMixedState {
   decisionBranch?: number;
   syncDone?: "done";
   remoteEncryptedKey?: string;
+  syncStatus?: TSyncStatus;
+  syncError?: string;
+  publishError?: string;
 
   mtimeLocalFmt?: string;
   mtimeRemoteFmt?: string;

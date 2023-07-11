@@ -83,7 +83,8 @@ export const publishFiles = async (
     allFiles: TFile[],
     password: string = "",
     settings: any,
-    triggerSource: string
+    triggerSource: string,
+    cb?: (key: string, status: 'START' | 'DONE' | 'FAIL') => any,
 ) => {
     const htmlPath = AssetHandler.initHtmlPath();
 
@@ -146,6 +147,10 @@ export const publishFiles = async (
         const resPromise = toUploads.map((upload, i) => {
             const htmlFileRelPath = Path.getRelativePathFromVault(new Path(upload.path), true).asString;
             log.info('rel path: ', htmlFileRelPath);
+            if (cb) {
+                const skip = cb(upload.key, 'START');
+                if (skip) return;
+            }
             return client.uploadToRemote(
                 htmlFileRelPath,
                 '',
@@ -159,7 +164,14 @@ export const publishFiles = async (
                 upload.key
             ).then((resp) => {
                 RenderLog.progress(i++, toUploads.length, "Uploading Docs", "Upload success: " + upload.key, "var(--color-accent)");
+                if (cb) {
+                    cb(upload.key, 'DONE');
+                }
                 return resp;
+            }).catch(err => {
+                if (cb) {
+                    cb(upload.key, 'FAIL');
+                }
             })
         })
 
@@ -212,9 +224,25 @@ const getFileFromRemoteKey = (vault: any, filePath: string) => {
 export const unpublishFile = async (
     client: RemoteClient,
     vault: any,
-    path: string
+    path: string,
+    cb?: (key: string, status: 'START' | 'DONE' | 'FAIL') => any,
 ) => {
     const remoteKey = getFileFromRemoteKey(vault, path);
     log.info('deleting.... ', remoteKey);
-    return client.deleteFromRemote(remoteKey, '', '', '');
+    if (cb) {
+        const skip = cb(path, 'START');
+        if (skip) return;
+    }
+    return client.deleteFromRemote(remoteKey, '', '', '')
+        .then(resp => {
+            if (cb) {
+                cb(path, 'DONE');
+            }
+            return resp;
+        })
+        .catch(err => {
+            if (cb) {
+                cb(path, 'FAIL');
+            }
+        })
 }
