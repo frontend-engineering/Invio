@@ -46,6 +46,7 @@ import type { LangType, LangTypeAndAuto, TransItemType } from "./i18n";
 
 import { DeletionOnRemote, MetadataOnRemote } from "./metadataOnRemote";
 import { SyncAlgoV2Modal } from "./syncAlgoV2Notice";
+import { TouchedPlanModel } from './touchedPlanModel';
 
 import { applyLogWriterInplace, log } from "./moreOnLog";
 import AggregateError from "aggregate-error";
@@ -282,11 +283,25 @@ export default class InvioPlugin extends Plugin {
         this.settings.password
       );
       log.info('plan.mixedStates: ', plan.mixedStates, touchedFileMap); // for debugging
-      await insertSyncPlanRecordByVault(this.db, plan, this.vaultRandomID);
 
       // The operations above are almost read only and kind of safe.
       // The operations below begins to write or delete (!!!) something.
 
+      try {
+        await new Promise((resolve, reject) => {
+          const touchedPlanModel = new TouchedPlanModel(this.app, this, touchedFileMap, (pub: boolean) => {
+            log.info('user confirmed: ', pub);
+            pub ? resolve('ok') : reject('cancelled')
+          });
+          touchedPlanModel.open();
+        })
+      } catch (error) {
+        log.info('user cancelled');
+        return;
+      }
+
+
+      await insertSyncPlanRecordByVault(this.db, plan, this.vaultRandomID);
       if (triggerSource !== "dry") {
         getNotice(
           t("syncrun_step7", {

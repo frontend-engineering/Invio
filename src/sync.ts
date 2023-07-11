@@ -57,7 +57,8 @@ import { log } from "./moreOnLog";
 
 export const RemoteSrcPrefix = 'op-remote-source-raw/'
 // 影响到pub产物变动的decision
-const FileTouchedDecisions = ['uploadLocalDelHistToRemote', 'uploadLocalToRemote'];
+const RemoteFileTouchedDecisions = ['uploadLocalDelHistToRemote', 'uploadLocalToRemote'];
+const LocalFileTouchedDecisions = ['downloadRemoteToLocal', 'keepRemoteDelHist'];
 
 export type SyncStatusType =
   | "idle"
@@ -1083,13 +1084,16 @@ export const getSyncPlan = async (
     }
   }
 
-  const touchedFileMap: any = {};
+  const touchedFileMap: FileOrFolderMixedState[] = [];
   for (let i = 0; i < sortedKeys.length; ++i) {
     const key = sortedKeys[i];
     const val = mixedStates[key];
 
-    if (FileTouchedDecisions.includes(val.decision)) {
-      touchedFileMap[key] = val.decision;
+    if (RemoteFileTouchedDecisions.includes(val.decision)) {
+      touchedFileMap.push(val);
+    }
+    if (LocalFileTouchedDecisions.includes(val.decision)) {
+      touchedFileMap.push(val);
     }
   }
 
@@ -1225,37 +1229,26 @@ const dispatchOperationToActual = async (
 
       await Utils.appendFile(vault, renamed, ConflictDescriptionTxt);
     }
-    if (
-      client.serviceType === "onedrive" &&
-      r.sizeLocal === 0 &&
-      password === ""
-    ) {
-      // special treatment for empty files for OneDrive
-      // TODO: it's ugly, any other way?
-      // special treatment for OneDrive: do nothing, skip empty file without encryption
-      // if it's empty folder, or it's encrypted file/folder, it continues to be uploaded.
-    } else {
-      const remoteObjMeta = await client.uploadToRemote(
-        r.key,
-        RemoteSrcPrefix,
-        vault,
-        false,
-        password,
-        remoteEncryptedKey
-      );
-      await upsertSyncMetaMappingDataByVault(
-        client.serviceType,
-        db,
-        r.key,
-        r.mtimeLocal,
-        r.sizeLocal,
-        r.key,
-        remoteObjMeta.lastModified,
-        remoteObjMeta.size,
-        remoteObjMeta.etag,
-        vaultRandomID
-      );
-    }
+    const remoteObjMeta = await client.uploadToRemote(
+      r.key,
+      RemoteSrcPrefix,
+      vault,
+      false,
+      password,
+      remoteEncryptedKey
+    );
+    await upsertSyncMetaMappingDataByVault(
+      client.serviceType,
+      db,
+      r.key,
+      r.mtimeLocal,
+      r.sizeLocal,
+      r.key,
+      remoteObjMeta.lastModified,
+      remoteObjMeta.size,
+      remoteObjMeta.etag,
+      vaultRandomID
+    );
     await clearDeleteRenameHistoryOfKeyAndVault(db, r.key, vaultRandomID);
   } else if (r.decision === "downloadRemoteToLocal") {
     if (r.remoteUnsync && r.existLocal) {
