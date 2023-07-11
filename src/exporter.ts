@@ -100,9 +100,11 @@ export const publishFiles = async (
         }
     }
     await HTMLGenerator.beginBatch(allFiles);
+    RenderLog.progress(0, allFiles.length, "Exporting Docs", "...", "var(--color-accent)");
     let externalFiles: Downloadable[] = [];
     let toUploads: any[] = [];
 
+    let i = 0;
     for (const path of pathList) {
         const file = vault.getAbstractFileByPath(path);
         if (!(file instanceof TFile)) {
@@ -111,7 +113,7 @@ export const publishFiles = async (
         }
         log.info('html path: ', htmlPath, file);
         const htmlFilePath = htmlPath.joinString(file.name).setExtension("html");
-
+        RenderLog.progress(i++, path.length, "Exporting Docs", "Exporting: " + file.path, "var(--color-accent)");
         const exportedFile = await exportFile(file, new Path(path), true, htmlFilePath, new Path(settings.localWatchDir));
         if (exportedFile) {
             toUploads.push(...exportedFile.downloads.map(d => {
@@ -129,16 +131,19 @@ export const publishFiles = async (
             externalFiles.push(...exportedFile.downloads);
         }
     }
+
+
     
     externalFiles = externalFiles.filter((file, index) => externalFiles.findIndex((f) => f.relativeDownloadPath == file.relativeDownloadPath && f.filename === file.filename) == index);
     await Utils.downloadFiles(externalFiles, htmlPath);
     log.info('download files to: ', htmlPath, externalFiles);
-    HTMLGenerator.endBatch();
 
     await sleep(200);
 
     try {
-        const resPromise = toUploads.map(upload => {
+        RenderLog.progress(0, toUploads.length, "Uploading Docs", "...", "var(--color-accent)");
+
+        const resPromise = toUploads.map((upload, i) => {
             const htmlFileRelPath = Path.getRelativePathFromVault(new Path(upload.path), true).asString;
             log.info('rel path: ', htmlFileRelPath);
             return client.uploadToRemote(
@@ -152,11 +157,17 @@ export const publishFiles = async (
                 false,
                 '',
                 upload.key
-            );
+            ).then((resp) => {
+                RenderLog.progress(i++, toUploads.length, "Uploading Docs", "Upload success: " + upload.key, "var(--color-accent)");
+                return resp;
+            })
         })
 
         await Promise.all(resPromise).then(result => {
             log.info('upload to remote result: ', result);
+            RenderLog.progress(toUploads.length, toUploads.length, "Uploading Docs", "Uploading Done: ", "var(--color-accent)");
+            HTMLGenerator.endBatch();
+
             const bucket = settings.s3.s3BucketName;
             const urls = result.map(record => `https://${bucket}.${settings.s3.s3Endpoint}/${record?.key}`)
             log.info('url list: ', urls);
@@ -171,6 +182,7 @@ export const publishFiles = async (
         })
     } catch (error) {
         log.error('exception: ', error);
+        HTMLGenerator.endBatch();
     }
 
 
