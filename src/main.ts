@@ -59,6 +59,8 @@ import { SizesConflictModal } from "./syncSizesConflictNotice";
 import { publishFiles, unpublishFile } from './exporter'
 import { AssetHandler } from './html-generation/asset-handler';
 import { Path } from './utils/path';
+import { HTMLGenerator } from './html-generation/html-generator';
+import { RenderLog } from './html-generation/render-log';
 import icon, { UsingIconNames, getIconSvg, addIconForconflictFile } from './utils/icon';
 const { iconNameSyncWait, iconNameSyncPending, iconNameSyncRunning, iconNameLogs, iconNameSyncLogo } = UsingIconNames;
 
@@ -311,6 +313,10 @@ export default class InvioPlugin extends Plugin {
         return;
       }
 
+      let allFiles = this.app.vault.getMarkdownFiles();
+      await HTMLGenerator.beginBatch(allFiles);
+      RenderLog.progress(1, 6, "Syncing Docs", "...", "var(--color-accent)");
+
       // The operations above are almost read only and kind of safe.
       // The operations below begins to write or delete (!!!) something.
       await insertSyncPlanRecordByVault(this.db, plan, this.vaultRandomID);
@@ -352,6 +358,7 @@ export default class InvioPlugin extends Plugin {
             self.setCurrSyncMsg(i, totalCount, pathName, decision);
 
             log.info('syncing ', pathName, decision);
+            RenderLog.progress(i, totalCount, "Syncing Docs", "Syncing: " + pathName, "var(--color-accent)");
             if (touchedFileMap?.pathName) {
               touchedFileMap.pathName.syncStatus = 'syncing';
             }
@@ -393,7 +400,7 @@ export default class InvioPlugin extends Plugin {
 
         const basePath = new Path(this.settings.localWatchDir);
         // get files to export
-        let allFiles = this.app.vault.getMarkdownFiles();
+        // let allFiles = this.app.vault.getMarkdownFiles();
         // if we are at the root path export all files, otherwise only export files in the folder we are exporting
         allFiles = allFiles.filter((file: TFile) => new Path(file.path).directory.asString.startsWith(basePath.asString) && (file.extension === "md") && (!file.name.endsWith('.conflict.md')));
         await publishFiles(client, this.app.vault, pubPathList, allFiles, '', this.settings, triggerSource, (pathName: string, status: string) => {

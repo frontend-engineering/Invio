@@ -100,7 +100,7 @@ export const publishFiles = async (
             success: true,
         }
     }
-    await HTMLGenerator.beginBatch(allFiles);
+    // await HTMLGenerator.beginBatch(allFiles);
     RenderLog.progress(0, allFiles.length, "Exporting Docs", "...", "var(--color-accent)");
     let externalFiles: Downloadable[] = [];
     let toUploads: any[] = [];
