@@ -60,8 +60,9 @@ import { publishFiles, unpublishFile } from './exporter'
 import { AssetHandler } from './html-generation/asset-handler';
 import { Path } from './utils/path';
 import { HTMLGenerator } from './html-generation/html-generator';
-import { RenderLog } from './html-generation/render-log';
 import icon, { UsingIconNames, getIconSvg, addIconForconflictFile } from './utils/icon';
+import { StatsView, VIEW_TYPE_STATS } from "./statsView";
+
 const { iconNameSyncWait, iconNameSyncPending, iconNameSyncRunning, iconNameLogs, iconNameSyncLogo } = UsingIconNames;
 
 const DEFAULT_SETTINGS: InvioPluginSettings = {
@@ -122,7 +123,7 @@ export default class InvioPlugin extends Plugin {
       // only show notices in manual mode
       // no notice in auto mode
       if (triggerSource === "manual" || triggerSource === "dry") {
-        new Notice(x, timeout);
+        // new Notice(x, timeout);
       }
     };
     if (this.syncStatus !== "idle") {
@@ -312,10 +313,22 @@ export default class InvioPlugin extends Plugin {
         }
         return;
       }
+  
+      const { toRemoteFiles } = TouchedPlanModel.getTouchedFilesGroup(touchedFileMap)
 
       let allFiles = this.app.vault.getMarkdownFiles();
       await HTMLGenerator.beginBatch(allFiles);
-      RenderLog.progress(1, 6, "Syncing Docs", "...", "var(--color-accent)");
+      await this.activateStatsView()
+      const view = this.getStatsView();
+
+      log.info('init stats view: ', view);
+      if (view) {
+        const initData: Record<string, FileOrFolderMixedState> = {};
+        toRemoteFiles.forEach(f => {
+          initData[f.key] = f;
+        })
+        view.init(initData);
+      }
 
       // The operations above are almost read only and kind of safe.
       // The operations below begins to write or delete (!!!) something.
@@ -358,10 +371,10 @@ export default class InvioPlugin extends Plugin {
             self.setCurrSyncMsg(i, totalCount, pathName, decision);
 
             log.info('syncing ', pathName, decision);
-            RenderLog.progress(i, totalCount, "Syncing Docs", "Syncing: " + pathName, "var(--color-accent)");
-            if (touchedFileMap?.pathName) {
-              touchedFileMap.pathName.syncStatus = 'syncing';
-            }
+            view?.handleStateChange(pathName, { syncStatus: 'syncing' })
+            // if (touchedFileMap?.pathName) {
+            //   touchedFileMap.pathName.syncStatus = 'syncing';
+            // }
             // TODO: Wrap in transation and do alert when publish failed
             if (decision === 'uploadLocalToRemote') {
               // upload
@@ -378,22 +391,21 @@ export default class InvioPlugin extends Plugin {
           }
         );
 
-        log.info('sync done with touched file map: ', JSON.stringify(touchedFileMap));
+        log.info('sync done with touched file map: ', JSON.stringify(toRemoteFiles));
 
         for (const pathName of unPubList) {
-          if (touchedFileMap?.pathName) {
-            touchedFileMap.pathName.syncStatus = 'publishing';
-          }
+          // if (touchedFileMap?.pathName) {
+          //   touchedFileMap.pathName.syncStatus = 'publishing';
+          // }
           await unpublishFile(client, this.app.vault, pathName, (pathName: string, status: string) => {
             log.info('publishing ', pathName, status);
-            if (touchedFileMap?.pathName) {
-              if (status === 'START') {
-                touchedFileMap.pathName.syncStatus = 'publishing';
-              } else if (status === 'DONE') {
-                touchedFileMap.pathName.syncStatus = 'done';
-              } else if (status === 'FAIL') {
-                touchedFileMap.pathName.syncStatus = 'fail';
-              }
+            if (status === 'START') {
+              log.info('set file start publishing', pathName);
+              view?.handleStateChange(pathName, { syncStatus: 'publishing' })
+            } else if (status === 'DONE') {
+              view?.handleStateChange(pathName, { syncStatus: 'done' })
+            } else if (status === 'FAIL') {
+              view?.handleStateChange(pathName, { syncStatus: 'fail' })
             }
           });
         }
@@ -405,14 +417,14 @@ export default class InvioPlugin extends Plugin {
         allFiles = allFiles.filter((file: TFile) => new Path(file.path).directory.asString.startsWith(basePath.asString) && (file.extension === "md") && (!file.name.endsWith('.conflict.md')));
         await publishFiles(client, this.app.vault, pubPathList, allFiles, '', this.settings, triggerSource, (pathName: string, status: string) => {
           log.info('publishing ', pathName, status);
-          if (touchedFileMap?.pathName) {
-            if (status === 'START') {
-              touchedFileMap.pathName.syncStatus = 'publishing';
-            } else if (status === 'DONE') {
-              touchedFileMap.pathName.syncStatus = 'done';
-            } else if (status === 'FAIL') {
-              touchedFileMap.pathName.syncStatus = 'fail';
-            }
+          if (status === 'START') {
+            log.info('set file start publishing', pathName);
+            view?.handleStateChange(pathName, { syncStatus: 'publishing' })
+          } else if (status === 'DONE') {
+            log.info('set file DONE publishing', pathName);
+            view?.handleStateChange(pathName, { syncStatus: 'done' })
+          } else if (status === 'FAIL') {
+            view?.handleStateChange(pathName, { syncStatus: 'fail' })
           }
         });
 
@@ -459,7 +471,7 @@ export default class InvioPlugin extends Plugin {
       );
 
       // TODO: Show stats model
-      return touchedFileMap;
+      return toRemoteFiles;
     } catch (error) {
       const msg = t("syncrun_abort", {
         manifestID: this.manifest.id,
@@ -492,10 +504,52 @@ export default class InvioPlugin extends Plugin {
     }
   }
 
+  async activateStatsView() {
+    this.app.workspace.detachLeavesOfType(VIEW_TYPE_STATS);
+
+    await this.app.workspace.getRightLeaf(false).setViewState({
+      type: VIEW_TYPE_STATS,
+      active: true,
+    });
+
+    this.app.workspace.revealLeaf(
+      this.app.workspace.getLeavesOfType(VIEW_TYPE_STATS)[0]
+    );
+  }
+
+  getStatsView() {
+    const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_STATS).find((leaf) => (leaf.view instanceof StatsView));
+    return leaf?.view as StatsView;
+  }
+
   async onload() {
     log.info(`loading plugin ${this.manifest.id}`);
 
 
+    this.addRibbonIcon("dice", "Activate view", () => {
+      this.activateStatsView();
+
+      // test updating view
+      setTimeout(() => {
+        const view = this.getStatsView();
+
+        log.info('init stats view: ', view);
+        if (!view) return;
+        view.init({
+          'IDEA': { status: 'DONE' },
+          'eDRAM': { status: 'FAIL' }
+        });
+      }, 2000)
+      setInterval(() => {
+        const view = this.getStatsView();
+
+        log.info('update stats view: ', view);
+        if (!view) return;
+        
+        view.handleStateChange('IDEA', {status: Math.random() > 0.5 ? 'DONE' : 'FAIL' })
+      }, 2000)
+    });
+  
 		// init html generator
 		AssetHandler.initialize(this.manifest.id);
 
@@ -572,6 +626,9 @@ export default class InvioPlugin extends Plugin {
     })
 
     this.syncStatus = "idle";
+
+    // Stats View
+    this.registerView(VIEW_TYPE_STATS, (leaf) => new StatsView(this, leaf));
 
     this.registerEvent(
       this.app.vault.on("delete", async (fileOrFolder) => {

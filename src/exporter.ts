@@ -101,7 +101,7 @@ export const publishFiles = async (
         }
     }
     // await HTMLGenerator.beginBatch(allFiles);
-    RenderLog.progress(0, allFiles.length, "Exporting Docs", "...", "var(--color-accent)");
+    // RenderLog.progress(0, allFiles.length, "Exporting Docs", "...", "var(--color-accent)");
     let externalFiles: Downloadable[] = [];
     let toUploads: any[] = [];
 
@@ -114,14 +114,16 @@ export const publishFiles = async (
         }
         log.info('html path: ', htmlPath, file);
         const htmlFilePath = htmlPath.joinString(file.name).setExtension("html");
-        RenderLog.progress(i++, path.length, "Exporting Docs", "Exporting: " + file.path, "var(--color-accent)");
+        // RenderLog.progress(i++, path.length, "Exporting Docs", "Exporting: " + file.path, "var(--color-accent)");
         const exportedFile = await exportFile(file, new Path(path), true, htmlFilePath, new Path(settings.localWatchDir));
         if (exportedFile) {
             toUploads.push(...exportedFile.downloads.map(d => {
                 const afterPath = exportedFile.exportToFolder.join(d.relativeDownloadPath);
                 const fileKey = (d.relativeDownloadPath.asString + '/' + d.filename).replace(/^\.\//, '');
     
+                const mdFilePreStr = file.path.replace(file.extension, '');
                 return {
+                    md: fileKey.startsWith(mdFilePreStr) ? file.path : undefined,
                     path: afterPath.asString + '/' + d.filename,
                     key: fileKey,
                 }
@@ -148,8 +150,10 @@ export const publishFiles = async (
             const htmlFileRelPath = Path.getRelativePathFromVault(new Path(upload.path), true).asString;
             log.info('rel path: ', htmlFileRelPath);
             if (cb) {
-                const skip = cb(upload.key, 'START');
-                if (skip) return;
+                if (upload.md) {
+                    const skip = cb(upload.md, 'START');
+                    if (skip) return;
+                }
             }
             return client.uploadToRemote(
                 htmlFileRelPath,
@@ -164,13 +168,13 @@ export const publishFiles = async (
                 upload.key
             ).then((resp) => {
                 RenderLog.progress(i++, toUploads.length, "Uploading Docs", "Upload success: " + upload.key, "var(--color-accent)");
-                if (cb) {
-                    cb(upload.key, 'DONE');
+                if (cb && upload.md) {
+                    cb(upload.md, 'DONE');
                 }
                 return resp;
             }).catch(err => {
-                if (cb) {
-                    cb(upload.key, 'FAIL');
+                if (cb && upload.md) {
+                    cb(upload.md, 'FAIL');
                 }
             })
         })
@@ -228,7 +232,7 @@ export const unpublishFile = async (
     cb?: (key: string, status: 'START' | 'DONE' | 'FAIL') => any,
 ) => {
     const remoteKey = getFileFromRemoteKey(vault, path);
-    log.info('deleting.... ', remoteKey);
+    log.info('deleting.... ', path, remoteKey);
     if (cb) {
         const skip = cb(path, 'START');
         if (skip) return;
