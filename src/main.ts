@@ -47,6 +47,7 @@ import type { LangType, LangTypeAndAuto, TransItemType } from "./i18n";
 import { DeletionOnRemote, MetadataOnRemote } from "./metadataOnRemote";
 import { SyncAlgoV2Modal } from "./syncAlgoV2Notice";
 import { TouchedPlanModel } from './touchedPlanModel';
+import { LoadingModal } from './loadingModal';
 
 import { applyLogWriterInplace, log } from "./moreOnLog";
 import AggregateError from "aggregate-error";
@@ -183,6 +184,11 @@ export default class InvioPlugin extends Plugin {
           maxSteps: `${MAX_STEPS}`,
         })
       );
+
+
+      const loading = new LoadingModal(this.app, this);
+      loading.open();
+
       this.syncStatus = "getting_remote_files_list";
       const self = this;
       const client = new RemoteClient(
@@ -285,6 +291,8 @@ export default class InvioPlugin extends Plugin {
       log.info('plan.mixedStates: ', plan.mixedStates, touchedFileMap); // for debugging
 
       try {
+        loading.close();
+
         await new Promise((resolve, reject) => {
           const touchedPlanModel = new TouchedPlanModel(this.app, this, touchedFileMap, (pub: boolean) => {
             log.info('user confirmed: ', pub);

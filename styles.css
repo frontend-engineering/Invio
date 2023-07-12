@@ -123,3 +123,29 @@
   display: block;
   margin-bottom: 15px;
 }
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 68px;
+  width: 100%;
+}
+
+.hide-loading-container {
+  display: none;
+}
+
+.file-item-action {
+  margin: 8px auto;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.file-item-action-icon {
+  font-size: var(--font-text-size);
+  width: var(--font-text-size);
+  height: var(--font-text-size);
+  margin: 0 8px;
+}

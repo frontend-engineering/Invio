@@ -1,6 +1,7 @@
 import { App, Modal, Notice, PluginSettingTab, Setting } from "obsidian";
 import type InvioPlugin from "./main"; // unavoidable
 import type { TransItemType } from "./i18n";
+import { createElement, FilePlus2, Trash } from "lucide";
 
 import { log } from "./moreOnLog";
 import { FileOrFolderMixedState } from "./baseTypes";
@@ -8,8 +9,8 @@ import { FileOrFolderMixedState } from "./baseTypes";
 export class TouchedPlanModel extends Modal {
   agree: boolean;
   readonly plugin: InvioPlugin;
-  hook: (agree: boolean) => void;
   readonly files: Record<string, FileOrFolderMixedState>;
+  hook: (agree: boolean) => void;
   constructor(app: App, plugin: InvioPlugin, fileMap: Record<string, FileOrFolderMixedState>, cb: (agree: boolean) => void) {
     super(app);
     this.plugin = plugin;
@@ -51,7 +52,7 @@ export class TouchedPlanModel extends Modal {
     });
 
     new Setting(contentEl)
-      .setDesc('在做同步操作之前，请检查文件变更列表，确认所有变更是否符合预期')
+      .setDesc('Please check the file changes list to confirm that all changes are as expected.')
 
     if (toRemoteFiles?.length > 0) {
       contentEl.createEl("h4", {
@@ -59,9 +60,20 @@ export class TouchedPlanModel extends Modal {
       });
       const ulRemote = contentEl.createEl("ul");
       toRemoteFiles.forEach((val) => {
-        ulRemote.createEl("li", {
-            text: val.key + ' - ' + (val.decision === 'uploadLocalToRemote' ? '➕' : '➖'),
+        const li = ulRemote.createEl("li", {
+            text: val.key,
+            cls: 'file-item-action'
           });
+          if (val.decision === 'uploadLocalToRemote') {
+            const iconSvgSyncPending = createElement(FilePlus2);
+            iconSvgSyncPending.addClass('file-item-action-icon')
+            li.appendChild(iconSvgSyncPending)
+          } else {
+            Trash
+            const iconSvgTrash = createElement(Trash);
+            iconSvgTrash.addClass('file-item-action-icon')
+            li.appendChild(iconSvgTrash)
+          }
         });
     }
 
