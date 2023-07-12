@@ -69,7 +69,6 @@ export class TouchedPlanModel extends Modal {
             iconSvgSyncPending.addClass('file-item-action-icon')
             li.appendChild(iconSvgSyncPending)
           } else {
-            Trash
             const iconSvgTrash = createElement(Trash);
             iconSvgTrash.addClass('file-item-action-icon')
             li.appendChild(iconSvgTrash)
