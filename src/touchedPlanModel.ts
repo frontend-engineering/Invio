@@ -1,7 +1,7 @@
 import { App, Modal, Notice, PluginSettingTab, Setting } from "obsidian";
 import type InvioPlugin from "./main"; // unavoidable
 import type { TransItemType } from "./i18n";
-import { createElement, FilePlus2, Trash } from "lucide";
+import { createElement, FilePlus2, Trash, ArrowDownToLine, ArrowUpToLine } from "lucide";
 
 import { log } from "./moreOnLog";
 import { FileOrFolderMixedState } from "./baseTypes";
@@ -65,9 +65,9 @@ export class TouchedPlanModel extends Modal {
             cls: 'file-item-action'
           });
           if (val.decision === 'uploadLocalToRemote') {
-            const iconSvgSyncPending = createElement(FilePlus2);
-            iconSvgSyncPending.addClass('file-item-action-icon')
-            li.appendChild(iconSvgSyncPending)
+            const iconSvgCreate = createElement(FilePlus2);
+            iconSvgCreate.addClass('file-item-action-icon')
+            li.appendChild(iconSvgCreate)
           } else {
             const iconSvgTrash = createElement(Trash);
             iconSvgTrash.addClass('file-item-action-icon')
@@ -83,10 +83,20 @@ export class TouchedPlanModel extends Modal {
       });
       const ulLocal = contentEl.createEl("ul");
       toLocalFiles.forEach((val) => {
-        ulLocal.createEl("li", {
-            text: val.key + ' - ' + (val.decision === 'downloadRemoteToLocal' ? '➕' : '➖'),
-          });
+        const li = ulLocal.createEl("li", {
+          text: val.key,
+          cls: 'file-item-action'
         });
+        if (val.decision === 'downloadRemoteToLocal') {
+          const iconSvgCreate = createElement(FilePlus2);
+          iconSvgCreate.addClass('file-item-action-icon')
+          li.appendChild(iconSvgCreate)
+        } else {
+          const iconSvgTrash = createElement(Trash);
+          iconSvgTrash.addClass('file-item-action-icon')
+          li.appendChild(iconSvgTrash)
+        }
+      });
     }
 
     if (conflictFiles.length > 0) {
@@ -95,9 +105,19 @@ export class TouchedPlanModel extends Modal {
       });
       const ulConflict = contentEl.createEl("ul");
       conflictFiles.forEach((val) => {
-        ulConflict.createEl("li", {
-            text: val.key + ' - Override ' + (val.decision === 'downloadRemoteToLocal' ? 'Local' : 'Remote'),
-          });
+        const li = ulConflict.createEl("li", {
+          text: val.key,
+          cls: 'file-item-action'
+        });
+        if (val.decision === 'downloadRemoteToLocal') {
+          const iconSvgSyncDown = createElement(ArrowDownToLine);
+          iconSvgSyncDown.addClass('file-item-action-icon')
+          li.appendChild(iconSvgSyncDown)
+        } else {
+          const iconSvgUp = createElement(ArrowUpToLine);
+          iconSvgUp.addClass('file-item-action-icon')
+          li.appendChild(iconSvgUp)
+        }
       });
       contentEl.createEl('p', {
         text: 'Warnning: Don\'t worry, to prevent data loss, conflicting files will generate a .conflict.md backup file with the overwritten content to your local folder.'
