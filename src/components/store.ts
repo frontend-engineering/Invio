@@ -9,6 +9,10 @@ import type {
 interface State {
   record: Record<string, FileOrFolderMixedState>;
   init: (data: Record<string, FileOrFolderMixedState>) => void;
+  getSyncJobList: () => FileOrFolderMixedState[];
+  getPubJobList: () => FileOrFolderMixedState[];
+  getFinishedJobList: () => FileOrFolderMixedState[];
+  getFailJobList: () => FileOrFolderMixedState[];
   updateRecord: (key: string, data: FileOrFolderMixedState) => void;
 }
 
@@ -18,6 +22,22 @@ const useStore = create<State>()((set, get) => ({
     set({
         record: data
     })
+  },
+  getSyncJobList: () => {
+    const obj = get().record;
+    return Object.keys(obj).filter(key => obj[key].syncStatus === 'syncing').map(key => obj[key])
+  },
+  getPubJobList: () => {
+    const obj = get().record;
+    return Object.keys(obj).filter(key => obj[key].syncStatus === 'publishing').map(key => obj[key])
+  },
+  getFinishedJobList: () => {
+    const obj = get().record;
+    return Object.keys(obj).filter(key => obj[key].syncStatus === 'done').map(key => obj[key])
+  },
+  getFailJobList: () => {
+    const obj = get().record;
+    return Object.keys(obj).filter(key => obj[key].syncStatus === 'fail').map(key => obj[key])
   },
   updateRecord: (key: string, update: object) => {
     const obj = get().record;

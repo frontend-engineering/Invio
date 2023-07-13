@@ -415,14 +415,14 @@ export default class InvioPlugin extends Plugin {
         // let allFiles = this.app.vault.getMarkdownFiles();
         // if we are at the root path export all files, otherwise only export files in the folder we are exporting
         allFiles = allFiles.filter((file: TFile) => new Path(file.path).directory.asString.startsWith(basePath.asString) && (file.extension === "md") && (!file.name.endsWith('.conflict.md')));
-        await publishFiles(client, this.app.vault, pubPathList, allFiles, '', this.settings, triggerSource, (pathName: string, status: string) => {
+        await publishFiles(client, this.app.vault, pubPathList, allFiles, '', this.settings, triggerSource, (pathName: string, status: string, meta?: any) => {
           log.info('publishing ', pathName, status);
           if (status === 'START') {
             log.info('set file start publishing', pathName);
             view?.handleStateChange(pathName, { syncStatus: 'publishing' })
           } else if (status === 'DONE') {
             log.info('set file DONE publishing', pathName);
-            view?.handleStateChange(pathName, { syncStatus: 'done' })
+            view?.handleStateChange(pathName, { syncStatus: 'done', remoteLink: meta })
           } else if (status === 'FAIL') {
             view?.handleStateChange(pathName, { syncStatus: 'fail' })
           }

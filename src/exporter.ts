@@ -84,7 +84,7 @@ export const publishFiles = async (
     password: string = "",
     settings: any,
     triggerSource: string,
-    cb?: (key: string, status: 'START' | 'DONE' | 'FAIL') => any,
+    cb?: (key: string, status: 'START' | 'DONE' | 'FAIL', meta?: any) => any,
 ) => {
     const htmlPath = AssetHandler.initHtmlPath();
 
@@ -169,7 +169,7 @@ export const publishFiles = async (
             ).then((resp) => {
                 RenderLog.progress(i++, toUploads.length, "Uploading Docs", "Upload success: " + upload.key, "var(--color-accent)");
                 if (cb && upload.md) {
-                    cb(upload.md, 'DONE');
+                    cb(upload.md, 'DONE', `https://${settings.s3.s3BucketName}.${settings.s3.s3Endpoint}/${resp?.key}`);
                 }
                 return resp;
             }).catch(err => {

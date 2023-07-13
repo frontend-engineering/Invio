@@ -1,4 +1,4 @@
-import {  MarkdownView, PluginManifest, TFolder, TextFileView, Vault } from 'obsidian';
+import {  MarkdownView, PluginManifest, TFile, TFolder, TextFileView, Vault } from 'obsidian';
 import { InvioSettingTab } from '../settings';
 import { Path } from './path';
 import { RenderLog } from '../html-generation/render-log';
@@ -150,6 +150,13 @@ export class Utils
 
 	static async appendFile(vault: Vault, filePath: string, mdString: string) {
 		await vault.adapter.append(filePath, mdString);
+	}
+
+	static async openFile(vault: Vault, filePath: string) {
+		const file = vault.getAbstractFileByPath(filePath);
+		if (file instanceof TFile) {
+			await app.workspace.getLeaf(false).openFile(file)
+		}
 	}
 
 	//async function that awaits until a condition is met

@@ -40,7 +40,7 @@ export class StatsView extends ItemView {
         log.info('on open... ');
         const root = createRoot(this.containerEl.children[1]);
         root.render(
-            <StatsViewComponent />
+            <StatsViewComponent plugin={this.plugin} />
         );
     }
 
