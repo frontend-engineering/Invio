@@ -7,6 +7,8 @@ import { ExportFile } from "./export-file";
 import { Downloadable } from "src/utils/downloadable";
 import { TFile } from "obsidian";
 import { log } from "../moreOnLog";
+import { StatsView } from "src/statsView";
+import InvioPlugin from "src/main";
 
 const LogoSVG = `<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="svg314096" viewBox="0 0 1024 768" height="768px" width="1024px" version="1.1">
 <metadata id="metadata314102">
@@ -58,12 +60,15 @@ const InheriableMeta: Array<keyof IMetaConfig> = [ 'icon' ];
 
 export class HTMLGenerator {
 	//#region Main Generation Functions
-	public static async beginBatch(exportingFiles: TFile[]) {
+	public static async beginBatch(plugin: InvioPlugin, exportingFiles: TFile[]) {
 		GlobalDataGenerator.clearGraphCache();
 		GlobalDataGenerator.clearFileTreeCache();
 		GlobalDataGenerator.getFileTree(exportingFiles);
-		await AssetHandler.updateAssetCache();
+		await StatsView.activateStatsView(plugin);
+		const view = StatsView.getStatsView(plugin);
+		await AssetHandler.updateAssetCache(view);
 		await MarkdownRenderer.beginBatch();
+		return view;
 	}
 
 	public static endBatch() {
@@ -71,8 +76,8 @@ export class HTMLGenerator {
 	}
 
 	// rootPath is used for collecting context nodes
-	public static async generateWebpage(file: ExportFile, rootPath: Path): Promise<ExportFile> {
-		await this.getDocumentHTML(file);
+	public static async generateWebpage(file: ExportFile, rootPath: Path, view: StatsView): Promise<ExportFile> {
+		await this.getDocumentHTML(file, false, view);
 		let usingDocument = file.document;
 
 		let sidebars = this.generateSideBars(file.contentElement, file);
@@ -136,7 +141,7 @@ export class HTMLGenerator {
 		pageContainerEl.appendChild(footerBar);
 	}
 
-	public static async getDocumentHTML(file: ExportFile, addSelfToDownloads: boolean = false): Promise<ExportFile> {
+	public static async getDocumentHTML(file: ExportFile, addSelfToDownloads: boolean = false, view?: StatsView): Promise<ExportFile> {
 		// set custom line width on body
 		let body = file.document.body;
 
@@ -163,7 +168,7 @@ export class HTMLGenerator {
 
 		// create obsidian document containers
 		let markdownViewEl = file.document.body.createDiv();
-		let content = await MarkdownRenderer.renderMarkdown(file);
+		let content = await MarkdownRenderer.renderMarkdown(file, view);
 		if (MarkdownRenderer.cancelled) throw new Error("Markdown rendering cancelled");
 		markdownViewEl.outerHTML = content;
 

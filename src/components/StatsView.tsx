@@ -2,13 +2,11 @@ import * as React from "react";
 import { throttle } from 'lodash';
 import useStore, { LogType } from './store';
 import styles from './StatsView.module.css';
-import { FileOrFolderMixedState } from "src/baseTypes";
 import { AlertTriangle, CheckCircle, ArrowDownUp, Activity, LineChart, ListChecks, Siren, FileType, ScrollText, Info, AlertCircle, XCircle, ChevronRight } from 'lucide-react';
 import { log } from '../moreOnLog'
 import { Utils } from '../utils/utils';
 import { Plugin, Notice } from "obsidian";
 import Logo from './InvioLogo';
-import style from "src/utils/style";
 
 const { useEffect, useRef } = React
 
@@ -27,14 +25,11 @@ export const StatsViewComponent = (props: { plugin: Plugin }) => {
   const logsRef = useRef(null);
 
   const scrollFn = throttle(() => {
-    console.log('scroll...');
     logsRef.current.scrollBy(0, 1000); 
   }, 300)
 
   useStore.subscribe((state, prev) => {
-    // console.log('sub- ', state, prev);
     if (logsRef.current) {
-      // elementRef.current.lastChild
       if (state.logs?.length > 0) {
         scrollFn();
       }

@@ -1,12 +1,7 @@
 import { create } from 'zustand'
 import type {
-    RemoteItem,
-    SyncTriggerSourceType,
-    DecisionType,
     FileOrFolderMixedState,
-    SUPPORTED_SERVICES_TYPE,
 } from "../baseTypes";
-import { log } from '../moreOnLog';
 
 export enum LogType {
     LOG = 'LOG',
@@ -15,7 +10,7 @@ export enum LogType {
 };
 
 // type LogType = 'LOG' | 'WARN' | 'ERROR';
-interface LogItem {
+export interface LogItem {
     type: LogType;
     msg: string;
     date?: number;
@@ -31,7 +26,7 @@ interface State {
   getPubJobList: () => FileOrFolderMixedState[];
   getFinishedJobList: () => FileOrFolderMixedState[];
   getFailJobList: () => FileOrFolderMixedState[];
-  updateRecord: (key: string, data: FileOrFolderMixedState) => void;
+  updateRecord: (key: string, data: Partial<FileOrFolderMixedState>) => void;
   addLog: (msg: string, type?: string) => void;
 }
 

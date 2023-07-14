@@ -158,10 +158,4 @@ export class ExportFile
 	{
 		return new Downloadable(this.name, this.html, this.exportPath.directory.makeForceFolder());
 	}
-
-	public async generateHTML(addSelfToDownloads: boolean = false): Promise<ExportFile>
-	{
-		await HTMLGenerator.getDocumentHTML(this, addSelfToDownloads);
-		return this;
-	}
 }

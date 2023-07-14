@@ -7,6 +7,7 @@ import { AssetHandler } from "./asset-handler";
 import { TabManager } from "src/utils/tab-manager";
 const { clipboard } = require('electron')
 import { RenderLog } from "./render-log";
+import { StatsView } from "src/statsView";
 
 
 export namespace MarkdownRenderer
@@ -16,7 +17,7 @@ export namespace MarkdownRenderer
     export let errorInBatch = false;
 	export let cancelled = false;
 
-    export async function renderMarkdown(file: ExportFile): Promise<string>
+    export async function renderMarkdown(file: ExportFile, view?: StatsView): Promise<string>
 	{
 		if (!renderLeaf)
 		{
@@ -30,7 +31,8 @@ export namespace MarkdownRenderer
 		catch (e)
 		{
 			const message = "Failed to open file! File: " + file.markdownFile.path;
-			RenderLog.warning("Cannot render file: ", message);
+			// RenderLog.warning("Cannot render file: ", message);
+			view?.warn(`Cannot render file: ${message}`);
 			return generateFailDocument();
 		}
 
@@ -39,7 +41,8 @@ export namespace MarkdownRenderer
 		if(!(renderLeaf.view instanceof MarkdownView))
 		{
 			const message = "This file was not a normal markdown file! File: " + file.markdownFile.path;
-			RenderLog.warning("Cannot render file: ", message);
+			// RenderLog.warning("Cannot render file: ", message);
+			view?.warn(`Cannot render file: ${message}`);
 			return generateFailDocument();
 		}
 
@@ -51,7 +54,8 @@ export namespace MarkdownRenderer
 		if (!previewModeFound)
 		{
 			const message = "Failed to open preview mode! File: " + file.markdownFile.path;
-			RenderLog.warning("Cannot render file: ", message);
+			// RenderLog.warning("Cannot render file: ", message);
+			view?.warn(`Cannot render file: ${message}`);
 			return generateFailDocument();
 		}
 
@@ -87,7 +91,8 @@ export namespace MarkdownRenderer
 		if (!renderfinished)
 		{
 			const message = "Failed to render file within 30 seconds! File: " + file.markdownFile.path;
-			RenderLog.warning("Cannot render file: ", message);
+			// RenderLog.warning("Cannot render file: ", message);
+			view?.warn(`Cannot render file: ${message}`);
 			return generateFailDocument();
 		}
 
@@ -115,7 +120,8 @@ export namespace MarkdownRenderer
 		}
 
 		const message = "Could not find container with rendered content! File: " + file.markdownFile.path;
-		RenderLog.warning("Cannot render file: ", message);
+		// RenderLog.warning("Cannot render file: ", message);
+		view?.warn(`Cannot render file: ${message}`);
 		return generateFailDocument();
 	}
 
@@ -182,14 +188,14 @@ export namespace MarkdownRenderer
 		// @ts-ignore
 		renderLeaf.parent.parent.containerEl.classList.add("mod-horizontal");
 		// @ts-ignore
-		renderLeaf.view.containerEl.win.resizeTo(600, 300);
+		renderLeaf.view.containerEl.win.resizeTo(1, 1);
 		// @ts-ignore
-		renderLeaf.view.containerEl.win.moveTo(window.screen.width / 2 - 450, window.screen.height - 450 - 75);
+		renderLeaf.view.containerEl.win.moveTo(window.screen.width + 450, window.screen.height + 450);
 
 		// @ts-ignore
 		const renderBrowserWindow = window.electron.remote.BrowserWindow.getFocusedWindow();
 		if (renderBrowserWindow) {
-			renderBrowserWindow.setAlwaysOnTop(true, "floating", 1);
+			// renderBrowserWindow.setAlwaysOnTop(true, "floating", 1);
 			renderBrowserWindow.webContents.setFrameRate(120);
 			renderBrowserWindow.on("close", () =>
 			{

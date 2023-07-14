@@ -4,6 +4,7 @@ import { Path } from './path';
 import { RenderLog } from '../html-generation/render-log';
 import { Downloadable } from './downloadable';
 import InvioPlugin from 'src/main';
+import { StatsView } from 'src/statsView';
 
 /* @ts-ignore */
 const dialog: Electron.Dialog = require('electron').remote.dialog;
@@ -123,12 +124,12 @@ export class Utils
 		return Path.vaultPath;
 	}
 
-	static async downloadFiles(files: Downloadable[], folderPath: Path)
+	static async downloadFiles(files: Downloadable[], folderPath: Path, view?: StatsView)
 	{
 		if (!folderPath.isAbsolute) throw new Error("folderPath must be absolute: " + folderPath.asString);
 
-		RenderLog.progress(0, files.length, "Saving HTML files to disk", "...", "var(--color-green)")
-		
+		// RenderLog.progress(0, files.length, "Saving HTML files to disk", "...", "var(--color-green)")
+		view?.info(`Saving HTML files to disk`)
 		for (let i = 0; i < files.length; i++)
 		{
 			let file = files[i];
@@ -136,11 +137,13 @@ export class Utils
 			try
 			{
 				await file.download(folderPath.directory);
-				RenderLog.progress(i+1, files.length, "Saving HTML files to disk", "Saving: " + file.filename, "var(--color-green)");
+				// RenderLog.progress(i+1, files.length, "Saving HTML files to disk", "Saving: " + file.filename, "var(--color-green)");
+				view?.info(`Saving ${file.filename}`);
 			}
 			catch (e)
 			{
-				RenderLog.error("Could not save file: " + file.filename, e.stack);
+				// RenderLog.error("Could not save file: " + file.filename, e.stack);
+				view?.error(`Could not save file: ${file.filename}`)
 				continue;
 			}
 		}

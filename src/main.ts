@@ -61,7 +61,7 @@ import { AssetHandler } from './html-generation/asset-handler';
 import { Path } from './utils/path';
 import { HTMLGenerator } from './html-generation/html-generator';
 import icon, { UsingIconNames, getIconSvg, addIconForconflictFile } from './utils/icon';
-import { StatsView, VIEW_TYPE_STATS } from "./statsView";
+import { StatsView, VIEW_TYPE_STATS, LogType } from "./statsView";
 
 const { iconNameSyncWait, iconNameSyncPending, iconNameSyncRunning, iconNameLogs, iconNameSyncLogo } = UsingIconNames;
 
@@ -317,16 +317,16 @@ export default class InvioPlugin extends Plugin {
       const { toRemoteFiles } = TouchedPlanModel.getTouchedFilesGroup(touchedFileMap)
 
       let allFiles = this.app.vault.getMarkdownFiles();
-      await HTMLGenerator.beginBatch(allFiles);
-      await this.activateStatsView()
-      const view = this.getStatsView();
 
+      // Make functions of StatsView static
+      const view = await HTMLGenerator.beginBatch(this, allFiles);
       log.info('init stats view: ', view);
       if (view) {
         const initData: Record<string, FileOrFolderMixedState> = {};
         toRemoteFiles.forEach(f => {
           initData[f.key] = f;
         })
+        view.info('Stats data init...');
         view.init(initData, []);
       }
 
@@ -334,13 +334,16 @@ export default class InvioPlugin extends Plugin {
       // The operations below begins to write or delete (!!!) something.
       await insertSyncPlanRecordByVault(this.db, plan, this.vaultRandomID);
       if (triggerSource !== "dry") {
-        getNotice(
-          t("syncrun_step7", {
-            maxSteps: `${MAX_STEPS}`,
-          })
-        );
+        // getNotice(
+        //   t("syncrun_step7", {
+        //     maxSteps: `${MAX_STEPS}`,
+        //   })
+        // );
+        view?.info('do syncing job');
 
         this.syncStatus = "syncing";
+        view?.info('Start to sync');
+
         // TODO: Delete all remote html files if triggerSource === force
         const pubPathList: string[] = [];
         const unPubList: string[] = [];
@@ -371,7 +374,8 @@ export default class InvioPlugin extends Plugin {
             self.setCurrSyncMsg(i, totalCount, pathName, decision);
 
             log.info('syncing ', pathName, decision);
-            view?.handleStateChange(pathName, { syncStatus: 'syncing' })
+            view?.update(pathName, { syncStatus: 'syncing' });
+            view?.info(`Checking file ${pathName} and it's remote status`);
             // if (touchedFileMap?.pathName) {
             //   touchedFileMap.pathName.syncStatus = 'syncing';
             // }
@@ -388,6 +392,7 @@ export default class InvioPlugin extends Plugin {
           },
           (key: string) => {
             log.warn('Remote files conflicts when syncing ... ', key);
+            view?.warn(`Remote file ${key} conflicts when syncing ...`);
           }
         );
 
@@ -401,11 +406,11 @@ export default class InvioPlugin extends Plugin {
             log.info('publishing ', pathName, status);
             if (status === 'START') {
               log.info('set file start publishing', pathName);
-              view?.handleStateChange(pathName, { syncStatus: 'publishing' })
+              view?.update(pathName, { syncStatus: 'publishing' })
             } else if (status === 'DONE') {
-              view?.handleStateChange(pathName, { syncStatus: 'done' })
+              view?.update(pathName, { syncStatus: 'done' })
             } else if (status === 'FAIL') {
-              view?.handleStateChange(pathName, { syncStatus: 'fail' })
+              view?.update(pathName, { syncStatus: 'fail' })
             }
           });
         }
@@ -415,16 +420,16 @@ export default class InvioPlugin extends Plugin {
         // let allFiles = this.app.vault.getMarkdownFiles();
         // if we are at the root path export all files, otherwise only export files in the folder we are exporting
         allFiles = allFiles.filter((file: TFile) => new Path(file.path).directory.asString.startsWith(basePath.asString) && (file.extension === "md") && (!file.name.endsWith('.conflict.md')));
-        await publishFiles(client, this.app.vault, pubPathList, allFiles, '', this.settings, triggerSource, (pathName: string, status: string, meta?: any) => {
+        await publishFiles(client, this.app.vault, pubPathList, allFiles, '', this.settings, triggerSource, view, (pathName: string, status: string, meta?: any) => {
           log.info('publishing ', pathName, status);
           if (status === 'START') {
             log.info('set file start publishing', pathName);
-            view?.handleStateChange(pathName, { syncStatus: 'publishing' })
+            view?.update(pathName, { syncStatus: 'publishing' })
           } else if (status === 'DONE') {
             log.info('set file DONE publishing', pathName);
-            view?.handleStateChange(pathName, { syncStatus: 'done', remoteLink: meta })
+            view?.update(pathName, { syncStatus: 'done', remoteLink: meta })
           } else if (status === 'FAIL') {
-            view?.handleStateChange(pathName, { syncStatus: 'fail' })
+            view?.update(pathName, { syncStatus: 'fail' })
           }
         });
 
@@ -504,51 +509,8 @@ export default class InvioPlugin extends Plugin {
     }
   }
 
-  async activateStatsView() {
-    this.app.workspace.detachLeavesOfType(VIEW_TYPE_STATS);
-
-    await this.app.workspace.getRightLeaf(false).setViewState({
-      type: VIEW_TYPE_STATS,
-      active: true,
-    });
-
-    this.app.workspace.revealLeaf(
-      this.app.workspace.getLeavesOfType(VIEW_TYPE_STATS)[0]
-    );
-  }
-
-  getStatsView() {
-    const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_STATS).find((leaf) => (leaf.view instanceof StatsView));
-    return leaf?.view as StatsView;
-  }
-
   async onload() {
     log.info(`loading plugin ${this.manifest.id}`);
-
-
-    this.addRibbonIcon("dice", "Activate view", () => {
-      this.activateStatsView();
-
-      // test updating view
-      setTimeout(() => {
-        const view = this.getStatsView();
-
-        log.info('init stats view: ', view);
-        if (!view) return;
-        view.init({
-          'IDEA': { status: 'DONE' },
-          'eDRAM': { status: 'FAIL' }
-        });
-      }, 2000)
-      setInterval(() => {
-        const view = this.getStatsView();
-
-        log.info('update stats view: ', view);
-        if (!view) return;
-        
-        view.handleStateChange('IDEA', {status: Math.random() > 0.5 ? 'DONE' : 'FAIL' })
-      }, 2000)
-    });
   
 		// init html generator
 		AssetHandler.initialize(this.manifest.id);

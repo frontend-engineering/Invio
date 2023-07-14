@@ -12,8 +12,9 @@ import { RenderLog } from './html-generation/render-log';
 import { Downloadable } from './utils/downloadable';
 import { log } from "./moreOnLog";
 import { RemoteClient } from "./remote";
+import { StatsView } from './statsView';
 
-export const exportFile = async (file: TFile, exportFromPath: Path, partOfBatch = false, exportToPath: Path | undefined = undefined, rootPath: Path | undefined) : Promise<ExportFile | undefined> => {
+export const exportFile = async (file: TFile, exportFromPath: Path, exportToPath: Path | undefined = undefined, rootPath: Path | undefined, view: StatsView) : Promise<ExportFile | undefined> => {
     if(file.extension != "md")
     {
         new Notice(`❗ Unfortunately exporting ${file.extension.replace(/\./igm, "")} files is not supported yet.`, 7000);
@@ -27,38 +28,17 @@ export const exportFile = async (file: TFile, exportFromPath: Path, partOfBatch 
         return undefined;
     }
 
-    if (!partOfBatch)
-    {
-        // if we are starting a new export then begin a new batch
-        await HTMLGenerator.beginBatch([]);
-        RenderLog.progress(1, 2, "Generating HTML", "Exporting: " + file.path);
-    }
-
     // the !partOfBatch is passed to forceExportToRoot. 
     // If this is a single file export then export it to the folder specified rather than into it's subfolder.
     let exportedFile = null;
     try
     {
-        exportedFile = new ExportFile(file, exportToPath.directory.absolute(), exportFromPath.directory, partOfBatch, exportToPath.fullName, false);
-        await HTMLGenerator.generateWebpage(exportedFile, rootPath);
+        exportedFile = new ExportFile(file, exportToPath.directory.absolute(), exportFromPath.directory, true, exportToPath.fullName, false);
+        await HTMLGenerator.generateWebpage(exportedFile, rootPath, view);
     }
     catch (e)
     {
-        if(!partOfBatch)
-        {
-            RenderLog.error("Could not export file: " + file.name, e.stack, true);
-        }
-
         throw e;
-    }
-
-    if(!partOfBatch) 
-    {
-        // file downloads are handled outside of the export function if we are exporting a batch.
-        // If this is not a batch export, then we need to download the files here instead.
-        await Utils.downloadFiles(exportedFile.downloads, exportToPath.directory);
-        new Notice("✅ Finished HTML Export:\n\n" + exportToPath.asString, 5000);
-        HTMLGenerator.endBatch();
     }
 
     return exportedFile;
@@ -84,6 +64,7 @@ export const publishFiles = async (
     password: string = "",
     settings: any,
     triggerSource: string,
+    view?: StatsView,
     cb?: (key: string, status: 'START' | 'DONE' | 'FAIL', meta?: any) => any,
 ) => {
     const htmlPath = AssetHandler.initHtmlPath();
@@ -102,6 +83,8 @@ export const publishFiles = async (
     }
     // await HTMLGenerator.beginBatch(allFiles);
     // RenderLog.progress(0, allFiles.length, "Exporting Docs", "...", "var(--color-accent)");
+    view?.info("Exporting Docs...");
+
     let externalFiles: Downloadable[] = [];
     let toUploads: any[] = [];
 
@@ -115,7 +98,9 @@ export const publishFiles = async (
         log.info('html path: ', htmlPath, file);
         const htmlFilePath = htmlPath.joinString(file.name).setExtension("html");
         // RenderLog.progress(i++, path.length, "Exporting Docs", "Exporting: " + file.path, "var(--color-accent)");
-        const exportedFile = await exportFile(file, new Path(path), true, htmlFilePath, new Path(settings.localWatchDir));
+        view?.info("Exporting: " + file.path);
+
+        const exportedFile = await exportFile(file, new Path(path), htmlFilePath, new Path(settings.localWatchDir), view);
         if (exportedFile) {
             toUploads.push(...exportedFile.downloads.map(d => {
                 const afterPath = exportedFile.exportToFolder.join(d.relativeDownloadPath);
@@ -144,8 +129,8 @@ export const publishFiles = async (
     await sleep(200);
 
     try {
-        RenderLog.progress(0, toUploads.length, "Uploading Docs", "...", "var(--color-accent)");
-
+        // RenderLog.progress(0, toUploads.length, "Uploading Docs", "...", "var(--color-accent)");
+        view?.info('Uploading Docs ...');
         const resPromise = toUploads.map((upload, i) => {
             const htmlFileRelPath = Path.getRelativePathFromVault(new Path(upload.path), true).asString;
             log.info('rel path: ', htmlFileRelPath);
@@ -167,7 +152,8 @@ export const publishFiles = async (
                 '',
                 upload.key
             ).then((resp) => {
-                RenderLog.progress(i++, toUploads.length, "Uploading Docs", "Upload success: " + upload.key, "var(--color-accent)");
+                // RenderLog.progress(i++, toUploads.length, "Uploading Docs", "Upload success: " + upload.key, "var(--color-accent)");
+                view?.info(`Upload success: ${upload.key}`);
                 if (cb && upload.md) {
                     cb(upload.md, 'DONE', `https://${settings.s3.s3BucketName}.${settings.s3.s3Endpoint}/${resp?.key}`);
                 }
@@ -181,7 +167,8 @@ export const publishFiles = async (
 
         await Promise.all(resPromise).then(result => {
             log.info('upload to remote result: ', result);
-            RenderLog.progress(toUploads.length, toUploads.length, "Uploading Docs", "Uploading Done: ", "var(--color-accent)");
+            // RenderLog.progress(toUploads.length, toUploads.length, "Uploading Docs", "Uploading Done: ", "var(--color-accent)");
+            view?.info(`Uploading All Success`);
             HTMLGenerator.endBatch();
 
             const bucket = settings.s3.s3BucketName;

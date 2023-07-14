@@ -1,14 +1,16 @@
-import { ItemView, WorkspaceLeaf } from "obsidian";
+import { ItemView, WorkspaceLeaf, Plugin } from "obsidian";
 import type InvioPlugin from "./main";
 import { log } from './moreOnLog'
 import * as React from "react";
-import * as ReactDOM from "react-dom";
+import type {
+    FileOrFolderMixedState,
+} from "./baseTypes";
 import { StatsViewComponent } from "./components/StatsView";
 import { createRoot } from "react-dom/client";
-import useStore, { LogType } from './components/store';
+import useStore, { LogType, LogItem } from './components/store';
 const { init, updateRecord, addLog } = useStore.getState();
 
-
+export * from './components/store';
 export const VIEW_TYPE_STATS = "stats-view";
 
 export class StatsView extends ItemView {
@@ -21,6 +23,25 @@ export class StatsView extends ItemView {
         this.data = undefined;
     }
 
+    static getStatsView(plugin: Plugin) {
+        const leaf = plugin.app.workspace.getLeavesOfType(VIEW_TYPE_STATS).find((leaf) => (leaf.view instanceof StatsView));
+        return leaf?.view as StatsView;
+    }
+    
+    static async activateStatsView(plugin: Plugin) {
+        plugin.app.workspace.detachLeavesOfType(VIEW_TYPE_STATS);
+    
+        await plugin.app.workspace.getRightLeaf(false).setViewState({
+          type: VIEW_TYPE_STATS,
+          active: true,
+        });
+    
+        plugin.app.workspace.revealLeaf(
+          plugin.app.workspace.getLeavesOfType(VIEW_TYPE_STATS)[0]
+        );
+    }
+
+
     getViewType() {
         return VIEW_TYPE_STATS;
     }
@@ -29,14 +50,17 @@ export class StatsView extends ItemView {
         return "Invio Stats";
     }
 
-    init(data: any, logs: any) {
+    init(data: Record<string, FileOrFolderMixedState>, logs?: LogItem[]) {
         log.info('init view with data: ', data);
         init(data, logs);
     }
-    handleStateChange(key: string, data: any) {
+
+    update(key: string, data: Partial<FileOrFolderMixedState>) {
         log.info('update key...', key, data);
-        updateRecord(key, data); 
+        updateRecord(key, data);
+        this.info(`File ${key} status changed - ${data?.syncStatus}`)
     }
+
     info(msg: string) {
         log.info('view show info: ', msg);
         addLog(msg, LogType.LOG);

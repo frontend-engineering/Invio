@@ -16,6 +16,7 @@ import { Downloadable } from "src/utils/downloadable.js";
 import { InvioSettingTab } from "src/settings.js";
 import { RenderLog } from "./render-log.js";
 import { Utils } from "src/utils/utils.js";
+import { StatsView } from "src/statsView.js";
 
 export class AssetHandler
 {
@@ -104,7 +105,7 @@ export class AssetHandler
 		return toDownload;
 	}
 
-	public static async updateAssetCache()
+	public static async updateAssetCache(view?: StatsView)
 	{
 		let snippetsNames = this.getEnabledSnippets();
 		let themeName = this.getCurrentThemeName();
@@ -117,7 +118,7 @@ export class AssetHandler
 		if (themeName != this.lastEnabledTheme)
 		{
 			this.lastEnabledTheme = themeName;
-			this.themeStyles = await this.getThemeContent(themeName);
+			this.themeStyles = await this.getThemeContent(themeName, view);
 		}
 		if (enabledPluginStyles != this.lastEnabledPluginStyles)
 		{
@@ -238,7 +239,7 @@ export class AssetHandler
 		return pluginCSS;
 	}
 
-	private static async getThemeContent(themeName: string): Promise<string>
+	private static async getThemeContent(themeName: string, view?: StatsView): Promise<string>
 	{
 		if (themeName == "Default") return "/* Using default theme. */";
 		// MIGHT NEED TO FORCE A RELATIVE PATH HERE IDKK
@@ -246,6 +247,7 @@ export class AssetHandler
 		if (!themePath.exists)
 		{
 			RenderLog.warning("Warning: could not load theme.", "Cannot find theme at path: \n\n" + themePath);
+			view?.warn(`Cannot find theme at path: \n\n ${themePath}`)
 			return "";
 		}
 		let themeContent = await themePath.readFileString() ?? "";
