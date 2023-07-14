@@ -10,6 +10,24 @@
     margin-right: 6px;
 }
 
+.empty-report {
+    display: flex;
+    flex-direction: column;
+    margin-top: 32px;
+    justify-content: center;
+    align-items: center;
+}
+
+.empty-report > .icon {
+    width: 48px;
+    height: 48px;
+    opacity: 0.1;
+}
+
+.empty-report > span {
+    margin-top: 22px;
+}
+
 .list-item {
     padding: var(--nav-item-padding);
     margin-bottom: 1px;

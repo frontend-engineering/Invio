@@ -2,7 +2,7 @@ import * as React from "react";
 import useStore from './store';
 import styles from './StatsView.module.css';
 import { FileOrFolderMixedState } from "src/baseTypes";
-import { AlertTriangle, CheckCircle, ArrowDownUp, Activity, LineChart, ListChecks, Siren, FileType } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ArrowDownUp, Activity, LineChart, ListChecks, Siren, FileType, ScrollText } from 'lucide-react';
 import { log } from '../moreOnLog'
 import { Utils } from '../utils/utils';
 import { Plugin } from "obsidian";
@@ -23,7 +23,10 @@ export const StatsViewComponent = (props: { plugin: Plugin }) => {
   if (!record || (Object.keys(record).length === 0)) {
     return <>
       <h4 className={styles['header']}><Logo className={styles['icon']} />Invio Action Report</h4>
-      <div className={styles['listItem']}>No file changed</div>
+      <div className={styles['emptyReport']}>
+        <ScrollText className={styles['icon']} />
+        <span>No file changed</span>
+      </div>
     </>
   }
 
