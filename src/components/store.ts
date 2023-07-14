@@ -5,22 +5,43 @@ import type {
     DecisionType,
     FileOrFolderMixedState,
     SUPPORTED_SERVICES_TYPE,
-  } from "../baseTypes";
+} from "../baseTypes";
+import { log } from '../moreOnLog';
+
+export enum LogType {
+    LOG = 'LOG',
+    WARN = 'WARN',
+    ERROR = 'ERROR'
+};
+
+// type LogType = 'LOG' | 'WARN' | 'ERROR';
+interface LogItem {
+    type: LogType;
+    msg: string;
+    date?: number;
+}
+
+const MAX_LOG_NUM = 1000;
+
 interface State {
   record: Record<string, FileOrFolderMixedState>;
-  init: (data: Record<string, FileOrFolderMixedState>) => void;
+  logs: LogItem[];
+  init: (data: Record<string, FileOrFolderMixedState>, logs?: LogItem[]) => void;
   getSyncJobList: () => FileOrFolderMixedState[];
   getPubJobList: () => FileOrFolderMixedState[];
   getFinishedJobList: () => FileOrFolderMixedState[];
   getFailJobList: () => FileOrFolderMixedState[];
   updateRecord: (key: string, data: FileOrFolderMixedState) => void;
+  addLog: (msg: string, type?: string) => void;
 }
 
 const useStore = create<State>()((set, get) => ({
   record: {},
-  init: (data) => {
+  logs: [],
+  init: (data: Record<string, FileOrFolderMixedState>, logs?: LogItem[]) => {
     set({
-        record: data
+        record: data,
+        logs
     })
   },
   getSyncJobList: () => {
@@ -42,16 +63,40 @@ const useStore = create<State>()((set, get) => ({
   updateRecord: (key: string, update: object) => {
     const obj = get().record;
     if (!(obj && obj[key])) {
-        console.log('obj not found - ', obj, obj[key]);
         return;
     }
-    console.log('obj set - ', key, update);
     return set(state => ({
+        ...state,
         record: {
           ...state.record,
           [key]: { ...state.record[key], ...update }
-        }  
+        },
       }))
+  },
+  addLog: (msg: string, type?: LogType) => {
+    if (!msg) return;
+    const newMsg = {
+        msg: msg.trim(),
+        type: type || LogType.LOG,
+        date: Date.now(),
+    };
+    const logs = get().logs;
+    if (!logs) {
+        set(state => ({
+            ...state,
+            logs: [ newMsg ]
+        }))
+        return;
+    }
+
+    logs.push(newMsg);
+    if (logs.length > MAX_LOG_NUM) {
+        logs.splice(0, logs.length - MAX_LOG_NUM)
+    }
+    set(state => ({
+        ...state,
+        logs
+    }))
   }
 }))
 

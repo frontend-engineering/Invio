@@ -1,12 +1,16 @@
 import * as React from "react";
-import useStore from './store';
+import { throttle } from 'lodash';
+import useStore, { LogType } from './store';
 import styles from './StatsView.module.css';
 import { FileOrFolderMixedState } from "src/baseTypes";
-import { AlertTriangle, CheckCircle, ArrowDownUp, Activity, LineChart, ListChecks, Siren, FileType, ScrollText } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ArrowDownUp, Activity, LineChart, ListChecks, Siren, FileType, ScrollText, Info, AlertCircle, XCircle, ChevronRight } from 'lucide-react';
 import { log } from '../moreOnLog'
 import { Utils } from '../utils/utils';
 import { Plugin, Notice } from "obsidian";
 import Logo from './InvioLogo';
+import style from "src/utils/style";
+
+const { useEffect, useRef } = React
 
 const getIconByStatus = (status: string) => {
   if (status === 'done') {
@@ -19,7 +23,24 @@ const getIconByStatus = (status: string) => {
 }
 
 export const StatsViewComponent = (props: { plugin: Plugin }) => {
-  const { record, getPubJobList, getSyncJobList, getFinishedJobList, getFailJobList } = useStore();
+  const { record, logs, getPubJobList, getSyncJobList, getFinishedJobList, getFailJobList } = useStore();
+  const logsRef = useRef(null);
+
+  const scrollFn = throttle(() => {
+    console.log('scroll...');
+    logsRef.current.scrollBy(0, 1000); 
+  }, 300)
+
+  useStore.subscribe((state, prev) => {
+    // console.log('sub- ', state, prev);
+    if (logsRef.current) {
+      // elementRef.current.lastChild
+      if (state.logs?.length > 0) {
+        scrollFn();
+      }
+    }
+  })
+
   if (!record || (Object.keys(record).length === 0)) {
     return <>
       <h4 className={styles['header']}><Logo className={styles['icon']} />Invio Action Report</h4>
@@ -50,6 +71,23 @@ export const StatsViewComponent = (props: { plugin: Plugin }) => {
     }
   }
 
+  const getLogTypeIcon = (type: LogType) => {
+    if (type === LogType.LOG) {
+      return <Info className={styles['icon']} />
+    }
+    if (type === LogType.WARN) {
+      return <AlertCircle className={styles['icon']} />
+    }
+    if (type === LogType.ERROR) {
+      return <XCircle className={styles['icon']} />
+    }
+  }
+
+  const getLogTypeColor = (type: LogType) => {
+    return type === LogType.ERROR ? '#ff0000e8' :
+      type === LogType.WARN ? '#ffff007a' : 
+      ''
+  }
 
   const syncList = getSyncJobList();
   const pubList = getPubJobList();
@@ -93,5 +131,21 @@ export const StatsViewComponent = (props: { plugin: Plugin }) => {
         <span onClick={() => onCheckError(job.syncError)} className={styles['listItemShortSpan']} title="Click to show error message">{getIconByStatus(job.syncStatus)}</span>
       </div>
     )) : null}
+    {(logs.length > 0) ?
+      <>
+      <div className={styles['divider']}></div>
+      <h4 className={styles['subHeader']}><LineChart className={styles['icon']} />Logs</h4>
+      <div className={styles['logsContainer']} ref={logsRef}>
+        {logs.map((log, idx) => {
+          return <div key={`${idx}-${log.msg?.slice(0, 9)}`} className={styles['logItem']} style={{ color: getLogTypeColor(log.type) }}>
+            <ChevronRight className={styles['icon']} />
+            { getLogTypeIcon(log.type) }
+            {log.msg}
+          </div>
+        })}
+      </div>
+      <div className={styles['safeArea']}></div>
+      </>
+      : null}
   </>;
 };

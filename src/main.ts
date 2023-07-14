@@ -327,7 +327,7 @@ export default class InvioPlugin extends Plugin {
         toRemoteFiles.forEach(f => {
           initData[f.key] = f;
         })
-        view.init(initData);
+        view.init(initData, []);
       }
 
       // The operations above are almost read only and kind of safe.

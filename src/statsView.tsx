@@ -5,8 +5,8 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { StatsViewComponent } from "./components/StatsView";
 import { createRoot } from "react-dom/client";
-import useStore from './components/store';
-const { init, updateRecord } = useStore.getState();
+import useStore, { LogType } from './components/store';
+const { init, updateRecord, addLog } = useStore.getState();
 
 
 export const VIEW_TYPE_STATS = "stats-view";
@@ -14,6 +14,7 @@ export const VIEW_TYPE_STATS = "stats-view";
 export class StatsView extends ItemView {
     readonly plugin
     data: any
+    root: any
     constructor(plugin: InvioPlugin, leaf: WorkspaceLeaf) {
         super(leaf);
         this.plugin = plugin;
@@ -28,23 +29,36 @@ export class StatsView extends ItemView {
         return "Invio Stats";
     }
 
-    init(data: any) {
+    init(data: any, logs: any) {
         log.info('init view with data: ', data);
-        init(data);
+        init(data, logs);
     }
-    handleStateChange = (key: string, data: any) => {
+    handleStateChange(key: string, data: any) {
         log.info('update key...', key, data);
         updateRecord(key, data); 
     }
+    info(msg: string) {
+        log.info('view show info: ', msg);
+        addLog(msg, LogType.LOG);
+    }
+    warn(msg: string) {
+        log.info('view show warn: ', msg);
+        addLog(msg, LogType.WARN);
+    }
+    error(msg: string) {
+        log.info('view show error: ', msg);
+        addLog(msg, LogType.ERROR);
+    }
     async onOpen() {
         log.info('on open... ');
-        const root = createRoot(this.containerEl.children[1]);
-        root.render(
+        this.root = createRoot(this.containerEl.children[1]);
+        this.root.render(
             <StatsViewComponent plugin={this.plugin} />
         );
     }
 
     async onClose() {
-        ReactDOM.unmountComponentAtNode(this.containerEl.children[1]);
+        this.root?.unmount();
+        // ReactDOM.unmountComponentAtNode(this.containerEl.children[1]);
     }
 }
