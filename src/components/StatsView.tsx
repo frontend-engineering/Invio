@@ -2,7 +2,7 @@ import * as React from "react";
 import { throttle } from 'lodash';
 import useStore, { LogType } from './store';
 import styles from './StatsView.module.css';
-import { AlertTriangle, CheckCircle, ArrowDownUp, Activity, LineChart, ListChecks, Siren, FileType, ScrollText, Info, AlertCircle, XCircle, ChevronRight } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ArrowDownUp, Activity, LineChart, ListChecks, Siren, FileType, ScrollText, Info, AlertCircle, XCircle, ChevronRight, Terminal } from 'lucide-react';
 import { log } from '../moreOnLog'
 import { Utils } from '../utils/utils';
 import { Plugin, Notice } from "obsidian";
@@ -129,7 +129,7 @@ export const StatsViewComponent = (props: { plugin: Plugin }) => {
     {(logs.length > 0) ?
       <>
       <div className={styles['divider']}></div>
-      <h4 className={styles['subHeader']}><LineChart className={styles['icon']} />Logs</h4>
+      <h4 className={styles['subHeader']}><Terminal className={styles['icon']} />Logs</h4>
       <div className={styles['logsContainer']} ref={logsRef}>
         {logs.map((log, idx) => {
           return <div key={`${idx}-${log.msg?.slice(0, 9)}`} className={styles['logItem']} style={{ color: getLogTypeColor(log.type) }}>
