@@ -154,9 +154,14 @@ export class Utils
 
 	static async openFile(vault: Vault, filePath: string) {
 		const file = vault.getAbstractFileByPath(filePath);
+		if (!file) {
+			return 'Deleted';
+		}
 		if (file instanceof TFile) {
 			await app.workspace.getLeaf(false).openFile(file)
+			return 'Done'
 		}
+		return 'NotFile'
 	}
 
 	//async function that awaits until a condition is met

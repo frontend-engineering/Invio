@@ -5,7 +5,7 @@ import { FileOrFolderMixedState } from "src/baseTypes";
 import { AlertTriangle, CheckCircle, ArrowDownUp, Activity, LineChart, ListChecks, Siren, FileType, ScrollText } from 'lucide-react';
 import { log } from '../moreOnLog'
 import { Utils } from '../utils/utils';
-import { Plugin } from "obsidian";
+import { Plugin, Notice } from "obsidian";
 import Logo from './InvioLogo';
 
 const getIconByStatus = (status: string) => {
@@ -32,14 +32,21 @@ export const StatsViewComponent = (props: { plugin: Plugin }) => {
 
   const onCheckLink = (url: string) => {
     if (url) {
-      log.info('open url: ', url);
       open(url);
     }
   }
-  const openFile = (key: string) => {
+  const openFile = async (key: string) => {
     if (key) {
-      log.info('open file: ', key);
-      Utils.openFile(props.plugin.app.vault, key);
+      const resp = await Utils.openFile(props.plugin.app.vault, key);
+      if (resp === 'Deleted') {
+        new Notice('This file already been deleted', 3000);
+      }
+    }
+  }
+
+  const onCheckError = (msg: string) => {
+    if (msg) {
+      new Notice(msg, 5000)
     }
   }
 
@@ -74,16 +81,16 @@ export const StatsViewComponent = (props: { plugin: Plugin }) => {
     {finished.length > 0 ? finished.map(job => (
       <div key={job.key} className={styles['listItem']}>
         <FileType className={styles['icon']} />
-        <span onClick={() => { openFile(job.key) }} className={styles['listItemLongSpan']}>{job.key}</span>
-        <span onClick={() => onCheckLink(job.remoteLink)} className={styles['listItemShortSpan']}>{getIconByStatus(job.syncStatus)}</span>
+        <span onClick={() => { openFile(job.key) }} className={styles['listItemLongSpan']} title="Click to show file contents">{job.key.split('/').slice(-1)[0]}</span>
+        <span onClick={() => onCheckLink(job.remoteLink)} className={styles['listItemShortSpan']} title="Click to show remote url">{getIconByStatus(job.syncStatus)}</span>
       </div>
     )) : null}
     {failList.length > 0 ? <h6 className={styles['subHeader']}><Siren className={styles['icon']} />Failed Files</h6> : null}
     {failList.length > 0 ? failList.map(job => (
       <div key={job.key} className={styles['listItem']}>
         <FileType className={styles['icon']} />
-        <span className={styles['listItemLongSpan']}>{job.key}</span>
-        <span className={styles['listItemShortSpan']}>{getIconByStatus(job.syncStatus)}</span>
+        <span onClick={() => { openFile(job.key) }} className={styles['listItemLongSpan']} title="Click to show file contents">{job.key.split('/').slice(-1)[0]}</span>
+        <span onClick={() => onCheckError(job.syncError)} className={styles['listItemShortSpan']} title="Click to show error message">{getIconByStatus(job.syncStatus)}</span>
       </div>
     )) : null}
   </>;

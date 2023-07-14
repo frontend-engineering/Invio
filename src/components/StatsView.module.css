@@ -45,6 +45,9 @@
 .list-item-long-span {
     flex: 1 1 auto;
     text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .list-item-short-span {
@@ -64,6 +67,7 @@
     font-size: 13px;
     width: 13px;
     height: 13px;
+    flex: 0 0 auto;
 }
 
 .icon {
