@@ -96,7 +96,7 @@ export const StatsViewComponent = (props: { plugin: Plugin }) => {
     {(syncList?.length > 0) ? syncList.map(job => (
       <div key={job.key} className={styles['listItem']}>
         <FileType className={styles['icon']} />
-        <span className={styles['listItemLongSpan']}>{job.key}</span>
+        <span className={styles['listItemLongSpan']}>{job.key.split('/').slice(-1)[0]}</span>
         <span className={styles['listItemShortSpan']}>{getIconByStatus(job.syncStatus)}</span>
       </div>
     )) : null}
@@ -104,7 +104,7 @@ export const StatsViewComponent = (props: { plugin: Plugin }) => {
     {pubList.length > 0 ? pubList.map(job => (
       <div key={job.key} className={styles['listItem']}>
         <FileType className={styles['icon']} />
-        <span className={styles['listItemLongSpan']}>{job.key}</span>
+        <span className={styles['listItemLongSpan']}>{job.key.split('/').slice(-1)[0]}</span>
         <span className={styles['listItemShortSpan']}>{getIconByStatus(job.syncStatus)}</span>
       </div>
     )) : null}
