@@ -6,6 +6,7 @@ import { AlertTriangle, CheckCircle, ArrowDownUp, Activity, LineChart, ListCheck
 import { log } from '../moreOnLog'
 import { Utils } from '../utils/utils';
 import { Plugin } from "obsidian";
+import Logo from './InvioLogo';
 
 const getIconByStatus = (status: string) => {
   if (status === 'done') {
@@ -21,8 +22,8 @@ export const StatsViewComponent = (props: { plugin: Plugin }) => {
   const { record, getPubJobList, getSyncJobList, getFinishedJobList, getFailJobList } = useStore();
   if (!record || (Object.keys(record).length === 0)) {
     return <>
-      <h4>Change File List</h4>
-      <div className={styles['listItem']}>No file</div>
+      <h4 className={styles['header']}><Logo className={styles['icon']} />Invio Action Report</h4>
+      <div className={styles['listItem']}>No file changed</div>
     </>
   }
 
@@ -46,7 +47,7 @@ export const StatsViewComponent = (props: { plugin: Plugin }) => {
   const failList = getFailJobList();
 
   return <>
-    <h3 className={styles['subHeader']}>Invio Action Report</h3>
+    <h3 className={styles['header']}><Logo className={styles['icon']} />Invio Action Report</h3>
     {(pubList.length > 0) || (syncList.length > 0) ? <h4 className={styles['subHeader']}><Activity className={styles['icon']} />Working Job</h4> : null}
     {syncList?.length > 0 ? <h6 className={styles['subHeader']}><ArrowDownUp className={styles['icon']} />Syncing</h6> : null}
     {(syncList?.length > 0) ? syncList.map(job => (
