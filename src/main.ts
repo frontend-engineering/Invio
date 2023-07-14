@@ -320,7 +320,9 @@ export default class InvioPlugin extends Plugin {
       const { toRemoteFiles } = TouchedPlanModel.getTouchedFilesGroup(touchedFileMap)
 
       let allFiles = this.app.vault.getMarkdownFiles();
-
+      const basePath = new Path(this.settings.localWatchDir);
+      // if we are at the root path export all files, otherwise only export files in the folder we are exporting
+      allFiles = allFiles.filter((file: TFile) => new Path(file.path).directory.asString.startsWith(basePath.asString) && (file.extension === "md") && (!file.name.endsWith('.conflict.md')));
       // Make functions of StatsView static
       const view = await HTMLGenerator.beginBatch(this, allFiles);
       log.info('init stats view: ', view);
@@ -418,11 +420,6 @@ export default class InvioPlugin extends Plugin {
           });
         }
 
-        const basePath = new Path(this.settings.localWatchDir);
-        // get files to export
-        // let allFiles = this.app.vault.getMarkdownFiles();
-        // if we are at the root path export all files, otherwise only export files in the folder we are exporting
-        allFiles = allFiles.filter((file: TFile) => new Path(file.path).directory.asString.startsWith(basePath.asString) && (file.extension === "md") && (!file.name.endsWith('.conflict.md')));
         await publishFiles(client, this.app.vault, pubPathList, allFiles, '', this.settings, triggerSource, view, (pathName: string, status: string, meta?: any) => {
           log.info('publishing ', pathName, status);
           if (status === 'START') {
