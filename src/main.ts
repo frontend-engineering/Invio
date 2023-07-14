@@ -123,7 +123,7 @@ export default class InvioPlugin extends Plugin {
       // only show notices in manual mode
       // no notice in auto mode
       if (triggerSource === "manual" || triggerSource === "dry") {
-        // new Notice(x, timeout);
+        new Notice(x, timeout);
       }
     };
     if (this.syncStatus !== "idle") {
@@ -145,6 +145,7 @@ export default class InvioPlugin extends Plugin {
       originLabel = this.syncRibbon.getAttribute("aria-label");
     }
 
+    let loadingModal;
     try {
       log.info(
         `${
@@ -189,8 +190,8 @@ export default class InvioPlugin extends Plugin {
       );
 
 
-      const loading = new LoadingModal(this.app, this);
-      loading.open();
+      loadingModal = new LoadingModal(this.app, this);
+      loadingModal.open();
 
       this.syncStatus = "getting_remote_files_list";
       const self = this;
@@ -294,7 +295,7 @@ export default class InvioPlugin extends Plugin {
       log.info('plan.mixedStates: ', plan.mixedStates, touchedFileMap); // for debugging
 
       try {
-        loading.close();
+        loadingModal.close();
 
         await new Promise((resolve, reject) => {
           const touchedPlanModel = new TouchedPlanModel(this.app, this, touchedFileMap, (pub: boolean) => {
@@ -484,6 +485,7 @@ export default class InvioPlugin extends Plugin {
         triggerSource: triggerSource,
         syncStatus: this.syncStatus,
       });
+      loadingModal.close();
       log.error(msg);
       log.error(error);
       getNotice(msg, 10 * 1000);
