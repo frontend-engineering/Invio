@@ -2,11 +2,12 @@ import * as React from "react";
 import { throttle } from 'lodash';
 import useStore, { LogType } from './store';
 import styles from './StatsView.module.css';
-import { AlertTriangle, CheckCircle, ArrowDownUp, Activity, LineChart, ListChecks, Siren, FileType, ScrollText, Info, AlertCircle, XCircle, ChevronRight, Terminal } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ArrowDownUp, Activity, LineChart, ListChecks, Siren, FileType, ScrollText, Info, AlertCircle, XCircle, ChevronRight, Terminal, RedoDot } from 'lucide-react';
 import { log } from '../moreOnLog'
 import { Utils } from '../utils/utils';
-import { Plugin, Notice } from "obsidian";
+import { Notice } from "obsidian";
 import Logo from './InvioLogo';
+import InvioPlugin from "src/main";
 
 const { useEffect, useRef } = React
 
@@ -20,7 +21,7 @@ const getIconByStatus = (status: string) => {
   return <div className={styles.loading}></div>
 }
 
-export const StatsViewComponent = (props: { plugin: Plugin }) => {
+export const StatsViewComponent = (props: { plugin: InvioPlugin }) => {
   const { record, logs, getPubJobList, getSyncJobList, getFinishedJobList, getFailJobList } = useStore();
   const logsRef = useRef(null);
 
@@ -44,6 +45,17 @@ export const StatsViewComponent = (props: { plugin: Plugin }) => {
         <span>No file changed</span>
       </div>
     </>
+  }
+
+  const autoFix = () => {
+    const list = getFailJobList().map(item => item.key);
+    log.info('auto fix list: ', list);
+    if (list?.length > 0) {
+      new Notice(`Auto fix the failed job`);
+      props.plugin.syncRun('manual', list)
+    } else {
+      new Notice(`No failed job found`);
+    }
   }
 
   const onCheckLink = (url: string) => {
@@ -118,7 +130,11 @@ export const StatsViewComponent = (props: { plugin: Plugin }) => {
         <span onClick={() => onCheckLink(job.remoteLink)} className={styles['listItemShortSpan']} title="Click to show remote url">{getIconByStatus(job.syncStatus)}</span>
       </div>
     )) : null}
-    {failList.length > 0 ? <h6 className={styles['subHeader']}><Siren className={styles['icon']} />Failed Files</h6> : null}
+    {failList.length > 0 ? <h6 className={styles['subHeader']}>
+        <Siren className={styles['icon']} />
+        <span className={styles['title']}>Failed Files</span>
+        <div className={styles['extraAction']} onClick={autoFix}><RedoDot className={styles['icon']} />AutoFix</div>
+      </h6> : null}
     {failList.length > 0 ? failList.map(job => (
       <div key={job.key} className={styles['listItem']}>
         <FileType className={styles['icon']} />

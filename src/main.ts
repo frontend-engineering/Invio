@@ -114,7 +114,7 @@ export default class InvioPlugin extends Plugin {
     return false;
   }
 
-  async syncRun(triggerSource: SyncTriggerSourceType = "manual") {
+  async syncRun(triggerSource: SyncTriggerSourceType = "manual", fileList?: string[]) {
     const t = (x: TransItemType, vars?: any) => {
       return this.i18n.t(x, vars);
     };
@@ -279,6 +279,8 @@ export default class InvioPlugin extends Plugin {
       const { plan, sortedKeys, deletions, sizesGoWrong, touchedFileMap } = await getSyncPlan(
         remoteStates,
         local,
+        fileList?.length > 0,
+        fileList,
         localConfigDirContents,
         origMetadataOnRemote.deletions,
         localHistory,
