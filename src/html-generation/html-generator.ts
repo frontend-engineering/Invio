@@ -118,6 +118,7 @@ export class HTMLGenerator {
 			const pageTitle = config?.title || app.vault.getName();
 			let fileTree: HTMLDivElement = this.generateHTMLTree(tree, usingDocument, pageTitle, "file-tree", true, 1, 1, false);
 			leftSidebar.appendChild(fileTree);
+			file.downloads.push(new Downloadable('_common-left-tree.html', fileTree.outerHTML, new Path(file.exportPath.asString.split('/')[0])));
 		}
 
 		await this.appendFooter(file);
