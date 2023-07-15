@@ -8,7 +8,7 @@ import type {
 import { StatsViewComponent } from "./components/StatsView";
 import { createRoot } from "react-dom/client";
 import useStore, { LogType, LogItem } from './components/store';
-const { init, updateRecord, addLog } = useStore.getState();
+const { init, updateRecord, addLog, clean } = useStore.getState();
 
 export * from './components/store';
 export const VIEW_TYPE_STATS = "stats-view";
@@ -82,6 +82,7 @@ export class StatsView extends ItemView {
     }
 
     async onClose() {
+        clean(); // Clean data on view close
         this.root?.unmount();
         // ReactDOM.unmountComponentAtNode(this.containerEl.children[1]);
     }

@@ -28,6 +28,7 @@ interface State {
   getFailJobList: () => FileOrFolderMixedState[];
   updateRecord: (key: string, data: Partial<FileOrFolderMixedState>) => void;
   addLog: (msg: string, type?: string) => void;
+  clean: () => void;
 }
 
 const useStore = create<State>()((set, get) => ({
@@ -37,6 +38,12 @@ const useStore = create<State>()((set, get) => ({
     set({
         record: data,
         logs
+    })
+  },
+  clean: () => {
+    set({
+      record: {},
+      logs: []
     })
   },
   getSyncJobList: () => {
@@ -55,10 +62,14 @@ const useStore = create<State>()((set, get) => ({
     const obj = get().record;
     return Object.keys(obj).filter(key => obj[key].syncStatus === 'fail').map(key => obj[key])
   },
-  updateRecord: (key: string, update: object) => {
+  updateRecord: (key: string, update: Partial<FileOrFolderMixedState>) => {
     const obj = get().record;
     if (!(obj && obj[key])) {
         return;
+    }
+    // Once failed, then all process failed.
+    if (obj[key].syncStatus === 'fail') {
+      update.syncStatus = 'fail';
     }
     return set(state => ({
         ...state,

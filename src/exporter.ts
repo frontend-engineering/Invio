@@ -211,7 +211,7 @@ export const unpublishFile = async (
     pathList: string[],
     cb?: (key: string, status: 'START' | 'DONE' | 'FAIL') => any,
 ) => {
-    for (const pathName of pathList) {
+    const returnPromise = pathList.map(pathName => {
         const remoteKey = getFileFromRemoteKey(vault, pathName);
         log.info('deleting.... ', pathName, remoteKey);
         if (cb) {
@@ -230,5 +230,6 @@ export const unpublishFile = async (
                     cb(pathName, 'FAIL');
                 }
             })
-    }
+    })
+    return Promise.all(returnPromise);
 }

@@ -33,6 +33,7 @@ export namespace MarkdownRenderer
 			const message = "Failed to open file! File: " + file.markdownFile.path;
 			// RenderLog.warning("Cannot render file: ", message);
 			view?.warn(`Cannot render file: ${message}`);
+			view?.update(file.markdownFile.path, { syncStatus: 'fail' })
 			return generateFailDocument();
 		}
 
@@ -43,6 +44,7 @@ export namespace MarkdownRenderer
 			const message = "This file was not a normal markdown file! File: " + file.markdownFile.path;
 			// RenderLog.warning("Cannot render file: ", message);
 			view?.warn(`Cannot render file: ${message}`);
+			view?.update(file.markdownFile.path, { syncStatus: 'fail' })
 			return generateFailDocument();
 		}
 
@@ -56,6 +58,7 @@ export namespace MarkdownRenderer
 			const message = "Failed to open preview mode! File: " + file.markdownFile.path;
 			// RenderLog.warning("Cannot render file: ", message);
 			view?.warn(`Cannot render file: ${message}`);
+			view?.update(file.markdownFile.path, { syncStatus: 'fail' })
 			return generateFailDocument();
 		}
 
@@ -93,6 +96,7 @@ export namespace MarkdownRenderer
 			const message = "Failed to render file within 30 seconds! File: " + file.markdownFile.path;
 			// RenderLog.warning("Cannot render file: ", message);
 			view?.warn(`Cannot render file: ${message}`);
+			view?.update(file.markdownFile.path, { syncStatus: 'fail' })
 			return generateFailDocument();
 		}
 
