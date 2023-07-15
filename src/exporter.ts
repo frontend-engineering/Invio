@@ -105,9 +105,8 @@ export const publishFiles = async (
                 const afterPath = exportedFile.exportToFolder.join(d.relativeDownloadPath);
                 const fileKey = (d.relativeDownloadPath.asString + '/' + d.filename).replace(/^\.\//, '');
     
-                const mdFilePreStr = file.path.replace(file.extension, '');
                 Object.assign(d, {
-                    md: fileKey.startsWith(mdFilePreStr) ? file.path : undefined,
+                    md: file.path.endsWith('.md') ? file.path : undefined,
                     path: afterPath.asString + '/' + d.filename,
                     key: fileKey,
                 })
