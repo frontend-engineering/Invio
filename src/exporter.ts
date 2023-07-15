@@ -133,7 +133,6 @@ export const publishFiles = async (
         view?.info('Uploading Docs ...');
         const resPromise = toUploads.map((upload, i) => {
             const htmlFileRelPath = Path.getRelativePathFromVault(new Path(upload.path), true).asString;
-            log.info('rel path: ', htmlFileRelPath);
             if (cb) {
                 if (upload.md) {
                     const skip = cb(upload.md, 'START');
@@ -187,8 +186,6 @@ export const publishFiles = async (
         log.error('exception: ', error);
         HTMLGenerator.endBatch();
     }
-
-
 }
 
 
@@ -215,25 +212,27 @@ const getFileFromRemoteKey = (vault: any, filePath: string) => {
 export const unpublishFile = async (
     client: RemoteClient,
     vault: any,
-    path: string,
+    pathList: string[],
     cb?: (key: string, status: 'START' | 'DONE' | 'FAIL') => any,
 ) => {
-    const remoteKey = getFileFromRemoteKey(vault, path);
-    log.info('deleting.... ', path, remoteKey);
-    if (cb) {
-        const skip = cb(path, 'START');
-        if (skip) return;
+    for (const pathName of pathList) {
+        const remoteKey = getFileFromRemoteKey(vault, pathName);
+        log.info('deleting.... ', pathName, remoteKey);
+        if (cb) {
+            const skip = cb(pathName, 'START');
+            if (skip) return;
+        }
+        return client.deleteFromRemote(remoteKey, '', '', '')
+            .then(resp => {
+                if (cb) {
+                    cb(pathName, 'DONE');
+                }
+                return resp;
+            })
+            .catch(err => {
+                if (cb) {
+                    cb(pathName, 'FAIL');
+                }
+            })
     }
-    return client.deleteFromRemote(remoteKey, '', '', '')
-        .then(resp => {
-            if (cb) {
-                cb(path, 'DONE');
-            }
-            return resp;
-        })
-        .catch(err => {
-            if (cb) {
-                cb(path, 'FAIL');
-            }
-        })
 }

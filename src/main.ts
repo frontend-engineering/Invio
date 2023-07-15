@@ -319,21 +319,6 @@ export default class InvioPlugin extends Plugin {
   
       const { toRemoteFiles } = TouchedPlanModel.getTouchedFilesGroup(touchedFileMap)
 
-      let allFiles = this.app.vault.getMarkdownFiles();
-      const basePath = new Path(this.settings.localWatchDir);
-      // if we are at the root path export all files, otherwise only export files in the folder we are exporting
-      allFiles = allFiles.filter((file: TFile) => new Path(file.path).directory.asString.startsWith(basePath.asString) && (file.extension === "md") && (!file.name.endsWith('.conflict.md')));
-      // Make functions of StatsView static
-      const view = await HTMLGenerator.beginBatch(this, allFiles);
-      log.info('init stats view: ', view);
-      if (view) {
-        const initData: Record<string, FileOrFolderMixedState> = {};
-        toRemoteFiles.forEach(f => {
-          initData[f.key] = f;
-        })
-        view.info('Stats data init...');
-        view.init(initData, []);
-      }
 
       // The operations above are almost read only and kind of safe.
       // The operations below begins to write or delete (!!!) something.
@@ -344,6 +329,22 @@ export default class InvioPlugin extends Plugin {
         //     maxSteps: `${MAX_STEPS}`,
         //   })
         // );
+        let allFiles = this.app.vault.getMarkdownFiles();
+        const basePath = new Path(this.settings.localWatchDir);
+        // if we are at the root path export all files, otherwise only export files in the folder we are exporting
+        allFiles = allFiles.filter((file: TFile) => new Path(file.path).directory.asString.startsWith(basePath.asString) && (file.extension === "md") && (!file.name.endsWith('.conflict.md')));
+        // Make functions of StatsView static
+        const view = await HTMLGenerator.beginBatch(this, allFiles);
+        log.info('init stats view: ', view);
+        if (view) {
+          const initData: Record<string, FileOrFolderMixedState> = {};
+          toRemoteFiles.forEach(f => {
+            initData[f.key] = f;
+          })
+          view.info('Stats data init...');
+          view.init(initData, []);
+        }
+  
         view?.info('do syncing job');
 
         this.syncStatus = "syncing";
@@ -403,23 +404,6 @@ export default class InvioPlugin extends Plugin {
 
         log.info('sync done with touched file map: ', JSON.stringify(toRemoteFiles));
 
-        for (const pathName of unPubList) {
-          // if (touchedFileMap?.pathName) {
-          //   touchedFileMap.pathName.syncStatus = 'publishing';
-          // }
-          await unpublishFile(client, this.app.vault, pathName, (pathName: string, status: string) => {
-            log.info('publishing ', pathName, status);
-            if (status === 'START') {
-              log.info('set file start publishing', pathName);
-              view?.update(pathName, { syncStatus: 'publishing' })
-            } else if (status === 'DONE') {
-              view?.update(pathName, { syncStatus: 'done' })
-            } else if (status === 'FAIL') {
-              view?.update(pathName, { syncStatus: 'fail' })
-            }
-          });
-        }
-
         await publishFiles(client, this.app.vault, pubPathList, allFiles, '', this.settings, triggerSource, view, (pathName: string, status: string, meta?: any) => {
           log.info('publishing ', pathName, status);
           if (status === 'START') {
@@ -428,6 +412,18 @@ export default class InvioPlugin extends Plugin {
           } else if (status === 'DONE') {
             log.info('set file DONE publishing', pathName);
             view?.update(pathName, { syncStatus: 'done', remoteLink: meta })
+          } else if (status === 'FAIL') {
+            view?.update(pathName, { syncStatus: 'fail' })
+          }
+        });
+
+        await unpublishFile(client, this.app.vault, unPubList, (pathName: string, status: string) => {
+          log.info('publishing ', pathName, status);
+          if (status === 'START') {
+            log.info('set file start publishing', pathName);
+            view?.update(pathName, { syncStatus: 'publishing' })
+          } else if (status === 'DONE') {
+            view?.update(pathName, { syncStatus: 'done' })
           } else if (status === 'FAIL') {
             view?.update(pathName, { syncStatus: 'fail' })
           }
@@ -445,6 +441,7 @@ export default class InvioPlugin extends Plugin {
           }
           await publishFiles(client, this.app.vault, forceList, allFiles, '', this.settings, triggerSource);
         }
+        HTMLGenerator.endBatch();
       } else {
         this.syncStatus = "syncing";
         getNotice(
