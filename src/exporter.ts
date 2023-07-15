@@ -168,12 +168,12 @@ export const publishFiles = async (
             HTMLGenerator.endBatch();
 
             const bucket = settings.s3.s3BucketName;
-            const urls = result.map(record => `https://${bucket}.${settings.s3.s3Endpoint}/${record?.key}`)
+            const urls = result.map(record => record && `https://${bucket}.${settings.s3.s3Endpoint}/${record?.key}`)
             log.info('url list: ', urls);
             if (InvioSettingTab.settings.openAfterExport && (triggerSource === 'manual')) {
                 // openPath(exportedFile.exportPathAbsolute);
                 urls.forEach(url => {
-                    if (url.endsWith('.html')) {
+                    if (url?.endsWith('.html')) {
                         openUrl(url);
                     }
                 })
