@@ -86,7 +86,6 @@ export const publishFiles = async (
     view?.info("Exporting Docs...");
 
     let externalFiles: Downloadable[] = [];
-    let toUploads: any[] = [];
 
     let i = 0;
     for (const path of pathList) {
@@ -102,28 +101,25 @@ export const publishFiles = async (
 
         const exportedFile = await exportFile(file, new Path(path), htmlFilePath, new Path(settings.localWatchDir), view);
         if (exportedFile) {
-            toUploads.push(...exportedFile.downloads.map(d => {
+            externalFiles.push(...exportedFile.downloads.map((d: Downloadable) => {
                 const afterPath = exportedFile.exportToFolder.join(d.relativeDownloadPath);
                 const fileKey = (d.relativeDownloadPath.asString + '/' + d.filename).replace(/^\.\//, '');
     
                 const mdFilePreStr = file.path.replace(file.extension, '');
-                return {
+                Object.assign(d, {
                     md: fileKey.startsWith(mdFilePreStr) ? file.path : undefined,
                     path: afterPath.asString + '/' + d.filename,
                     key: fileKey,
-                }
+                })
+                return d
             }));
             log.info('download list: ', exportedFile.downloads);
-            log.info('to upload list: ', toUploads);
-
-            externalFiles.push(...exportedFile.downloads);
+            // log.info('to upload list: ', toUploads);
         }
     }
 
-
-    
     externalFiles = externalFiles.filter((file, index) => externalFiles.findIndex((f) => f.relativeDownloadPath == file.relativeDownloadPath && f.filename === file.filename) == index);
-    await Utils.downloadFiles(externalFiles, htmlPath);
+    await Utils.downloadFiles(externalFiles, htmlPath, view);
     log.info('download files to: ', htmlPath, externalFiles);
 
     await sleep(200);
@@ -131,7 +127,7 @@ export const publishFiles = async (
     try {
         // RenderLog.progress(0, toUploads.length, "Uploading Docs", "...", "var(--color-accent)");
         view?.info('Uploading Docs ...');
-        const resPromise = toUploads.map((upload, i) => {
+        const resPromise = externalFiles.map((upload, i) => {
             const htmlFileRelPath = Path.getRelativePathFromVault(new Path(upload.path), true).asString;
             if (cb) {
                 if (upload.md) {
