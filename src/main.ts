@@ -300,6 +300,11 @@ export default class InvioPlugin extends Plugin {
         loadingModal.close();
 
         await new Promise((resolve, reject) => {
+          if (fileList?.length > 0) {
+            resolve('skip');
+            return;
+          }
+
           const touchedPlanModel = new TouchedPlanModel(this.app, this, touchedFileMap, (pub: boolean) => {
             log.info('user confirmed: ', pub);
             pub ? resolve('ok') : reject('cancelled')
@@ -345,8 +350,6 @@ export default class InvioPlugin extends Plugin {
           view.init(initData, []);
         }
   
-        view?.info('do syncing job');
-
         this.syncStatus = "syncing";
         view?.info('Start to sync');
 
@@ -404,6 +407,26 @@ export default class InvioPlugin extends Plugin {
 
         log.info('sync done with touched file map: ', JSON.stringify(toRemoteFiles));
 
+        // selected mode
+        // Get redo file list and redo the publish/unpublish job
+        if (fileList?.length > 0) {
+          const localFiles = this.app.vault.getMarkdownFiles().filter(file => file.path.startsWith(this.settings.localWatchDir) && !file.path.endsWith('.conflict.md'));
+          fileList.forEach(p => {
+            const exist = localFiles.find(file => file.path === p);
+            if (exist) {
+              if (pubPathList.indexOf(p) === -1) {
+                pubPathList.push(p)
+              }
+            } else {
+              if (unPubList.indexOf(p) === -1) {
+                unPubList.push(p);
+              }
+            }
+          })
+          log.info('selected mode');
+          log.info('pub list: ', pubPathList, unPubList);
+        }
+        
         await publishFiles(client, this.app.vault, pubPathList, allFiles, '', this.settings, triggerSource, view, (pathName: string, status: string, meta?: any) => {
           log.info('publishing ', pathName, status);
           if (status === 'START') {
