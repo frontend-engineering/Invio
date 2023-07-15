@@ -498,10 +498,6 @@ async function loadLeftSidebar(document) {
 			container.removeChild(legacy);
 		}
 		container.appendChild(tmpContainer.firstChild);
-
-		// initialize events
-		// initializePage(document.querySelector(".sidebar-left > .sidebar-content"));
-		initializePage(document);
 	}
 	else
 	{
@@ -980,6 +976,12 @@ function initializeForFileProtocol()
 window.onload = function()
 {
 	if (window.location.protocol == "file:") initializeForFileProtocol();
-	// initializePage(document);
-	loadLeftSidebar(document);
+	loadLeftSidebar(document)
+		.then(resp => {
+			console.log('left bar load ', resp);
+		})
+		.finally(() => {
+			initializePage(document);
+		})
+
 }
