@@ -165,7 +165,6 @@ export const publishFiles = async (
             log.info('upload to remote result: ', result);
             // RenderLog.progress(toUploads.length, toUploads.length, "Uploading Docs", "Uploading Done: ", "var(--color-accent)");
             view?.info(`Uploading All Success`);
-            HTMLGenerator.endBatch();
 
             const bucket = settings.s3.s3BucketName;
             const urls = result.map(record => record && `https://${bucket}.${settings.s3.s3Endpoint}/${record?.key}`)
