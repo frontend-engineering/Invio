@@ -147,6 +147,7 @@ export const publishFiles = async (
                 '',
                 upload.key
             ).then((resp) => {
+                if (!resp) return;
                 // RenderLog.progress(i++, toUploads.length, "Uploading Docs", "Upload success: " + upload.key, "var(--color-accent)");
                 view?.info(`Upload success: ${upload.key}`);
                 if (cb && upload.md) {
