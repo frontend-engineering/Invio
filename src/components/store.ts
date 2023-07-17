@@ -67,6 +67,10 @@ const useStore = create<State>()((set, get) => ({
     if (!(obj && obj[key])) {
         return;
     }
+    // For ToLocal files, sync done means ready
+    if ((update.syncStatus === 'sync-done') && (obj[key].syncType === 'TOLOCAL')) {
+      update.syncStatus = 'done';
+    }
     // Once failed, then all process failed.
     if (obj[key].syncStatus === 'fail') {
       update.syncStatus = 'fail';

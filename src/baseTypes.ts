@@ -143,6 +143,7 @@ export type DecisionType =
 export type TSyncStatus =
   | "pending"
   | "syncing"
+  | "sync-done"
   | "publishing"
   | "done"
   | "fail"
@@ -167,6 +168,7 @@ export interface FileOrFolderMixedState {
   decisionBranch?: number;
   remoteEncryptedKey?: string;
 
+  syncType?: `TOREMOTE` | `TOLOCAL`; // upload to remote OR download to local
   syncStatus?: TSyncStatus;
   remoteLink?: string;
   syncError?: string;

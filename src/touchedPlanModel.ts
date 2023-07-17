@@ -28,15 +28,19 @@ export class TouchedPlanModel extends Modal {
     [ ...Object.keys(files) ].forEach(key => {
       const f = files[key];
       if ((f.decision === 'uploadLocalDelHistToRemote') && f.existRemote) {
+        f.syncType = 'TOREMOTE';
         toRemoteFiles.push(f);
       }
       if (f.decision === 'uploadLocalToRemote') {
+        f.syncType = 'TOREMOTE';
         toRemoteFiles.push(f);
       }
       if (f.decision === 'downloadRemoteToLocal') {
+        f.syncType = 'TOLOCAL';
         toLocalFiles.push(f);
       }
       if ((f.decision === 'keepRemoteDelHist') && f.existLocal) {
+        f.syncType = 'TOLOCAL';
         toLocalFiles.push(f);
       }
       if (f.remoteUnsync) {

@@ -69,7 +69,7 @@ export const publishFiles = async (
 ) => {
     const htmlPath = AssetHandler.initHtmlPath();
 
-    if (allFiles.length > 100000 || allFiles.length <= 0)
+    if (allFiles.length > 100000 || allFiles.length < 0)
     {
         new Notice(`❗Invalid number of files to export: ${allFiles.length}.`, 0);
         return {success: false, exportedPath: htmlPath, fileNumber: allFiles.length};

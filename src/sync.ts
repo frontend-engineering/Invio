@@ -1454,6 +1454,7 @@ export const doActualSync = async (
   concurrency: number = 1,
   callbackSizesGoWrong?: any,
   callbackSyncProcess?: any,
+  callbackSyncDone?: any,
   callbackConflictSync?: any
 ) => {
   const mixedStates = syncPlan.mixedStates;
@@ -1572,8 +1573,30 @@ export const doActualSync = async (
             vault,
             localDeleteFunc,
             password
-          );
+          ).catch((err) => {
+            if (callbackSyncDone !== undefined) {
+              callbackSyncDone(
+                realCounter,
+                realTotalCount,
+                key,
+                val.decision,
+                err
+              );
+  
+              realCounter += 1;
+            }
+            throw err;
+          })
+          if (callbackSyncDone !== undefined) {
+            await callbackSyncDone(
+              realCounter,
+              realTotalCount,
+              key,
+              val.decision
+            );
 
+            realCounter += 1;
+          }
           log.debug(`finished ${key}`);
         };
 

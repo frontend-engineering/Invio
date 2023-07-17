@@ -337,7 +337,7 @@ export default class InvioPlugin extends Plugin {
         return;
       }
   
-      const { toRemoteFiles } = TouchedPlanModel.getTouchedFilesGroup(touchedFileMap)
+      const { toRemoteFiles, toLocalFiles } = TouchedPlanModel.getTouchedFilesGroup(touchedFileMap)
 
 
       // The operations above are almost read only and kind of safe.
@@ -359,14 +359,14 @@ export default class InvioPlugin extends Plugin {
         log.info('init stats view: ', view);
         if (view) {
           const initData: Record<string, FileOrFolderMixedState> = {};
-          let changingFiles = toRemoteFiles;
+          let remoteChangingFiles = toRemoteFiles;
           if (triggerSource === 'force') {
-            changingFiles = allFiles.map(f => {
+            remoteChangingFiles = allFiles.map(f => {
               const fState: FileOrFolderMixedState = { key: f.path, syncStatus: 'syncing' }
               return fState;
             })
           }
-          changingFiles.forEach(f => {
+          [ ...remoteChangingFiles, ...toLocalFiles ].forEach(f => {
             initData[f.key] = f;
           })
           view.info('Stats data init...');
@@ -421,6 +421,18 @@ export default class InvioPlugin extends Plugin {
             } else {
               log.info('ignore decision ', decision, pathName);
             } 
+          },
+          async (i: number, totalCount: number, pathName: string, decision: string, err?: any) => {
+            if (err) {
+              log.info('sync failed ', pathName, decision);
+              view?.update(pathName, { syncStatus: 'fail' });
+              view?.error(`${i}/${totalCount} - file ${pathName} sync failed`);
+              return;
+            }
+            log.info('sync done ', pathName, decision);
+            // TODO: Get remote link, but need remote domain first
+            view?.update(pathName, { syncStatus: 'sync-done', remoteLink: '' });
+            view?.info(`${i}/${totalCount} - file ${pathName} sync done`);
           },
           (key: string) => {
             log.warn('Remote files conflicts when syncing ... ', key);
