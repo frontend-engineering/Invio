@@ -464,6 +464,50 @@ function setActiveDocument(url, scrollTo = true, pushHistory = true)
 }
 
 //#region Initialization
+
+async function loadLeftSidebar(document) {
+	let container = document.querySelector('.sidebar-left > .sidebar-content')
+	if (!container) {
+		console.log('no container found for left sidebar');
+		return;
+	}
+	let response;
+
+	try
+	{
+		const hostPath = getURLPath();
+		const baseDir = hostPath.split('/')[0];
+		const sidebarUrl = `${baseDir}/_common-left-tree.html`
+		console.log("Loading left sidebar: ", sidebarUrl);
+		response = await fetch(sidebarUrl);
+	}
+	catch (error)
+	{
+		console.log("Cannot fetch left sidebar");
+		return;
+	}
+
+	if (response.ok)
+	{
+		let html = (await response.text()).replaceAll("<!DOCTYPE html>", "").replaceAll("<html>", "").replaceAll("</html>", "");
+		const tmpContainer = document.createElement('div');
+		console.log('html fetched: ', html);
+		tmpContainer.innerHTML = html;
+		const legacy = container.querySelector('.file-tree');
+		if (legacy) {
+			container.removeChild(legacy);
+		}
+		container.appendChild(tmpContainer.firstChild);
+	}
+	else
+	{
+		console.error('fetch failed: ', response);
+		container.innerHTML = "";
+	}
+
+	return container;
+}
+
 function setupThemeToggle(setupOnNode)
 {
 	if (localStorage.getItem("theme_toggle") != null)
@@ -932,5 +976,12 @@ function initializeForFileProtocol()
 window.onload = function()
 {
 	if (window.location.protocol == "file:") initializeForFileProtocol();
-	initializePage(document);
+	loadLeftSidebar(document)
+		.then(resp => {
+			console.log('left bar load ', resp);
+		})
+		.finally(() => {
+			initializePage(document);
+		})
+
 }

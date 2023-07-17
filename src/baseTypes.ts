@@ -165,9 +165,10 @@ export interface FileOrFolderMixedState {
   changeLocalMtimeUsingMapping?: boolean;
   decision?: DecisionType;
   decisionBranch?: number;
-  syncDone?: "done";
   remoteEncryptedKey?: string;
+
   syncStatus?: TSyncStatus;
+  remoteLink?: string;
   syncError?: string;
   publishError?: string;
 

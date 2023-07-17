@@ -6,6 +6,10 @@ export class Downloadable
 	content: string | Buffer;
 	relativeDownloadPath: Path;
 	encoding: BufferEncoding | undefined;
+	// For uploading
+	md?: string | undefined
+	path?: string;
+	key?: string;
 
 	constructor(filename: string, content: string | Buffer, vaultRelativeDestination: Path, encoding: BufferEncoding | undefined = "utf8")
 	{

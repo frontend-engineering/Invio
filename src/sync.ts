@@ -358,8 +358,17 @@ const isSkipItem = (
   syncConfigDir: boolean,
   syncUnderscoreItems: boolean,
   configDir: string,
-  watchDir: string
+  watchDir: string,
+  selectedMode: boolean,
+  selectedLocalFilePaths: string[] | undefined,
 ) => {
+  if (selectedMode) {
+    if (selectedLocalFilePaths?.length > 0) {
+      if (selectedLocalFilePaths.indexOf(key) < 0) {
+        return true;
+      }
+    }
+  }
   if (syncConfigDir && isInsideObsFolder(key, configDir)) {
     return false;
   }
@@ -377,6 +386,8 @@ const isSkipItem = (
 const ensembleMixedStates = async (
   remoteStates: FileOrFolderMixedState[],
   local: TAbstractFile[],
+  selectedMode: boolean,
+  selectedLocalFilePaths: string[] | undefined,
   localConfigDirContents: ObsConfigDirFileType[] | undefined,
   remoteDeleteHistory: DeletionOnRemote[],
   localFileHistory: FileFolderHistoryRecord[],
@@ -391,7 +402,7 @@ const ensembleMixedStates = async (
   for (const r of remoteStates) {
     const key = r.key;
 
-    if (isSkipItem(key, syncConfigDir, syncUnderscoreItems, configDir, watchDir)) {
+    if (isSkipItem(key, syncConfigDir, syncUnderscoreItems, configDir, watchDir, selectedMode, selectedLocalFilePaths)) {
       continue;
     }
     results[key] = r;
@@ -430,7 +441,7 @@ const ensembleMixedStates = async (
       throw Error(`unexpected ${entry}`);
     }
 
-    if (isSkipItem(key, syncConfigDir, syncUnderscoreItems, configDir, watchDir)) {
+    if (isSkipItem(key, syncConfigDir, syncUnderscoreItems, configDir, watchDir, selectedMode, selectedLocalFilePaths)) {
       continue;
     }
 
@@ -486,7 +497,7 @@ const ensembleMixedStates = async (
       deltimeRemoteFmt: unixTimeToStr(entry.actionWhen),
     } as FileOrFolderMixedState;
 
-    if (isSkipItem(key, syncConfigDir, syncUnderscoreItems, configDir, watchDir)) {
+    if (isSkipItem(key, syncConfigDir, syncUnderscoreItems, configDir, watchDir, selectedMode, selectedLocalFilePaths)) {
       continue;
     }
 
@@ -514,7 +525,7 @@ const ensembleMixedStates = async (
       throw Error(`unexpected ${entry}`);
     }
 
-    if (isSkipItem(key, syncConfigDir, syncUnderscoreItems, configDir, watchDir)) {
+    if (isSkipItem(key, syncConfigDir, syncUnderscoreItems, configDir, watchDir, selectedMode, selectedLocalFilePaths)) {
       continue;
     }
 
@@ -999,6 +1010,8 @@ const SIZES_GO_WRONG_DECISIONS: Set<DecisionType> = new Set([
 export const getSyncPlan = async (
   remoteStates: FileOrFolderMixedState[],
   local: TAbstractFile[],
+  selectedMode: boolean, // Selected mode only care about files in selectedLocalFilePaths
+  selectedLocalFilePaths: string[] | undefined, // Only care file in this list and ignore all other files, work when selectedMode is true
   localConfigDirContents: ObsConfigDirFileType[] | undefined,
   remoteDeleteHistory: DeletionOnRemote[],
   localFileHistory: FileFolderHistoryRecord[],
@@ -1015,6 +1028,8 @@ export const getSyncPlan = async (
   const mixedStates = await ensembleMixedStates(
     remoteStates,
     local,
+    selectedMode,
+    selectedLocalFilePaths,
     localConfigDirContents,
     remoteDeleteHistory,
     localFileHistory,

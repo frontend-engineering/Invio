@@ -132,6 +132,18 @@
   width: 100%;
 }
 
+.loading-logs {
+  display: block;
+  padding: 12px;
+  border-top: 1px solid #f5f5f5;
+}
+
+.loading-log-item {
+  padding: 6px 8px;
+  font-size: small;
+  color: currentColor;
+}
+
 .hide-loading-container {
   display: none;
 }

@@ -60,8 +60,9 @@ import { publishFiles, unpublishFile } from './exporter'
 import { AssetHandler } from './html-generation/asset-handler';
 import { Path } from './utils/path';
 import { HTMLGenerator } from './html-generation/html-generator';
-import { RenderLog } from './html-generation/render-log';
 import icon, { UsingIconNames, getIconSvg, addIconForconflictFile } from './utils/icon';
+import { StatsView, VIEW_TYPE_STATS, LogType } from "./statsView";
+
 const { iconNameSyncWait, iconNameSyncPending, iconNameSyncRunning, iconNameLogs, iconNameSyncLogo } = UsingIconNames;
 
 const DEFAULT_SETTINGS: InvioPluginSettings = {
@@ -113,15 +114,19 @@ export default class InvioPlugin extends Plugin {
     return false;
   }
 
-  async syncRun(triggerSource: SyncTriggerSourceType = "manual") {
+  async syncRun(triggerSource: SyncTriggerSourceType = "manual", fileList?: string[]) {
     const t = (x: TransItemType, vars?: any) => {
       return this.i18n.t(x, vars);
     };
 
-    const getNotice = (x: string, timeout?: number) => {
+    const getNotice = (modal: LoadingModal, x: string, timeout?: number) => {
       // only show notices in manual mode
       // no notice in auto mode
       if (triggerSource === "manual" || triggerSource === "dry") {
+        if (modal) {
+          modal.info(x);
+          return;
+        }
         new Notice(x, timeout);
       }
     };
@@ -144,6 +149,7 @@ export default class InvioPlugin extends Plugin {
       originLabel = this.syncRibbon.getAttribute("aria-label");
     }
 
+    let loadingModal;
     try {
       log.info(
         `${
@@ -162,10 +168,14 @@ export default class InvioPlugin extends Plugin {
         );
       }
 
+      loadingModal = new LoadingModal(this.app, this);
+      loadingModal.open();
+
       const MAX_STEPS = 8;
 
       if (triggerSource === "dry") {
         getNotice(
+          loadingModal,
           t("syncrun_step0", {
             maxSteps: `${MAX_STEPS}`,
           })
@@ -174,6 +184,7 @@ export default class InvioPlugin extends Plugin {
 
       //log.info(`huh ${this.settings.password}`)
       getNotice(
+        loadingModal,
         t("syncrun_step1", {
           maxSteps: `${MAX_STEPS}`,
           serviceType: this.settings.serviceType,
@@ -182,14 +193,13 @@ export default class InvioPlugin extends Plugin {
       this.syncStatus = "preparing";
 
       getNotice(
+        loadingModal,
         t("syncrun_step2", {
           maxSteps: `${MAX_STEPS}`,
         })
       );
 
 
-      const loading = new LoadingModal(this.app, this);
-      loading.open();
 
       this.syncStatus = "getting_remote_files_list";
       const self = this;
@@ -205,6 +215,7 @@ export default class InvioPlugin extends Plugin {
       const remoteContents = remoteRsp.Contents.filter(item => item.key !== RemoteSrcPrefix);
 
       getNotice(
+        loadingModal,
         t("syncrun_step3", {
           maxSteps: `${MAX_STEPS}`,
         })
@@ -215,11 +226,12 @@ export default class InvioPlugin extends Plugin {
         this.settings.password
       );
       if (!passwordCheckResult.ok) {
-        getNotice(t("syncrun_passworderr"));
+        getNotice(loadingModal, t("syncrun_passworderr"));
         throw Error(passwordCheckResult.reason);
       }
 
       getNotice(
+        loadingModal,
         t("syncrun_step4", {
           maxSteps: `${MAX_STEPS}`,
         })
@@ -242,6 +254,7 @@ export default class InvioPlugin extends Plugin {
       console.log('fetchMetadataFile result: ', origMetadataOnRemote);
 
       getNotice(
+        loadingModal,
         t("syncrun_step5", {
           maxSteps: `${MAX_STEPS}`,
         })
@@ -269,6 +282,7 @@ export default class InvioPlugin extends Plugin {
       log.info('local history: ', localHistory);
 
       getNotice(
+        loadingModal,
         t("syncrun_step6", {
           maxSteps: `${MAX_STEPS}`,
         })
@@ -277,6 +291,8 @@ export default class InvioPlugin extends Plugin {
       const { plan, sortedKeys, deletions, sizesGoWrong, touchedFileMap } = await getSyncPlan(
         remoteStates,
         local,
+        fileList?.length > 0,
+        fileList,
         localConfigDirContents,
         origMetadataOnRemote.deletions,
         localHistory,
@@ -293,9 +309,15 @@ export default class InvioPlugin extends Plugin {
       log.info('plan.mixedStates: ', plan.mixedStates, touchedFileMap); // for debugging
 
       try {
-        loading.close();
+        loadingModal.close();
+        loadingModal = null;
 
         await new Promise((resolve, reject) => {
+          if (fileList?.length > 0) {
+            resolve('skip');
+            return;
+          }
+
           const touchedPlanModel = new TouchedPlanModel(this.app, this, touchedFileMap, (pub: boolean) => {
             log.info('user confirmed: ', pub);
             pub ? resolve('ok') : reject('cancelled')
@@ -305,29 +327,45 @@ export default class InvioPlugin extends Plugin {
       } catch (error) {
         log.info('user cancelled');
         this.syncStatus = "idle";
-        getNotice('user cancelled')
+        getNotice(loadingModal, 'user cancelled')
         if (this.syncRibbon !== undefined) {
           setIcon(this.syncRibbon, iconNameSyncLogo);
           this.syncRibbon.setAttribute("aria-label", originLabel);
         }
         return;
       }
+  
+      const { toRemoteFiles } = TouchedPlanModel.getTouchedFilesGroup(touchedFileMap)
 
-      let allFiles = this.app.vault.getMarkdownFiles();
-      await HTMLGenerator.beginBatch(allFiles);
-      RenderLog.progress(1, 6, "Syncing Docs", "...", "var(--color-accent)");
 
       // The operations above are almost read only and kind of safe.
       // The operations below begins to write or delete (!!!) something.
       await insertSyncPlanRecordByVault(this.db, plan, this.vaultRandomID);
       if (triggerSource !== "dry") {
-        getNotice(
-          t("syncrun_step7", {
-            maxSteps: `${MAX_STEPS}`,
+        // getNotice(
+        //   t("syncrun_step7", {
+        //     maxSteps: `${MAX_STEPS}`,
+        //   })
+        // );
+        let allFiles = this.app.vault.getMarkdownFiles();
+        const basePath = new Path(this.settings.localWatchDir);
+        // if we are at the root path export all files, otherwise only export files in the folder we are exporting
+        allFiles = allFiles.filter((file: TFile) => new Path(file.path).directory.asString.startsWith(basePath.asString) && (file.extension === "md") && (!file.name.endsWith('.conflict.md')));
+        // Make functions of StatsView static
+        const view = await HTMLGenerator.beginBatch(this, allFiles);
+        log.info('init stats view: ', view);
+        if (view) {
+          const initData: Record<string, FileOrFolderMixedState> = {};
+          toRemoteFiles.forEach(f => {
+            initData[f.key] = f;
           })
-        );
-
+          view.info('Stats data init...');
+          view.init(initData, []);
+        }
+  
         this.syncStatus = "syncing";
+        view?.info('Start to sync');
+
         // TODO: Delete all remote html files if triggerSource === force
         const pubPathList: string[] = [];
         const unPubList: string[] = [];
@@ -358,10 +396,11 @@ export default class InvioPlugin extends Plugin {
             self.setCurrSyncMsg(i, totalCount, pathName, decision);
 
             log.info('syncing ', pathName, decision);
-            RenderLog.progress(i, totalCount, "Syncing Docs", "Syncing: " + pathName, "var(--color-accent)");
-            if (touchedFileMap?.pathName) {
-              touchedFileMap.pathName.syncStatus = 'syncing';
-            }
+            view?.update(pathName, { syncStatus: 'syncing' });
+            view?.info(`Checking file ${pathName} and it's remote status`);
+            // if (touchedFileMap?.pathName) {
+            //   touchedFileMap.pathName.syncStatus = 'syncing';
+            // }
             // TODO: Wrap in transation and do alert when publish failed
             if (decision === 'uploadLocalToRemote') {
               // upload
@@ -375,46 +414,65 @@ export default class InvioPlugin extends Plugin {
           },
           (key: string) => {
             log.warn('Remote files conflicts when syncing ... ', key);
+            view?.warn(`Remote file ${key} conflicts when syncing ...`);
           }
         );
 
-        log.info('sync done with touched file map: ', JSON.stringify(touchedFileMap));
+        log.info('sync done with touched file map: ', JSON.stringify(toRemoteFiles));
 
-        for (const pathName of unPubList) {
-          if (touchedFileMap?.pathName) {
-            touchedFileMap.pathName.syncStatus = 'publishing';
-          }
-          await unpublishFile(client, this.app.vault, pathName, (pathName: string, status: string) => {
-            log.info('publishing ', pathName, status);
-            if (touchedFileMap?.pathName) {
-              if (status === 'START') {
-                touchedFileMap.pathName.syncStatus = 'publishing';
-              } else if (status === 'DONE') {
-                touchedFileMap.pathName.syncStatus = 'done';
-              } else if (status === 'FAIL') {
-                touchedFileMap.pathName.syncStatus = 'fail';
+        // selected mode
+        // Get redo file list and redo the publish/unpublish job
+        if (fileList?.length > 0) {
+          const localFiles = this.app.vault.getMarkdownFiles().filter(file => file.path.startsWith(this.settings.localWatchDir) && !file.path.endsWith('.conflict.md'));
+          fileList.forEach(p => {
+            const exist = localFiles.find(file => file.path === p);
+            if (exist) {
+              if (pubPathList.indexOf(p) === -1) {
+                pubPathList.push(p)
+              }
+            } else {
+              if (unPubList.indexOf(p) === -1) {
+                unPubList.push(p);
               }
             }
-          });
+          })
+          log.info('selected mode');
+          log.info('pub list: ', pubPathList, unPubList);
         }
 
-        const basePath = new Path(this.settings.localWatchDir);
-        // get files to export
-        // let allFiles = this.app.vault.getMarkdownFiles();
-        // if we are at the root path export all files, otherwise only export files in the folder we are exporting
-        allFiles = allFiles.filter((file: TFile) => new Path(file.path).directory.asString.startsWith(basePath.asString) && (file.extension === "md") && (!file.name.endsWith('.conflict.md')));
-        await publishFiles(client, this.app.vault, pubPathList, allFiles, '', this.settings, triggerSource, (pathName: string, status: string) => {
+        await unpublishFile(client, this.app.vault, unPubList, (pathName: string, status: string) => {
           log.info('publishing ', pathName, status);
-          if (touchedFileMap?.pathName) {
-            if (status === 'START') {
-              touchedFileMap.pathName.syncStatus = 'publishing';
-            } else if (status === 'DONE') {
-              touchedFileMap.pathName.syncStatus = 'done';
-            } else if (status === 'FAIL') {
-              touchedFileMap.pathName.syncStatus = 'fail';
-            }
+          if (status === 'START') {
+            log.info('set file start publishing', pathName);
+            view?.update(pathName, { syncStatus: 'publishing' })
+          } else if (status === 'DONE') {
+            view?.update(pathName, { syncStatus: 'done' })
+          } else if (status === 'FAIL') {
+            view?.update(pathName, { syncStatus: 'fail' })
+          }
+        }); 
+
+        if (pubPathList?.length === 0) {
+          if (unPubList?.length > 0) {
+            // Need to update left tree links for unpublish means link deduction
+            const indexFile = allFiles.find(file => file.name === 'index.md') || allFiles[0];
+            pubPathList.push(indexFile.path);
+          }
+        }
+        await publishFiles(client, this.app.vault, pubPathList, allFiles, '', this.settings, triggerSource, view, (pathName: string, status: string, meta?: any) => {
+          log.info('publishing ', pathName, status);
+          if (status === 'START') {
+            log.info('set file start publishing', pathName);
+            view?.update(pathName, { syncStatus: 'publishing' })
+          } else if (status === 'DONE') {
+            log.info('set file DONE publishing', pathName);
+            view?.update(pathName, { syncStatus: 'done', remoteLink: meta })
+          } else if (status === 'FAIL') {
+            view?.update(pathName, { syncStatus: 'fail' })
           }
         });
+
+
 
         if (triggerSource === 'force') {
           const forceList: string[] = [];
@@ -428,9 +486,11 @@ export default class InvioPlugin extends Plugin {
           }
           await publishFiles(client, this.app.vault, forceList, allFiles, '', this.settings, triggerSource);
         }
+        HTMLGenerator.endBatch();
       } else {
         this.syncStatus = "syncing";
         getNotice(
+          null,
           t("syncrun_step7skip", {
             maxSteps: `${MAX_STEPS}`,
           })
@@ -438,6 +498,7 @@ export default class InvioPlugin extends Plugin {
       }
 
       getNotice(
+        null,
         t("syncrun_step8", {
           maxSteps: `${MAX_STEPS}`,
         })
@@ -459,7 +520,7 @@ export default class InvioPlugin extends Plugin {
       );
 
       // TODO: Show stats model
-      return touchedFileMap;
+      return toRemoteFiles;
     } catch (error) {
       const msg = t("syncrun_abort", {
         manifestID: this.manifest.id,
@@ -467,15 +528,16 @@ export default class InvioPlugin extends Plugin {
         triggerSource: triggerSource,
         syncStatus: this.syncStatus,
       });
+      loadingModal.close();
       log.error(msg);
       log.error(error);
-      getNotice(msg, 10 * 1000);
+      getNotice(null, msg, 10 * 1000);
       if (error instanceof AggregateError) {
         for (const e of error.errors) {
-          getNotice(e.message, 10 * 1000);
+          getNotice(null, e.message, 10 * 1000);
         }
       } else {
-        getNotice(error.message, 10 * 1000);
+        getNotice(null, error.message, 10 * 1000);
       }
       this.syncStatus = "idle";
       if (this.syncRibbon !== undefined) {
@@ -494,8 +556,7 @@ export default class InvioPlugin extends Plugin {
 
   async onload() {
     log.info(`loading plugin ${this.manifest.id}`);
-
-
+  
 		// init html generator
 		AssetHandler.initialize(this.manifest.id);
 
@@ -572,6 +633,9 @@ export default class InvioPlugin extends Plugin {
     })
 
     this.syncStatus = "idle";
+
+    // Stats View
+    this.registerView(VIEW_TYPE_STATS, (leaf) => new StatsView(this, leaf));
 
     this.registerEvent(
       this.app.vault.on("delete", async (fileOrFolder) => {

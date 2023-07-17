@@ -75,7 +75,7 @@ export const DEFAULT_SETTINGS: ExportSettingsData =
 
 	// Main Export Options
 	exportPreset: '',
-	openAfterExport: true,
+	openAfterExport: false,
 
 	// Graph View Settings
 	graphAttractionForce: 1,

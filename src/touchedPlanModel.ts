@@ -18,22 +18,15 @@ export class TouchedPlanModel extends Modal {
     this.files = fileMap;
     this.hook = cb;
   }
-  onOpen() {
-    let { contentEl } = this;
-    const t = (x: TransItemType, vars?: any) => {
-      return this.plugin.i18n.t(x, vars);
-    };
 
-    contentEl.createEl("h2", {
-      text: 'Sync Files Checklist'
-    });
+  static getTouchedFilesGroup(files: Record<string, FileOrFolderMixedState>) {
 
     const toRemoteFiles: FileOrFolderMixedState[] = [];
     const toLocalFiles: FileOrFolderMixedState[] = [];
     const conflictFiles: FileOrFolderMixedState[] = [];
 
-    [ ...Object.keys(this.files) ].forEach(key => {
-      const f = this.files[key];
+    [ ...Object.keys(files) ].forEach(key => {
+      const f = files[key];
       if ((f.decision === 'uploadLocalDelHistToRemote') && f.existRemote) {
         toRemoteFiles.push(f);
       }
@@ -50,6 +43,24 @@ export class TouchedPlanModel extends Modal {
         conflictFiles.push(f);
       }
     });
+    return {
+      toRemoteFiles: [ ...toRemoteFiles ],
+      toLocalFiles: [ ...toLocalFiles ],
+      conflictFiles: [ ...conflictFiles ]
+    }
+  }
+
+  onOpen() {
+    let { contentEl } = this;
+    const t = (x: TransItemType, vars?: any) => {
+      return this.plugin.i18n.t(x, vars);
+    };
+
+    contentEl.createEl("h2", {
+      text: 'Sync Files Checklist'
+    });
+
+    const { toRemoteFiles, toLocalFiles, conflictFiles } = TouchedPlanModel.getTouchedFilesGroup(this.files);
 
     new Setting(contentEl)
       .setDesc('Please check the file changes list to confirm that all changes are as expected.')

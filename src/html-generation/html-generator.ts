@@ -7,63 +7,39 @@ import { ExportFile } from "./export-file";
 import { Downloadable } from "src/utils/downloadable";
 import { TFile } from "obsidian";
 import { log } from "../moreOnLog";
+import { StatsView } from "src/statsView";
+import InvioPlugin from "src/main";
 
-const LogoSVG = `<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="svg314096" viewBox="0 0 1024 768" height="768px" width="1024px" version="1.1">
-<metadata id="metadata314102">
-  <rdf:rdf>
-    <cc:work rdf:about="">
-      <dc:format>image/svg+xml</dc:format>
-      <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"></dc:type>
-    </cc:work>
-  </rdf:rdf>
-</metadata>
-<defs id="defs314100"></defs>
-<linearGradient spreadMethod="pad" y2="30%" x2="-10%" y1="120%" x1="30%" id="3d_gradient2-logo-a31de0a3-52bf-4afd-a50e-e85d6d052b76">
-  <stop id="stop314077" stop-opacity="1" stop-color="#ffffff" offset="0%"></stop>
-  <stop id="stop314079" stop-opacity="1" stop-color="#000000" offset="100%"></stop>
-</linearGradient>
-<linearGradient gradientTransform="rotate(-30)" spreadMethod="pad" y2="30%" x2="-10%" y1="120%" x1="30%" id="3d_gradient3-logo-a31de0a3-52bf-4afd-a50e-e85d6d052b76">
-  <stop id="stop314082" stop-opacity="1" stop-color="#ffffff" offset="0%"></stop>
-  <stop id="stop314084" stop-opacity="1" stop-color="#cccccc" offset="50%"></stop>
-  <stop id="stop314086" stop-opacity="1" stop-color="#000000" offset="100%"></stop>
-</linearGradient>
-<g id="logo-group">
-  <image xlink:href="" id="container" x="272" y="144" width="480" height="480" style="display: none;" transform="translate(0 0)"></image>
-  <g id="logo-center" transform="translate(153.4774500000001 0)">
-    <image xlink:href="" id="icon_container" x="0" y="0" style="display: none;"></image>
-    <g id="slogan" style="font-style:normal;font-weight:300;font-size:32px;line-height:1;font-family:'Montserrat Light Alt1';font-variant-ligatures:none;text-align:center;text-anchor:middle" transform="translate(0 0)"></g>
-    <g id="title" style="font-style:normal;font-weight:300;font-size:72px;line-height:1;font-family:'Montserrat Light Alt1';font-variant-ligatures:none;text-align:center;text-anchor:middle" transform="translate(0 0)">
-      <path id="path314105" style="font-style:normal;font-weight:300;font-size:72px;line-height:1;font-family:'Montserrat Light Alt1';font-variant-ligatures:none;text-align:center;text-anchor:middle" d="M 416.22931,-50.4 V 0 h 3.672 v -50.4 z" stroke-width="0" stroke-linejoin="miter" stroke-miterlimit="2" fill="#ed3223" stroke="#ed3223" transform="translate(0 353.8) translate(50 -40.35999999999998) scale(2.8) translate(-416.22931 50.4)"></path>
-      <path id="path314107" style="font-style:normal;font-weight:300;font-size:72px;line-height:1;font-family:'Montserrat Light Alt1';font-variant-ligatures:none;text-align:center;text-anchor:middle" d="m 478.50369,-50.4 h -3.672 v 43.776 l -34.272,-43.776 h -3.096 V 0 h 3.672 V -43.776 L 475.47969,0 h 3.024 z" stroke-width="0" stroke-linejoin="miter" stroke-miterlimit="2" fill="#b25156" stroke="#b25156" transform="translate(0 353.8) translate(126.25626399999989 -40.35999999999998) scale(2.8) translate(-437.46369 50.4)"></path>
-      <path id="path314109" style="font-style:normal;font-weight:300;font-size:72px;line-height:1;font-family:'Montserrat Light Alt1';font-variant-ligatures:none;text-align:center;text-anchor:middle" d="m 535.64919,-50.4 h -3.816 l -20.376,45.648 -20.376,-45.648 h -4.032 l 22.464,50.4 h 3.672 z" stroke-width="0" stroke-linejoin="miter" stroke-miterlimit="2" fill="#777089" stroke="#777089" transform="translate(0 353.8) translate(281.8956639999999 -40.35999999999998) scale(2.8) translate(-487.04919 50.4)"></path>
-      <path id="path314111" style="font-style:normal;font-weight:300;font-size:72px;line-height:1;font-family:'Montserrat Light Alt1';font-variant-ligatures:none;text-align:center;text-anchor:middle" d="M 543.77619,-50.4 V 0 h 3.672 v -50.4 z" stroke-width="0" stroke-linejoin="miter" stroke-miterlimit="2" fill="#3b8ebc" stroke="#3b8ebc" transform="translate(0 353.8) translate(457.5312640000001 -40.35999999999998) scale(2.8) translate(-543.77619 50.4)"></path>
-      <path id="path314113" style="font-style:normal;font-weight:300;font-size:72px;line-height:1;font-family:'Montserrat Light Alt1';font-variant-ligatures:none;text-align:center;text-anchor:middle" d="m 573.00256,-2.952 c 3.96,2.232 8.424,3.312 13.392,3.312 4.896,0 9.36,-1.08 13.392,-3.312 3.96,-2.16 7.056,-5.256 9.36,-9.144 2.304,-3.888 3.456,-8.208 3.456,-13.104 0,-4.824 -1.152,-9.216 -3.456,-13.104 -2.304,-3.888 -5.4,-6.912 -9.36,-9.144 -4.032,-2.16 -8.496,-3.312 -13.392,-3.312 -4.968,0 -9.432,1.152 -13.392,3.384 -4.032,2.232 -7.128,5.256 -9.432,9.144 -2.304,3.888 -3.384,8.28 -3.384,13.032 0,4.824 1.08,9.144 3.384,13.032 2.304,3.888 5.4,6.984 9.432,9.216 z m 24.84,-2.952 c -3.456,1.944 -7.272,2.88 -11.448,2.88 -4.248,0 -8.064,-0.936 -11.52,-2.88 -3.456,-1.872 -6.12,-4.536 -8.064,-7.92 -2.016,-3.384 -2.952,-7.2 -2.952,-11.376 0,-4.176 0.936,-7.92 2.952,-11.304 1.944,-3.384 4.608,-6.048 8.064,-7.992 3.456,-1.872 7.272,-2.88 11.52,-2.88 4.176,0 7.992,1.008 11.448,2.88 3.384,1.944 6.048,4.608 8.064,7.992 1.944,3.384 2.952,7.128 2.952,11.304 0,4.176 -1.008,7.992 -2.952,11.376 -2.016,3.384 -4.68,6.048 -8.064,7.92 z" stroke-width="0" stroke-linejoin="miter" stroke-miterlimit="2" fill="#00adef" stroke="#00adef" transform="translate(0 353.8) translate(520.2802999999999 -41.36799999999999) scale(2.8) translate(-560.18656 50.76)"></path>
-    </g>
-    <image xlink:href="" id="icon" x="0" y="0" style="display: none;"></image>
-  </g>
-</g>
-</svg>`;
-
+const LogoSVGDefault = `<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="svg238067" height="768px" width="1024px" version="1.1" viewBox="0 0 100 100" class="svg-icon invio-sync-wait"><g fill-rule="evenodd" style="transform: scale3d(0.89, 0.99, 1.5);"><path d="M27 97.93A56.08 56.08 0 0 1 9.29 19.08 55.77 55.77 0 0 0 23.59 50l.07.07c.53.58 1.06 1.14 1.62 1.7s1.12 1.09 1.72 1.62L45.54 72a14.93 14.93 0 0 1 4.53 10.93v1.59a15.12 15.12 0 0 1-8 13.52A15.09 15.09 0 0 1 27 97.93z" style="fill: var(--icon-color);"></path><path d="M23.59 50a55.77 55.77 0 0 1-14.3-30.92A56.46 56.46 0 0 1 27 2.08 15.08 15.08 0 0 1 42.11 2a15.12 15.12 0 0 1 8 13.52v1.59A15 15 0 0 1 45.55 28l-22 22z" fill="#999999" opacity=".8"></path><path d="M85.16 2.08a56.08 56.08 0 0 1 17.67 78.84A55.77 55.77 0 0 0 88.53 50l-.08-.07c-.52-.58-1.06-1.14-1.62-1.7s-1.12-1.09-1.69-1.62L66.58 28a14.93 14.93 0 0 1-4.53-10.93v-1.55A15.12 15.12 0 0 1 70 2a15.08 15.08 0 0 1 15.15.08z" style="fill: var(--icon-color);"></path><path d="M88.53 50a55.77 55.77 0 0 1 14.3 30.92 56.35 56.35 0 0 1-17.67 17 15.46 15.46 0 0 1-23.11-13.44v-1.59A15 15 0 0 1 66.57 72l22-22z" fill="#999999" opacity=".8"></path></g></svg>`
 
 export interface IMetaConfig {
-	title?: string;
+	// Site Config
+	home?: string; // Home link, only used in index.md for site config
+	brand?: string; // Brand name
+	slogan?: string;
+	icon?: string;
+
+	// Page Config
+	title?: string; // Page title
 	description?: string;
 	keywords?: string[];
-	icon?: string;
 	publish?: boolean;
 	permalink?: string;
 }
 
-const InheriableMeta: Array<keyof IMetaConfig> = [ 'icon' ];
+const InheriableMeta: Array<keyof IMetaConfig> = [ 'icon', 'home', 'brand', 'slogan' ];
 
 export class HTMLGenerator {
 	//#region Main Generation Functions
-	public static async beginBatch(exportingFiles: TFile[]) {
+	public static async beginBatch(plugin: InvioPlugin, exportingFiles: TFile[]) {
 		GlobalDataGenerator.clearGraphCache();
 		GlobalDataGenerator.clearFileTreeCache();
 		GlobalDataGenerator.getFileTree(exportingFiles);
-		await AssetHandler.updateAssetCache();
+		await StatsView.activateStatsView(plugin);
+		const view = StatsView.getStatsView(plugin);
+		await AssetHandler.updateAssetCache(view);
 		await MarkdownRenderer.beginBatch();
+		return view;
 	}
 
 	public static endBatch() {
@@ -71,8 +47,8 @@ export class HTMLGenerator {
 	}
 
 	// rootPath is used for collecting context nodes
-	public static async generateWebpage(file: ExportFile, rootPath: Path): Promise<ExportFile> {
-		await this.getDocumentHTML(file);
+	public static async generateWebpage(file: ExportFile, rootPath: Path, view: StatsView): Promise<ExportFile> {
+		await this.getDocumentHTML(file, false, view);
 		let usingDocument = file.document;
 
 		let sidebars = this.generateSideBars(file.contentElement, file);
@@ -98,6 +74,13 @@ export class HTMLGenerator {
 			rightSidebar.appendChild(outline);
 		}
 
+		// inject icon and title
+		const config = this.getMeta(file);
+		const pageTitle = config?.title || app.vault.getName();
+
+		let brandHeader = this.generateBrandHeader(usingDocument, config.brand, config.icon, config.slogan, config?.home);
+		leftSidebar.appendChild(brandHeader);
+
 		// inject darkmode toggle
 		if (InvioSettingTab.settings.addDarkModeToggle && !usingDocument.querySelector(".theme-toggle-container-inline, .theme-toggle-container")) {
 			let toggle = this.generateDarkmodeToggle(false, usingDocument);
@@ -109,10 +92,9 @@ export class HTMLGenerator {
 			let tree = GlobalDataGenerator.getFileTree();
 			if (InvioSettingTab.settings.makeNamesWebStyle) tree.makeLinksWebStyle();
 
-			const config = this.getMeta(file);
-			const pageTitle = config?.title || app.vault.getName();
 			let fileTree: HTMLDivElement = this.generateHTMLTree(tree, usingDocument, pageTitle, "file-tree", true, 1, 1, false);
-			leftSidebar.appendChild(fileTree);
+			// leftSidebar.appendChild(fileTree);
+			file.downloads.push(new Downloadable('_common-left-tree.html', fileTree.outerHTML, new Path(file.exportPath.asString.split('/')[0])));
 		}
 
 		await this.appendFooter(file);
@@ -136,7 +118,7 @@ export class HTMLGenerator {
 		pageContainerEl.appendChild(footerBar);
 	}
 
-	public static async getDocumentHTML(file: ExportFile, addSelfToDownloads: boolean = false): Promise<ExportFile> {
+	public static async getDocumentHTML(file: ExportFile, addSelfToDownloads: boolean = false, view?: StatsView): Promise<ExportFile> {
 		// set custom line width on body
 		let body = file.document.body;
 
@@ -163,7 +145,7 @@ export class HTMLGenerator {
 
 		// create obsidian document containers
 		let markdownViewEl = file.document.body.createDiv();
-		let content = await MarkdownRenderer.renderMarkdown(file);
+		let content = await MarkdownRenderer.renderMarkdown(file, view);
 		if (MarkdownRenderer.cancelled) throw new Error("Markdown rendering cancelled");
 		markdownViewEl.outerHTML = content;
 
@@ -671,6 +653,48 @@ export class HTMLGenerator {
 		return treeItems;
 	}
 
+	private static generateBrandHeader(usingDocument: Document, brand: string, icon: string, slogan: string, homeLink: string) {
+		// site-body-left-column-site-name
+		/**
+		 * - div.sidebar-section-header
+		 * 	- a.sidebar-section-header-brand
+		 * 		- img.sidebar-section-header-brand-logo
+		 * 		- span
+		 * 	- div.sidebar-section-header-slogan
+		 */
+		let container = usingDocument.createElement('div');
+		container.classList.add('sidebar-section-header');
+		let header = usingDocument.createElement("a");
+		header.classList.add('sidebar-section-header-brand');
+		header.setAttribute('aria-label', brand);
+		header.href = homeLink || '/';
+		if (icon) {
+			let logo = usingDocument.createElement('img');
+			logo.src = icon
+			logo.classList.add('sidebar-section-header-brand-logo')
+			header.appendChild(logo);
+		} else {
+			// Use default icon
+			const tmpContainer = usingDocument.createElement('div');
+			tmpContainer.innerHTML = LogoSVGDefault;
+			const defaultIcon = tmpContainer.firstElementChild;
+			defaultIcon.classList.add('sidebar-section-header-brand-logo')
+			header.appendChild(defaultIcon)
+		}
+		
+		const title = usingDocument.createElement('span');
+		title.innerText = brand || 'Invio';
+		header.appendChild(title);
+
+		let description = usingDocument.createElement('div');
+		description.classList.add('sidebar-section-header-slogan')
+		description.innerText = slogan;
+		
+		container.appendChild(header);
+		container.appendChild(description);
+		return container;
+	}
+
 	private static generateHTMLTree(tree: LinkTree, usingDocument: Document, treeTitle: string, className: string, showNestingIndicator = true, minDepth: number = 1, minCollapsableDepth = 1, closeAllItems: boolean = false): HTMLDivElement {
 		/*
 		- div.tree-container
@@ -713,9 +737,9 @@ export class HTMLGenerator {
 
 		treeContainerEl.appendChild(treeHeaderEl);
 		treeContainerEl.appendChild(treeScrollAreaEl);
-		treeHeaderEl.appendChild(sectionHeaderEl);
-		treeHeaderEl.appendChild(collapseAllEl);
-		collapseAllEl.appendChild(collapseAllIconEl);
+		// treeHeaderEl.appendChild(sectionHeaderEl);
+		// treeHeaderEl.appendChild(collapseAllEl);
+		// collapseAllEl.appendChild(collapseAllIconEl);
 
 		let treeItems = this.buildTreeRecursive(tree, usingDocument, minDepth, minCollapsableDepth, closeAllItems);
 
