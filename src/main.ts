@@ -426,7 +426,26 @@ export default class InvioPlugin extends Plugin {
           log.info('selected mode');
           log.info('pub list: ', pubPathList, unPubList);
         }
-        
+
+        await unpublishFile(client, this.app.vault, unPubList, (pathName: string, status: string) => {
+          log.info('publishing ', pathName, status);
+          if (status === 'START') {
+            log.info('set file start publishing', pathName);
+            view?.update(pathName, { syncStatus: 'publishing' })
+          } else if (status === 'DONE') {
+            view?.update(pathName, { syncStatus: 'done' })
+          } else if (status === 'FAIL') {
+            view?.update(pathName, { syncStatus: 'fail' })
+          }
+        }); 
+
+        if (pubPathList?.length === 0) {
+          if (unPubList?.length > 0) {
+            // Need to update left tree links for unpublish means link deduction
+            const indexFile = allFiles.find(file => file.name === 'index.md') || allFiles[0];
+            pubPathList.push(indexFile.path);
+          }
+        }
         await publishFiles(client, this.app.vault, pubPathList, allFiles, '', this.settings, triggerSource, view, (pathName: string, status: string, meta?: any) => {
           log.info('publishing ', pathName, status);
           if (status === 'START') {
@@ -440,17 +459,7 @@ export default class InvioPlugin extends Plugin {
           }
         });
 
-        await unpublishFile(client, this.app.vault, unPubList, (pathName: string, status: string) => {
-          log.info('publishing ', pathName, status);
-          if (status === 'START') {
-            log.info('set file start publishing', pathName);
-            view?.update(pathName, { syncStatus: 'publishing' })
-          } else if (status === 'DONE') {
-            view?.update(pathName, { syncStatus: 'done' })
-          } else if (status === 'FAIL') {
-            view?.update(pathName, { syncStatus: 'fail' })
-          }
-        });
+
 
         if (triggerSource === 'force') {
           const forceList: string[] = [];
