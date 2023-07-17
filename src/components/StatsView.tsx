@@ -61,6 +61,8 @@ export const StatsViewComponent = (props: { plugin: InvioPlugin }) => {
   const onCheckLink = (url: string) => {
     if (url) {
       open(url);
+    } else {
+      new Notice('This page has been deleted online', 3000);
     }
   }
   const openFile = async (key: string) => {
