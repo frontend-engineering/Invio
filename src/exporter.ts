@@ -105,15 +105,15 @@ export const publishFiles = async (
                 const afterPath = exportedFile.exportToFolder.join(d.relativeDownloadPath);
                 const fileKey = (d.relativeDownloadPath.asString + '/' + d.filename).replace(/^\.\//, '');
     
+                const mdName = (file.path.endsWith('.md') && (fileKey?.replace(/\.html$/ig, '') === file.path.replace(/\.md$/igm, ''))) ? file.path : undefined
                 Object.assign(d, {
-                    md: file.path.endsWith('.md') ? file.path : undefined,
+                    md: mdName,
                     path: afterPath.asString + '/' + d.filename,
                     key: fileKey,
                 })
                 return d
             }));
-            log.info('download list: ', exportedFile.downloads);
-            // log.info('to upload list: ', toUploads);
+            log.info('download list: ', externalFiles);
         }
     }
 
