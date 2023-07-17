@@ -119,10 +119,14 @@ export default class InvioPlugin extends Plugin {
       return this.i18n.t(x, vars);
     };
 
-    const getNotice = (x: string, timeout?: number) => {
+    const getNotice = (modal: LoadingModal, x: string, timeout?: number) => {
       // only show notices in manual mode
       // no notice in auto mode
       if (triggerSource === "manual" || triggerSource === "dry") {
+        if (modal) {
+          modal.info(x);
+          return;
+        }
         new Notice(x, timeout);
       }
     };
@@ -164,10 +168,14 @@ export default class InvioPlugin extends Plugin {
         );
       }
 
+      loadingModal = new LoadingModal(this.app, this);
+      loadingModal.open();
+
       const MAX_STEPS = 8;
 
       if (triggerSource === "dry") {
         getNotice(
+          loadingModal,
           t("syncrun_step0", {
             maxSteps: `${MAX_STEPS}`,
           })
@@ -176,6 +184,7 @@ export default class InvioPlugin extends Plugin {
 
       //log.info(`huh ${this.settings.password}`)
       getNotice(
+        loadingModal,
         t("syncrun_step1", {
           maxSteps: `${MAX_STEPS}`,
           serviceType: this.settings.serviceType,
@@ -184,14 +193,13 @@ export default class InvioPlugin extends Plugin {
       this.syncStatus = "preparing";
 
       getNotice(
+        loadingModal,
         t("syncrun_step2", {
           maxSteps: `${MAX_STEPS}`,
         })
       );
 
 
-      loadingModal = new LoadingModal(this.app, this);
-      loadingModal.open();
 
       this.syncStatus = "getting_remote_files_list";
       const self = this;
@@ -207,6 +215,7 @@ export default class InvioPlugin extends Plugin {
       const remoteContents = remoteRsp.Contents.filter(item => item.key !== RemoteSrcPrefix);
 
       getNotice(
+        loadingModal,
         t("syncrun_step3", {
           maxSteps: `${MAX_STEPS}`,
         })
@@ -217,11 +226,12 @@ export default class InvioPlugin extends Plugin {
         this.settings.password
       );
       if (!passwordCheckResult.ok) {
-        getNotice(t("syncrun_passworderr"));
+        getNotice(loadingModal, t("syncrun_passworderr"));
         throw Error(passwordCheckResult.reason);
       }
 
       getNotice(
+        loadingModal,
         t("syncrun_step4", {
           maxSteps: `${MAX_STEPS}`,
         })
@@ -244,6 +254,7 @@ export default class InvioPlugin extends Plugin {
       console.log('fetchMetadataFile result: ', origMetadataOnRemote);
 
       getNotice(
+        loadingModal,
         t("syncrun_step5", {
           maxSteps: `${MAX_STEPS}`,
         })
@@ -271,6 +282,7 @@ export default class InvioPlugin extends Plugin {
       log.info('local history: ', localHistory);
 
       getNotice(
+        loadingModal,
         t("syncrun_step6", {
           maxSteps: `${MAX_STEPS}`,
         })
@@ -298,6 +310,7 @@ export default class InvioPlugin extends Plugin {
 
       try {
         loadingModal.close();
+        loadingModal = null;
 
         await new Promise((resolve, reject) => {
           if (fileList?.length > 0) {
@@ -314,7 +327,7 @@ export default class InvioPlugin extends Plugin {
       } catch (error) {
         log.info('user cancelled');
         this.syncStatus = "idle";
-        getNotice('user cancelled')
+        getNotice(loadingModal, 'user cancelled')
         if (this.syncRibbon !== undefined) {
           setIcon(this.syncRibbon, iconNameSyncLogo);
           this.syncRibbon.setAttribute("aria-label", originLabel);
@@ -477,6 +490,7 @@ export default class InvioPlugin extends Plugin {
       } else {
         this.syncStatus = "syncing";
         getNotice(
+          null,
           t("syncrun_step7skip", {
             maxSteps: `${MAX_STEPS}`,
           })
@@ -484,6 +498,7 @@ export default class InvioPlugin extends Plugin {
       }
 
       getNotice(
+        null,
         t("syncrun_step8", {
           maxSteps: `${MAX_STEPS}`,
         })
@@ -516,13 +531,13 @@ export default class InvioPlugin extends Plugin {
       loadingModal.close();
       log.error(msg);
       log.error(error);
-      getNotice(msg, 10 * 1000);
+      getNotice(null, msg, 10 * 1000);
       if (error instanceof AggregateError) {
         for (const e of error.errors) {
-          getNotice(e.message, 10 * 1000);
+          getNotice(null, e.message, 10 * 1000);
         }
       } else {
-        getNotice(error.message, 10 * 1000);
+        getNotice(null, error.message, 10 * 1000);
       }
       this.syncStatus = "idle";
       if (this.syncRibbon !== undefined) {

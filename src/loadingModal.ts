@@ -10,6 +10,16 @@ export class LoadingModal extends Modal {
     this.plugin = plugin;
   }
 
+  info(msg: string) {
+    let { contentEl } = this;
+    let container = contentEl.querySelector('.loading-logs');
+    if (!container) {
+      container = contentEl.createDiv('loading-logs');
+    }
+    const logItem = container.createDiv('loading-log-item');
+    logItem.innerText = msg;
+  }
+
   onOpen() {
     let { contentEl } = this;
     const t = (x: TransItemType, vars?: any) => {
