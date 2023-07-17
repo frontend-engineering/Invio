@@ -312,18 +312,20 @@ export default class InvioPlugin extends Plugin {
         loadingModal.close();
         loadingModal = null;
 
-        await new Promise((resolve, reject) => {
-          if (fileList?.length > 0) {
-            resolve('skip');
-            return;
-          }
-
-          const touchedPlanModel = new TouchedPlanModel(this.app, this, touchedFileMap, (pub: boolean) => {
-            log.info('user confirmed: ', pub);
-            pub ? resolve('ok') : reject('cancelled')
-          });
-          touchedPlanModel.open();
-        })
+        if (triggerSource !== 'force') {
+          await new Promise((resolve, reject) => {
+            if (fileList?.length > 0) {
+              resolve('skip');
+              return;
+            }
+  
+            const touchedPlanModel = new TouchedPlanModel(this.app, this, touchedFileMap, (pub: boolean) => {
+              log.info('user confirmed: ', pub);
+              pub ? resolve('ok') : reject('cancelled')
+            });
+            touchedPlanModel.open();
+          })
+        }
       } catch (error) {
         log.info('user cancelled');
         this.syncStatus = "idle";
@@ -357,7 +359,14 @@ export default class InvioPlugin extends Plugin {
         log.info('init stats view: ', view);
         if (view) {
           const initData: Record<string, FileOrFolderMixedState> = {};
-          toRemoteFiles.forEach(f => {
+          let changingFiles = toRemoteFiles;
+          if (triggerSource === 'force') {
+            changingFiles = allFiles.map(f => {
+              const fState: FileOrFolderMixedState = { key: f.path, syncStatus: 'syncing' }
+              return fState;
+            })
+          }
+          changingFiles.forEach(f => {
             initData[f.key] = f;
           })
           view.info('Stats data init...');
@@ -368,7 +377,7 @@ export default class InvioPlugin extends Plugin {
         view?.info('Start to sync');
 
         // TODO: Delete all remote html files if triggerSource === force
-        const pubPathList: string[] = [];
+        let pubPathList: string[] = [];
         const unPubList: string[] = [];
         await doActualSync(
           client,
@@ -424,9 +433,8 @@ export default class InvioPlugin extends Plugin {
         // selected mode
         // Get redo file list and redo the publish/unpublish job
         if (fileList?.length > 0) {
-          const localFiles = this.app.vault.getMarkdownFiles().filter(file => file.path.startsWith(this.settings.localWatchDir) && !file.path.endsWith('.conflict.md'));
           fileList.forEach(p => {
-            const exist = localFiles.find(file => file.path === p);
+            const exist = allFiles.find(file => file.path === p);
             if (exist) {
               if (pubPathList.indexOf(p) === -1) {
                 pubPathList.push(p)
@@ -453,6 +461,11 @@ export default class InvioPlugin extends Plugin {
           }
         }); 
 
+        // Force Mode - Publish all docs
+        if (triggerSource === 'force') {
+          pubPathList.push(...allFiles.map(file => file.path));
+          pubPathList = pubPathList.filter((p, idx) => pubPathList.indexOf(p) === idx);
+        }
         if (pubPathList?.length === 0) {
           if (unPubList?.length > 0) {
             // Need to update left tree links for unpublish means link deduction
@@ -472,8 +485,6 @@ export default class InvioPlugin extends Plugin {
             view?.update(pathName, { syncStatus: 'fail' })
           }
         });
-
-
 
         if (triggerSource === 'force') {
           const forceList: string[] = [];
