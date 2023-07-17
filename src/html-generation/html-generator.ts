@@ -94,6 +94,10 @@ export class HTMLGenerator {
 
 			let fileTree: HTMLDivElement = this.generateHTMLTree(tree, usingDocument, pageTitle, "file-tree", true, 1, 1, false);
 			// leftSidebar.appendChild(fileTree);
+			const dataNode = this.generateRootDirNode(file, usingDocument);
+			leftSidebar.appendChild(dataNode);
+			const rootDir = file.exportPath.directory.asString?.split('/')[0];
+
 			file.downloads.push(new Downloadable('_common-left-tree.html', fileTree.outerHTML, new Path(file.exportPath.asString.split('/')[0])));
 		}
 
@@ -692,6 +696,15 @@ export class HTMLGenerator {
 		
 		container.appendChild(header);
 		container.appendChild(description);
+		return container;
+	}
+
+	private static generateRootDirNode(file: ExportFile, usingDocument: Document) {
+		const rootDir = file.exportPath.directory.asString?.split('/')[0];
+		const container = document.createElement('div');
+		container.id = 'invio-hidden-data-node'
+		container.style.display = 'none';
+		container.setAttribute('data-root', rootDir);
 		return container;
 	}
 

@@ -475,8 +475,15 @@ async function loadLeftSidebar(document) {
 
 	try
 	{
-		const hostPath = getURLPath();
-		const baseDir = hostPath.split('/')[0];
+		const dataNode = document.getElementById('invio-hidden-data-node');
+		let baseDir = '';
+		if (dataNode?.dataset.root) {
+			baseDir = dataNode?.dataset.root;
+		} else {
+			const hostPath = getURLPath();
+			baseDir = hostPath.split('/')[0];
+		}
+
 		const sidebarUrl = `${baseDir}/_common-left-tree.html`
 		console.log("Loading left sidebar: ", sidebarUrl);
 		response = await fetch(sidebarUrl);
