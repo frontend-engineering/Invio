@@ -690,12 +690,14 @@ export class HTMLGenerator {
 		title.innerText = brand || 'Invio';
 		header.appendChild(title);
 
-		let description = usingDocument.createElement('div');
-		description.classList.add('sidebar-section-header-slogan')
-		description.innerText = slogan;
-		
+
 		container.appendChild(header);
-		container.appendChild(description);
+		if (slogan) {
+			let description = usingDocument.createElement('div');
+			description.classList.add('sidebar-section-header-slogan')
+			description.innerText = slogan;
+			container.appendChild(description);
+		}
 		return container;
 	}
 
