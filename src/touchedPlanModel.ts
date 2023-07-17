@@ -1,7 +1,7 @@
 import { App, Modal, Notice, PluginSettingTab, Setting } from "obsidian";
 import type InvioPlugin from "./main"; // unavoidable
 import type { TransItemType } from "./i18n";
-import { createElement, FilePlus2, Trash, ArrowDownToLine, ArrowUpToLine } from "lucide";
+import { createElement, FilePlus2, Trash, ArrowDownToLine, ArrowUpToLine, FileText } from "lucide";
 
 import { log } from "./moreOnLog";
 import { FileOrFolderMixedState } from "./baseTypes";
@@ -71,20 +71,28 @@ export class TouchedPlanModel extends Modal {
       });
       const ulRemote = contentEl.createEl("ul");
       toRemoteFiles.forEach((val) => {
-        const li = ulRemote.createEl("li", {
-            text: val.key,
-            cls: 'file-item-action'
-          });
-          if (val.decision === 'uploadLocalToRemote') {
-            const iconSvgCreate = createElement(FilePlus2);
-            iconSvgCreate.addClass('file-item-action-icon')
-            li.appendChild(iconSvgCreate)
-          } else {
-            const iconSvgTrash = createElement(Trash);
-            iconSvgTrash.addClass('file-item-action-icon')
-            li.appendChild(iconSvgTrash)
-          }
+        const li = ulRemote.createEl('li', {
+          cls: 'file-item-action'
         });
+        const fileIcon = createElement(FileText);
+        fileIcon.addClass('file-item-action-prefix')
+        li.appendChild(fileIcon);
+
+        li.createEl('span', {
+          text: val.key,
+          cls: 'file-item-action-name'
+        });
+       
+        if (val.decision === 'uploadLocalToRemote') {
+          const iconSvgCreate = createElement(FilePlus2);
+          iconSvgCreate.addClass('file-item-action-icon')
+          li.appendChild(iconSvgCreate)
+        } else {
+          const iconSvgTrash = createElement(Trash);
+          iconSvgTrash.addClass('file-item-action-icon')
+          li.appendChild(iconSvgTrash)
+        }
+      });
     }
 
 
@@ -94,10 +102,18 @@ export class TouchedPlanModel extends Modal {
       });
       const ulLocal = contentEl.createEl("ul");
       toLocalFiles.forEach((val) => {
-        const li = ulLocal.createEl("li", {
-          text: val.key,
+        const li = ulLocal.createEl('li', {
           cls: 'file-item-action'
         });
+        const fileIcon = createElement(FileText);
+        fileIcon.addClass('file-item-action-prefix')
+        li.appendChild(fileIcon);
+
+        li.createEl('span', {
+          text: val.key,
+          cls: 'file-item-action-name'
+        });
+       
         if (val.decision === 'downloadRemoteToLocal') {
           const iconSvgCreate = createElement(FilePlus2);
           iconSvgCreate.addClass('file-item-action-icon')
@@ -116,10 +132,18 @@ export class TouchedPlanModel extends Modal {
       });
       const ulConflict = contentEl.createEl("ul");
       conflictFiles.forEach((val) => {
-        const li = ulConflict.createEl("li", {
-          text: val.key,
+        const li = ulConflict.createEl('li', {
           cls: 'file-item-action'
         });
+        const fileIcon = createElement(FileText);
+        fileIcon.addClass('file-item-action-prefix')
+        li.appendChild(fileIcon);
+
+        li.createEl('span', {
+          text: val.key,
+          cls: 'file-item-action-name'
+        });
+       
         if (val.decision === 'downloadRemoteToLocal') {
           const iconSvgSyncDown = createElement(ArrowDownToLine);
           iconSvgSyncDown.addClass('file-item-action-icon')

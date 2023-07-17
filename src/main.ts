@@ -341,6 +341,7 @@ export default class InvioPlugin extends Plugin {
       // The operations above are almost read only and kind of safe.
       // The operations below begins to write or delete (!!!) something.
       await insertSyncPlanRecordByVault(this.db, plan, this.vaultRandomID);
+      let view: StatsView;
       if (triggerSource !== "dry") {
         // getNotice(
         //   t("syncrun_step7", {
@@ -352,7 +353,7 @@ export default class InvioPlugin extends Plugin {
         // if we are at the root path export all files, otherwise only export files in the folder we are exporting
         allFiles = allFiles.filter((file: TFile) => new Path(file.path).directory.asString.startsWith(basePath.asString) && (file.extension === "md") && (!file.name.endsWith('.conflict.md')));
         // Make functions of StatsView static
-        const view = await HTMLGenerator.beginBatch(this, allFiles);
+        view = await HTMLGenerator.beginBatch(this, allFiles);
         log.info('init stats view: ', view);
         if (view) {
           const initData: Record<string, FileOrFolderMixedState> = {};
@@ -503,6 +504,10 @@ export default class InvioPlugin extends Plugin {
           maxSteps: `${MAX_STEPS}`,
         })
       );
+      view?.info(t("syncrun_step8", {
+        maxSteps: `${MAX_STEPS}`,
+      }));
+
       this.syncStatus = "finish";
       this.syncStatus = "idle";
 

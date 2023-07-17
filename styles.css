@@ -150,12 +150,30 @@
 
 .file-item-action {
   margin: 8px auto;
+  width: 100%;
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: center;
+  color: currentColor;
+  border-bottom: 1px solid var(--divider-color);
+  padding: 8px 2px;
+}
+.file-item-action-name {
+  flex: 1 1 auto;
+  font-size: small;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.file-item-action-prefix {
+  flex: 0 0 auto;
+  font-size: var(--font-text-size);
+  width: var(--font-text-size);
+  height: var(--font-text-size);
+  margin-right: 4px;
 }
 
 .file-item-action-icon {
+  flex: 0 0 auto;
   font-size: var(--font-text-size);
   width: var(--font-text-size);
   height: var(--font-text-size);
