@@ -1,8 +1,9 @@
 import * as React from "react";
 import { throttle } from 'lodash';
+import classnames from 'classnames';
 import useStore, { LogType } from './store';
 import styles from './StatsView.module.css';
-import { AlertTriangle, CheckCircle, ArrowDownUp, Activity, LineChart, ListChecks, Siren, FileType, ScrollText, Info, AlertCircle, XCircle, ChevronRight, Terminal, RedoDot } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ArrowDownUp, Activity, LineChart, ListChecks, Siren, FileType, ScrollText, Info, AlertCircle, XCircle, ChevronRight, Terminal, RedoDot, UploadCloud, DownloadCloud } from 'lucide-react';
 import { log } from '../moreOnLog'
 import { Utils } from '../utils/utils';
 import { Notice } from "obsidian";
@@ -19,6 +20,14 @@ const getIconByStatus = (status: string) => {
     return <AlertTriangle className={styles['icon']} />
   }
   return <div className={styles.loading}></div>
+}
+
+const getIconByType = (type: string) => {
+  if (type === 'TOLOCAL') {
+    return <DownloadCloud className={styles['icon']} />
+  }
+  
+  return <UploadCloud className={styles['icon']} />
 }
 
 export const StatsViewComponent = (props: { plugin: InvioPlugin }) => {
@@ -129,6 +138,10 @@ export const StatsViewComponent = (props: { plugin: InvioPlugin }) => {
       <div key={job.key} className={styles['listItem']}>
         <FileType className={styles['icon']} />
         <span onClick={() => { openFile(job.key) }} className={styles['listItemLongSpan']} title="Click to show file contents">{job.key.split('/').slice(-1)[0]}</span>
+        <span className={classnames(styles['listItemShortSpan'], styles['readonly'])}
+          title={job.syncType === 'TOLOCAL' ? 'Download to local' : 'Upload to remote'}>
+          {getIconByType(job.syncType)}
+        </span>
         <span onClick={() => onCheckLink(job.remoteLink)} className={styles['listItemShortSpan']} title="Click to show remote url">{getIconByStatus(job.syncStatus)}</span>
       </div>
     )) : null}
