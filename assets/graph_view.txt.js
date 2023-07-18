@@ -243,7 +243,9 @@ class GraphRenderWorker
         this.cameraScale = 1;
         this.hoveredNode = -1;
         this.grabbedNode = -1;
-        this.resampleColors();
+        setTimeout(() => {
+            this.resampleColors();
+        }, 500)
 
         this.#pixiInit();
 
@@ -862,7 +864,9 @@ function initializeGraphEvents()
 
     document.querySelector(".theme-toggle-input")?.addEventListener("change", event =>
     {
-        renderWorker.resampleColors();
+        setTimeout(() => {
+            renderWorker.resampleColors();
+        }, 1000)
     });
 
     function toggleExpandedGraph()
