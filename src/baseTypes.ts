@@ -72,6 +72,7 @@ export interface OnedriveConfig {
 export interface InvioPluginSettings {
   s3: S3Config;
   password: string;
+  remoteDomain: string;
   serviceType: SUPPORTED_SERVICES_TYPE;
   currLogLevel?: string;
   autoRunEveryMilliseconds?: number;

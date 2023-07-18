@@ -520,6 +520,27 @@ export class InvioSettingTab extends PluginSettingTab {
           })
       );
 
+      let remoteDomain = `${this.plugin.settings.remoteDomain}`;
+      new Setting(s3Div)
+        .setName(t("settings_domain"))
+        .setDesc(t("settings_domain_desc"))
+        .addText((text) => {
+          text
+            .setPlaceholder("https://docs.google.com")
+            .setValue(`${this.plugin.settings.remoteDomain || ''}`)
+            .onChange(async (value) => {
+              remoteDomain = value.trim();
+            });
+        })
+        .addButton(async (button) => {
+          button.setButtonText(t("confirm"));
+          button.onClick(async () => {
+            this.plugin.settings.remoteDomain = remoteDomain
+            await this.plugin.saveSettings();
+            log.info('new domain: ', t("settings_domain_saved") + " " + remoteDomain)
+            new Notice(t("settings_domain_saved") + " " + remoteDomain)
+          });
+        });
     // if (VALID_REQURL) {
     //   new Setting(s3Div)
     //     .setName(t("settings_s3_bypasscorslocally"))

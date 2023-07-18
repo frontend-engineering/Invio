@@ -94,6 +94,9 @@
   "modal_sizesconflict_copynotice": "所有的文件大小冲突信息，已被复制到剪贴板！",
 
   "settings_basic": "基本设置",
+  "settings_domain": "域名",
+  "settings_domain_desc": "（可选）绑定的指向S3（或其他COS）的域名，主要用于预览和部署网页时SEO相关配置的自动注入。\n例如：https://search.google.com",
+  "settings_domain_saved": "域名保存成功",
   "settings_password": "密码",
   "settings_password_desc": "端到端加密的密码。不填写则代表没密码。您需要点击“确认”来修改。注意：密码和其它信息都会在本地保存。",
   "settings_autorun": "自动运行",

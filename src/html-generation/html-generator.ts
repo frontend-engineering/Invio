@@ -96,9 +96,8 @@ export class HTMLGenerator {
 			// leftSidebar.appendChild(fileTree);
 			const dataNode = this.generateRootDirNode(file, usingDocument);
 			leftSidebar.appendChild(dataNode);
-			const rootDir = file.exportPath.directory.asString?.split('/')[0];
-
-			file.downloads.push(new Downloadable('_common-left-tree.html', fileTree.outerHTML, new Path(file.exportPath.asString.split('/')[0])));
+			const rootDir = new Path(file.exportPath.asString.split('/')[0])
+			file.downloads.push(new Downloadable('_common-left-tree.html', fileTree.outerHTML, rootDir));
 		}
 
 		await this.appendFooter(file);
@@ -655,6 +654,41 @@ export class HTMLGenerator {
 		}
 
 		return treeItems;
+	}
+
+	private static createXMLNode(file: TFile, usingDocument: Document, domain: string) {
+		const url = usingDocument.createElement("url");
+
+		const loc = usingDocument.createElement('loc');
+		loc.innerHTML = Utils.getRemoteUrl(file, domain);
+
+		const lastmod = usingDocument.createElement("lastmod");
+		lastmod.innerHTML = new Date(file.stat.mtime).toISOString().slice(0, 10);
+
+		url.appendChild(loc);
+		url.appendChild(lastmod);
+		return url;
+	}
+
+	static generateSitemap(fileList: TFile[], domain: string): string {
+			var doc = document.implementation.createDocument('', '', null);
+
+			//create the outer tag
+			var urlset = doc.createElement("urlset");
+			urlset.setAttribute("xmlns","http://www.sitemaps.org/schemas/sitemap/0.9");
+		 
+		   //first create static sites (note, that this is a selection)
+		   for (var i=0; i < fileList.length; i++) {
+				const target = fileList[i];
+				if (target instanceof TFile) {
+					const urlItemNode = this.createXMLNode(target, doc, domain);
+					urlset.appendChild(urlItemNode);
+				}
+		   }            					
+		   doc.appendChild(urlset);
+		   var oSerializer = new XMLSerializer();
+		   var xmltext = oSerializer.serializeToString(doc);
+		   return `<?xml version="1.0" encoding="UTF-8"?>${xmltext}`;
 	}
 
 	private static generateBrandHeader(usingDocument: Document, brand: string, icon: string, slogan: string, homeLink: string) {

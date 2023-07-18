@@ -62,12 +62,14 @@ import { Path } from './utils/path';
 import { HTMLGenerator } from './html-generation/html-generator';
 import icon, { UsingIconNames, getIconSvg, addIconForconflictFile } from './utils/icon';
 import { StatsView, VIEW_TYPE_STATS, LogType } from "./statsView";
+import { DomaindModal } from './remoteDomainModal';
 
 const { iconNameSyncWait, iconNameSyncPending, iconNameSyncRunning, iconNameLogs, iconNameSyncLogo } = UsingIconNames;
 
 const DEFAULT_SETTINGS: InvioPluginSettings = {
   s3: DEFAULT_S3_CONFIG,
   password: "",
+  remoteDomain: '',
   serviceType: "s3",
   currLogLevel: "info",
   // vaultRandomID: "", // deprecated
@@ -112,6 +114,21 @@ export default class InvioPlugin extends Plugin {
       }
     }
     return false;
+  }
+
+  async checkDomain() {
+    // Domain check
+    return new Promise((resolve) => {
+      if (this.settings?.remoteDomain) {
+        resolve(this.settings.remoteDomain);
+      }
+      if (!this.settings?.remoteDomain) {
+        // Show modal to get
+        new DomaindModal(this.app, this, this.settings?.remoteDomain, (newDomain) => {
+          resolve(newDomain);
+        }).open()
+      }
+    })
   }
 
   async syncRun(triggerSource: SyncTriggerSourceType = "manual", fileList?: string[]) {
@@ -309,8 +326,10 @@ export default class InvioPlugin extends Plugin {
       log.info('plan.mixedStates: ', plan.mixedStates, touchedFileMap); // for debugging
 
       try {
-        loadingModal.close();
-        loadingModal = null;
+        if (loadingModal) {
+          loadingModal.close();
+          loadingModal = null;
+        }
 
         if (triggerSource !== 'force') {
           await new Promise((resolve, reject) => {
@@ -556,7 +575,7 @@ export default class InvioPlugin extends Plugin {
         triggerSource: triggerSource,
         syncStatus: this.syncStatus,
       });
-      loadingModal.close();
+      loadingModal?.close();
       log.error(msg);
       log.error(error);
       getNotice(null, msg, 10 * 1000);

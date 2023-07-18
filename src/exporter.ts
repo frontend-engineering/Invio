@@ -116,7 +116,16 @@ export const publishFiles = async (
             log.info('download list: ', externalFiles);
         }
     }
-
+    if (settings.remoteDomain) {
+        const sitemapDomStr = HTMLGenerator.generateSitemap(allFiles, settings.remoteDomain);
+        const sitemapDownload = new Downloadable('sitemap.xml', sitemapDomStr, htmlPath.joinString(settings.localWatchDir));
+        Object.assign(sitemapDownload, {
+            path: `${sitemapDownload.relativeDownloadPath.asString}/${sitemapDownload.filename}`,
+            key: settings.localWatchDir + '/' + sitemapDownload.filename,
+        }) 
+        log.info('sitemap - ', sitemapDomStr, htmlPath);
+        externalFiles.push(sitemapDownload);
+    }
     externalFiles = externalFiles.filter((file, index) => externalFiles.findIndex((f) => f.relativeDownloadPath == file.relativeDownloadPath && f.filename === file.filename) == index);
     await Utils.downloadFiles(externalFiles, htmlPath, view);
     log.info('download files to: ', htmlPath, externalFiles);
