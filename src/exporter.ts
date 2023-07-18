@@ -159,7 +159,8 @@ export const publishFiles = async (
                 // RenderLog.progress(i++, toUploads.length, "Uploading Docs", "Upload success: " + upload.key, "var(--color-accent)");
                 view?.info(`Upload success: ${upload.key}`);
                 if (cb && upload.md) {
-                    cb(upload.md, 'DONE', `https://${settings.s3.s3BucketName}.${settings.s3.s3Endpoint}/${resp?.key}`);
+                    const domain = settings.remoteDomain || `https://${settings.s3.s3BucketName}.${settings.s3.s3Endpoint}`;
+                    cb(upload.md, 'DONE', `${domain}/${resp?.key}`);
                 }
                 return resp;
             }).catch(err => {
