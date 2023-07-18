@@ -245,4 +245,17 @@ export class Utils
 		const list = plugin.app.vault.getRoot().children;
 		return list.filter(fileOrFolder => (fileOrFolder instanceof TFolder)).map(folder => folder.path)
 	}
+
+	static getRemoteUrl(file: TFile, domain: string) {
+		let url = domain || '';
+		if (!url.endsWith('/')) {
+			url += '/'
+		}
+		if (file.path.endsWith('.md')) {
+			url += file.path.replace(/\.md$/ig, '');
+		} else {
+			url += file.path;
+		}
+		return url;
+	}
 }
