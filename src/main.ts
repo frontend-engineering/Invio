@@ -62,7 +62,6 @@ import { Path } from './utils/path';
 import { HTMLGenerator } from './html-generation/html-generator';
 import icon, { UsingIconNames, getIconSvg, addIconForconflictFile } from './utils/icon';
 import { StatsView, VIEW_TYPE_STATS, LogType } from "./statsView";
-import { DomaindModal } from './remoteDomainModal';
 
 const { iconNameSyncWait, iconNameSyncPending, iconNameSyncRunning, iconNameLogs, iconNameSyncLogo } = UsingIconNames;
 
@@ -116,20 +115,20 @@ export default class InvioPlugin extends Plugin {
     return false;
   }
 
-  async checkDomain() {
-    // Domain check
-    return new Promise((resolve) => {
-      if (this.settings?.remoteDomain) {
-        resolve(this.settings.remoteDomain);
-      }
-      if (!this.settings?.remoteDomain) {
-        // Show modal to get
-        new DomaindModal(this.app, this, this.settings?.remoteDomain, (newDomain) => {
-          resolve(newDomain);
-        }).open()
-      }
-    })
-  }
+  // async checkDomain() {
+  //   // Domain check
+  //   return new Promise((resolve) => {
+  //     if (this.settings?.remoteDomain) {
+  //       resolve(this.settings.remoteDomain);
+  //     }
+  //     if (!this.settings?.remoteDomain) {
+  //       // Show modal to get
+  //       new DomaindModal(this.app, this, this.settings?.remoteDomain, (newDomain) => {
+  //         resolve(newDomain);
+  //       }).open()
+  //     }
+  //   })
+  // }
 
   async syncRun(triggerSource: SyncTriggerSourceType = "manual", fileList?: string[]) {
     const t = (x: TransItemType, vars?: any) => {
