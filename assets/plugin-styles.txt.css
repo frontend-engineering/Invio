@@ -104,7 +104,6 @@
     text-transform: uppercase;
     letter-spacing: 0.06em;
     font-weight: 600;
-    color: var(--site-name-color);
     font-size: var(--site-name-size);
     font-weight: var(--site-name-weight);
     z-index: 1;
@@ -114,6 +113,9 @@
     display: flex;
     justify-content: flex-start;
     align-items: center;
+    background: #fff;
+    border-radius: 12px;
+    padding: 8px 12px;
 }
 .sidebar-section-header-brand > span {
     display: block;
@@ -126,6 +128,7 @@
     height: 24px;
     object-fit: contain;
 }
+
 .theme-light .sidebar-section-header-brand-logo {
     /* filter: invert(1); */
 }
