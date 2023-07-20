@@ -905,6 +905,17 @@ export class InvioSettingTab extends PluginSettingTab {
           new Notice(t("settings_resetcache_notice"));
         });
       });
+
+    const bonusDiv = containerEl.createEl('div');
+    bonusDiv.createEl('h2', { text: 'Stay up to date' });
+
+    const twitterContainer = bonusDiv.createEl('p')
+    const twitterText = twitterContainer.createSpan();
+    twitterText.innerText = 'Stay up to date with the latest news and updates about our product by following us on Twitter: ';
+    twitterContainer.createEl("a", {
+      href: "https://twitter.com/webinfra111450",
+      text: 'webinfra111450',
+    });
   }
 
   hide() {
