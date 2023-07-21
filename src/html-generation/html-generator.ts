@@ -24,6 +24,7 @@ export interface IMetaConfig {
 	title?: string; // Page title
 	description?: string;
 	keywords?: string[];
+	canonical?: string;
 	publish?: boolean;
 	permalink?: string;
 }
@@ -337,6 +338,9 @@ export class HTMLGenerator {
 
 		if (pageConfig?.description) {
 			meta += `<meta name="description" content="${pageConfig?.description || ''}">`
+		}
+		if (pageConfig?.canonical) {
+			meta += `<link rel=“canonical” href=“${pageConfig.canonical}” />`
 		}
 
 		if (pageConfig?.keywords) {
