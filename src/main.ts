@@ -64,6 +64,7 @@ import icon, { UsingIconNames, getIconSvg, addIconForconflictFile } from './util
 import { StatsView, VIEW_TYPE_STATS, LogType } from "./statsView";
 
 const { iconNameSyncWait, iconNameSyncPending, iconNameSyncRunning, iconNameLogs, iconNameSyncLogo } = UsingIconNames;
+const Menu_Tab = `    `;
 
 const DEFAULT_SETTINGS: InvioPluginSettings = {
   s3: DEFAULT_S3_CONFIG,
@@ -684,6 +685,43 @@ export default class InvioPlugin extends Plugin {
     this.registerView(VIEW_TYPE_STATS, (leaf) => new StatsView(this, leaf));
 
     this.registerEvent(
+      this.app.workspace.on("file-menu", (menu, file) => {
+        if (file instanceof TFolder) {
+          menu.addSeparator()
+          .addItem((item) => {
+            item
+            .setTitle(`Invio Action`)
+            .setDisabled(true)
+            .setIcon("document")
+          })
+
+          if (file.path !== this.settings.localWatchDir) {
+            menu.addItem((item) => {
+              item
+                .setTitle(`${Menu_Tab}Set as working folder`)
+                .setIcon("document")
+                .onClick(async () => {
+                  await this.switchWorkingDir(file.path);
+                });
+            })
+          } else {
+            menu.addItem((item) => {
+              item
+                .setTitle(`${Menu_Tab}Publish`)
+                .setIcon("document")
+                .onClick(async () => {
+                  this.syncRun("manual")
+                });
+            })
+          }
+          menu.addSeparator();
+        } else if (file instanceof TFile) {
+          // TODO: Add file action here 
+        }
+      })
+    );
+
+    this.registerEvent(
       this.app.vault.on("delete", async (fileOrFolder) => {
         await insertDeleteRecordByVault(
           this.db,
@@ -851,6 +889,14 @@ export default class InvioPlugin extends Plugin {
 
   async saveSettings() {
     await this.saveData(normalConfigToMessy(this.settings));
+  }
+
+  async switchWorkingDir(value: string) {
+    this.settings.localWatchDir = value.trim();
+    icon.removeIconInNode(document.body);
+    const { iconSvgSyncWait } = getIconSvg();
+    icon.createIconNode(this, this.settings.localWatchDir, iconSvgSyncWait);
+    await this.saveSettings(); 
   }
 
   async checkIfOauthExpires() {}

@@ -485,7 +485,6 @@ async function loadLeftSidebar(document) {
 		}
 
 		const sidebarUrl = `${baseDir}/_common-left-tree.html`
-		console.log("Loading left sidebar: ", sidebarUrl);
 		response = await fetch(sidebarUrl);
 	}
 	catch (error)
@@ -498,7 +497,6 @@ async function loadLeftSidebar(document) {
 	{
 		let html = (await response.text()).replaceAll("<!DOCTYPE html>", "").replaceAll("<html>", "").replaceAll("</html>", "");
 		const tmpContainer = document.createElement('div');
-		console.log('html fetched: ', html);
 		tmpContainer.innerHTML = html;
 		const legacy = container.querySelector('.file-tree');
 		if (legacy) {

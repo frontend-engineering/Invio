@@ -380,11 +380,7 @@ export class InvioSettingTab extends PluginSettingTab {
         dropdown
           .setValue(this.plugin.settings.localWatchDir)
           .onChange(async (value: string) => {
-            this.plugin.settings.localWatchDir = value.trim();
-            icon.removeIconInNode(document.body);
-            const { iconSvgSyncWait } = getIconSvg();
-            icon.createIconNode(this.plugin, this.plugin.settings.localWatchDir, iconSvgSyncWait);
-            await this.plugin.saveSettings(); 
+            await this.plugin.switchWorkingDir(value);
           })
       });
 
