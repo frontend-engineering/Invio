@@ -16,6 +16,9 @@ Invio automatically converts your Obsidian documents into HTML web pages and syn
 - Auto sync your local docs's edit with remote published html. **[Sync Algorithm open](https://github.com/remotely-save/remotely-save/blob/master/docs/sync_algorithm_v2.md) is inspired by this [project](https://github.com/remotely-save/remotely-save).**
 - **Fully open source under [Apache-2.0 License](./LICENSE).**
 
+<p align="center">
+   <img width="348px" src="./assets/statsview.gif" />
+</p>
 
 
 ## Download and Install
