@@ -17,22 +17,6 @@ Invio automatically converts your Obsidian documents into HTML web pages and syn
 - **Fully open source under [Apache-2.0 License](./LICENSE).**
 
 
-## Limitations
-
-- **No content-diff-and-patch algorithm.** All files and folders are compared using their local and remote "last modified time" and those with later "last modified time" wins. For example: if one file's been edited lately, it will be fully re-uploaded.
-
-- **Cloud services cost you money.** Although COS services are easier to maintain and use, however it's important to always stay mindful of the expenses and pricing associated with different operations. This includes, but is not limited to, downloading, uploading, listing files, making API calls, and storage sizes. These actions may or may not incur charges, so it's crucial to take them into consideration.
-- Your Obsidian desktop version should >= 0.13.25
-
-
-## Questions, Suggestions, Or Bugs
-
-You are greatly welcome to ask questions, post any suggestions, or report any bugs! The project is mainly maintained on GitHub:
-
-- Questions: [GitHub repo Discussions](https://github.com/frontend-engineering/Invio/discussions)
-- Suggestions: also in [GitHub repo Discussions](https://github.com/frontend-engineering/Invio/discussions)
-- Bugs: [GitHub repo Issues](https://github.com/frontend-engineering/Invio/issues) (NOT Discussion)
-
 
 ## Download and Install
 
@@ -77,3 +61,30 @@ You are greatly welcome to ask questions, post any suggestions, or report any bu
 - **BucketName**	obsidian-123456789
 
 To test your settings, you can click the button **check** in settings to test your COS connectivity.
+
+
+## Limitations
+
+- **No content-diff-and-patch algorithm.** All files and folders are compared using their local and remote "last modified time" and those with later "last modified time" wins. For example: if one file's been edited lately, it will be fully re-uploaded.
+
+- **Cloud services cost you money.** Although COS services are easier to maintain and use, however it's important to always stay mindful of the expenses and pricing associated with different operations. This includes, but is not limited to, downloading, uploading, listing files, making API calls, and storage sizes. These actions may or may not incur charges, so it's crucial to take them into consideration.
+- Your Obsidian desktop version should >= 0.13.25
+
+
+## Questions, Suggestions, Or Bugs
+
+You are greatly welcome to ask questions, post any suggestions, or report any bugs! The project is mainly maintained on GitHub:
+
+- Questions: [GitHub repo Discussions](https://github.com/frontend-engineering/Invio/discussions)
+- Suggestions: also in [GitHub repo Discussions](https://github.com/frontend-engineering/Invio/discussions)
+- Bugs: [GitHub repo Issues](https://github.com/frontend-engineering/Invio/issues) (NOT Discussion)
+
+
+## Stay up to date
+
+Invio is in active development.
+
+Stay up to date with the latest news and updates about our product by following us on Twitter:
+
+[![Twitter URL](https://img.shields.io/twitter/url/https/twitter.com/webinfra111450.svg?style=social&label=Follow%20%40webinfra111450)](https://twitter.com/webinfra111450)
+
