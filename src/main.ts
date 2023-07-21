@@ -717,6 +717,24 @@ export default class InvioPlugin extends Plugin {
           menu.addSeparator();
         } else if (file instanceof TFile) {
           // TODO: Add file action here 
+          if (!file.path?.startsWith(this.settings.localWatchDir)) {
+            return;
+          }
+          menu.addSeparator()
+            .addItem((item) => {
+              item
+              .setTitle(`Invio Action`)
+              .setDisabled(true)
+              .setIcon("document")
+            })
+            .addItem((item) => {
+              item
+                .setTitle(`${Menu_Tab}Publish`)
+                .setIcon("document")
+                .onClick(async () => {
+                  await this.syncRun('manual', [file.path])
+                });
+            })
         }
       })
     );
