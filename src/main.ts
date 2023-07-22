@@ -707,7 +707,7 @@ export default class InvioPlugin extends Plugin {
           } else {
             menu.addItem((item) => {
               item
-                .setTitle(`${Menu_Tab}Publish`)
+                .setTitle(`${Menu_Tab}Folder Publish`)
                 .setIcon("document")
                 .onClick(async () => {
                   this.syncRun("manual")
@@ -729,7 +729,7 @@ export default class InvioPlugin extends Plugin {
             })
             .addItem((item) => {
               item
-                .setTitle(`${Menu_Tab}Publish`)
+                .setTitle(`${Menu_Tab}File Publish`)
                 .setIcon("document")
                 .onClick(async () => {
                   await this.syncRun('manual', [file.path])
