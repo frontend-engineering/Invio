@@ -832,6 +832,20 @@ export default class InvioPlugin extends Plugin {
     );
 
     this.addCommand({
+      id: "start-sync-file",
+      name: t("command_startsync_file"),
+      icon: iconNameSyncLogo,
+      callback: async () => {
+        const activeFile = this.app.workspace.getActiveFile();
+        log.info('active file: ', activeFile);
+        if (activeFile instanceof TFile) {
+          this.syncRun("manual", [activeFile.path]);
+        } else {
+          new Notice(`File not found`); 
+        }
+      },
+    });
+    this.addCommand({
       id: "start-sync",
       name: t("command_startsync"),
       icon: iconNameSyncLogo,

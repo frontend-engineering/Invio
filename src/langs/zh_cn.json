@@ -34,9 +34,10 @@
   "protocol_onedrive_connect_fail": "OneDrive 的回调请求有点异常。您是否拒绝了鉴权？",
   "protocol_onedrive_connect_unknown": "不知道如何处理此 callback：{{params}}",
 
-  "command_startsync": "开始同步（start sync）",
+  "command_startsync": "开始同步文件夹",
+  "command_startsync_file": "开始同步当前文件",
   "command_forcesync": "强制全量同步",
-  "command_drynrun": "开始同步（空跑模式）（start sync (dry run only)）",
+  "command_drynrun": "开始同步（空跑模式）",
   "command_exportsyncplans_json": "导出同步计划为 json 格式（export sync plans in json format）",
   "command_exportsyncplans_table": "导出同步计划为表格格式（export sync plans in table format）",
   "command_exportlogsindb": "从数据库导出终端日志（export logs saved in db）",

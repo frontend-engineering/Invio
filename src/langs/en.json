@@ -34,7 +34,8 @@
   "protocol_onedrive_connect_fail": "Something went wrong from response from OneDrive. Maybe you rejected the auth?",
   "protocol_onedrive_connect_unknown": "Do not know how to deal with the callback: {{params}}",
 
-  "command_startsync": "start sync",
+  "command_startsync": "start sync the folder",
+  "command_startsync_file": "start sync current file",
   "command_forcesync": "Force full synchronization",
   "command_drynrun": "start sync (dry run only)",
   "command_exportsyncplans_json": "export sync plans in json format",
