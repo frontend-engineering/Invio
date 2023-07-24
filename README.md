@@ -17,7 +17,7 @@ Invio automatically converts your Obsidian documents into HTML web pages and syn
 - **Fully open source under [Apache-2.0 License](./LICENSE).**
 
 <p align="center">
-   <img width="348px" src="./assets/demo.gif" />
+   <img width="100%" src="./assets/demo.gif" />
 </p>
 
 
