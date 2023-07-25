@@ -5,11 +5,26 @@ on:
 jobs:
   tweet:
     runs-on: ubuntu-latest
+    env:
+      CONSUMER_API_KEY: ${{ secrets.TWITTER_CONSUMER_API_KEY }}
+      CONSUMER_API_SECRET_KEY: ${{ secrets.TWITTER_CONSUMER_API_SECRET_KEY }}
+      ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+      ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
     steps:
-      - uses: ethomson/send-tweet-action@v1
+      - uses: actions/checkout@v3
+      - name: Tweet summary
+        id: summary
+        uses: snow-actions/tweet@v1.4.0
         with:
-          status: "Obsidian Invio Feature"
-          consumer-key: ${{ secrets.TWITTER_CONSUMER_API_KEY }}
-          consumer-secret: ${{ secrets.TWITTER_CONSUMER_API_SECRET }}
-          access-token: ${{ secrets.TWITTER_ACCESS_TOKEN }}
-          access-token-secret: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
+          status: |
+            Released ${{ github.event.release.name }}
+            ${{ github.event.release.html_url }}
+          media_paths: |
+            1st.png
+            2nd.png
+      - name: Tweet details
+        uses: snow-actions/tweet@v1.4.0
+        with:
+          status: |
+            Additional information
+          in_reply_to_status_id: ${{ fromJSON(steps.summary.outputs.response).id_str }}
