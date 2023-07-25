@@ -118,7 +118,7 @@ export namespace MarkdownRenderer
 		{
 			postProcessHTML(file, container);
 
-			AssetHandler.loadMathjaxStyles();
+			await AssetHandler.loadMathjaxStyles();
 
 			return container.innerHTML;
 		}

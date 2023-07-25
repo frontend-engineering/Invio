@@ -17,6 +17,7 @@ import { InvioSettingTab } from "src/settings.js";
 import { RenderLog } from "./render-log.js";
 import { Utils } from "src/utils/utils.js";
 import { StatsView } from "src/statsView.js";
+import { log } from "src/moreOnLog.js";
 
 export class AssetHandler
 {
@@ -40,6 +41,8 @@ export class AssetHandler
 	private static lastEnabledTheme: string = "";
 	private static lastMathjaxChanged: number = -1;
 	private static mathjaxStylesheet: CSSStyleSheet | undefined = undefined;
+
+	private static appInternalAssets: Downloadable[] = [];
 
 	public static webpageJS: string = "";
 	public static graphViewJS: string = "";
@@ -68,7 +71,7 @@ export class AssetHandler
 
 	public static async getDownloads() : Promise<Downloadable[]>
 	{
-		let toDownload: Downloadable[] = [];
+		let toDownload: Downloadable[] = [...this.appInternalAssets];
 		if (!InvioSettingTab.settings.inlineCSS)
 		{
 			let pluginCSS = this.webpageStyles;
@@ -129,7 +132,7 @@ export class AssetHandler
 		this.lastMathjaxChanged = -1;
 	}
 
-	public static loadMathjaxStyles()
+	public static async loadMathjaxStyles()
 	{
 		// @ts-ignore
 		if (this.mathjaxStylesheet == undefined) this.mathjaxStylesheet = Array.from(document.styleSheets).find((sheet) => sheet.ownerNode.id == ("MJX-CHTML-styles"));
@@ -144,12 +147,20 @@ export class AssetHandler
 			{
 				AssetHandler.mathStyles += this.mathjaxStylesheet.cssRules[i].cssText + "\n";
 			}
-
-			AssetHandler.mathStyles.replaceAll("app://obsidian.md/", "https://publish.obsidian.md/").trim();
+			const regexAsset = /"(app\:\/\/obsidian\.md\/[^"]+)"/g;
+			let matchedAsset;
+			while ((matchedAsset = regexAsset.exec(AssetHandler.mathStyles))) {
+				log.info('AssetHandler.mathStyles asset matched: ', matchedAsset[1]);
+				const asset = matchedAsset[1];
+				const assetContent = await this.getAppAssetsContent(asset);
+				const assetPathInfo = asset.split('/');
+				const fileName = assetPathInfo.splice(-1)[0];
+				this.appInternalAssets.push(new Downloadable(fileName, assetContent, new Path(assetPathInfo.join('/'))))
+			}
 		}
 		else
 		{
-			console.log(Utils.getActiveTextView()?.file.name + " does not have latex");
+			log.info(Utils.getActiveTextView()?.file.name + " does not have latex");
 			AssetHandler.mathStyles = "";
 		}
 
@@ -162,7 +173,6 @@ export class AssetHandler
 		// @ts-ignore
 		const pathString = Path.vaultConfigDir.joinString('obsidian-plugin-cache-html').asString || '';
 
-		console.log('path str: ', pathString);
 		return new Path(pathString).directory.absolute();
 	}
 
@@ -186,14 +196,22 @@ export class AssetHandler
 			let rule = appSheet.cssRules[i];
 			if (rule)
 			{
-				if (rule.cssText.startsWith("@font-face")) continue;
+				// if (rule.cssText.startsWith("@font-face")) continue;
 				if (rule.cssText.startsWith(".CodeMirror")) continue;
 				if (rule.cssText.startsWith(".cm-")) continue;
 				
 				let cssText = rule.cssText + "\n";
-				cssText = cssText.replaceAll("public/", "https://publish.obsidian.md/public/");
-				cssText = cssText.replaceAll("lib/", "https://publish.obsidian.md/lib/")
-				
+				const regexAsset = /"((public|lib)\/[^"]+)"/g;
+
+				let matchedAsset;
+				while ((matchedAsset = regexAsset.exec(cssText))) {
+					log.info('cssText asset matched: ', matchedAsset[1]);
+					const asset = matchedAsset[1];
+					const assetContent = await this.getAppAssetsContent(asset);
+					const assetPathInfo = asset.split('/');
+					const fileName = assetPathInfo.splice(-1)[0];
+					this.appInternalAssets.push(new Downloadable(fileName, assetContent, new Path(assetPathInfo.join('/'))))
+				}
 				this.appStyles += cssText;
 			}
 		}
@@ -216,6 +234,27 @@ export class AssetHandler
 				}
 			}
 		}
+	}
+
+
+	private static async getAppAssetsContent(asset: string, view?: StatsView): Promise<Buffer>
+	{
+		return new Promise((resolve) => {
+			const xhr = new XMLHttpRequest();
+			xhr.responseType = 'arraybuffer';
+
+			xhr.open('GET', asset, true);
+			xhr.onload = function() {
+				if (xhr.status === 200) {
+					// Get the binary data from the response
+					const buffer = new Uint8Array(xhr.response);
+					resolve(Buffer.from(buffer))
+				} else {
+					view.error(`load asset ${asset} failed`);
+				}
+			};
+			xhr.send();
+		})
 	}
 
 	private static async getPluginStyles() : Promise<string>
