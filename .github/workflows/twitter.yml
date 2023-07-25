@@ -19,9 +19,6 @@ jobs:
           status: |
             Released ${{ github.event.release.name }}
             ${{ github.event.release.html_url }}
-          media_paths: |
-            1st.png
-            2nd.png
       - name: Tweet details
         uses: snow-actions/tweet@v1.4.0
         with:
