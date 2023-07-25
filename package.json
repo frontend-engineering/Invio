@@ -1,6 +1,6 @@
 {
   "name": "obsidian-invio",
-  "version": "0.2.4",
+  "version": "0.3.1",
   "description": "Publish your obsidian docs to COS.",
   "scripts": {
     "dev": "node esbuild.config.mjs",
