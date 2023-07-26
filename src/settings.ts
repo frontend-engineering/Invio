@@ -838,6 +838,8 @@ export class InvioSettingTab extends PluginSettingTab {
       text: t("settings_importexport"),
     });
 
+    const settingsPrefix = `Invio-Settings>`;
+    const settingsSuffix = `<&`
     new Setting(importExportDiv)
       .setName(t("settings_export"))
       .setDesc(t("settings_export_desc"))
@@ -846,7 +848,7 @@ export class InvioSettingTab extends PluginSettingTab {
         button.onClick(async () => {
           // new ExportSettingsQrCodeModal(this.app, this.plugin).open();
           const data = await this.plugin.loadData();
-          await navigator.clipboard.writeText(data.d);
+          await navigator.clipboard.writeText(`${settingsPrefix} ${data.d} ${settingsSuffix}`);
           new Notice(t("settings_export_msg"));
         });
       });
@@ -870,11 +872,21 @@ export class InvioSettingTab extends PluginSettingTab {
             new Notice(t("settings_import_err")); 
             return;
           }
-          await this.plugin.loadSettings(restoredStr);
+          if (!(restoredStr.startsWith(settingsPrefix) && restoredStr.endsWith(settingsSuffix))) {
+            new Notice(t("settings_import_err"));
+            return;
+          }
+
+          await this.plugin.loadSettings(restoredStr.replace(settingsPrefix, '').replace(settingsSuffix, '').trim());
           // Create dir if necessary.
           const dir = this.plugin.settings.localWatchDir;
           if (dir && (typeof dir === 'string')) {
             await mkdirpInVault(dir, this.plugin.app.vault);
+            await this.plugin.switchWorkingDir(dir);
+
+            setTimeout(() => {
+              this.plugin.syncRun('auto');
+            }, 100)
           } else {
             log.error('Imported settings not configured correctly.')
           }

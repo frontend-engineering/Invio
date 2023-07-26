@@ -337,7 +337,11 @@ export default class InvioPlugin extends Plugin {
               resolve('skip');
               return;
             }
-  
+            // silent mode
+            if (triggerSource === 'auto') {
+              resolve('skip');
+              return;
+            }
             const touchedPlanModel = new TouchedPlanModel(this.app, this, touchedFileMap, (pub: boolean) => {
               log.info('user confirmed: ', pub);
               pub ? resolve('ok') : reject('cancelled')
