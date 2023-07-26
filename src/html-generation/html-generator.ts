@@ -19,6 +19,7 @@ export interface IMetaConfig {
 	brand?: string; // Brand name
 	slogan?: string;
 	icon?: string;
+	gaID?: string;
 
 	// Page Config
 	title?: string; // Page title
@@ -29,7 +30,7 @@ export interface IMetaConfig {
 	permalink?: string;
 }
 
-const InheriableMeta: Array<keyof IMetaConfig> = [ 'icon', 'home', 'brand', 'slogan' ];
+const InheriableMeta: Array<keyof IMetaConfig> = [ 'icon', 'home', 'brand', 'slogan', 'gaID' ];
 
 export class HTMLGenerator {
 	//#region Main Generation Functions
@@ -354,6 +355,17 @@ export class HTMLGenerator {
 
 		if (InvioSettingTab.settings.includeOutline) {
 			meta += `<script src="https://code.iconify.design/iconify-icon/1.0.3/iconify-icon.min.js"></script>`;
+		}
+		
+		if (pageConfig?.gaID) {
+			meta += `<script async src="https://www.googletagmanager.com/gtag/js?id=${pageConfig.gaID}"></script>
+				<script>
+					window.dataLayer = window.dataLayer || [];
+					function gtag(){dataLayer.push(arguments);}
+					gtag('js', new Date());
+
+					gtag('config', '${pageConfig.gaID}');
+				</script>`
 		}
 
 		// --- JS ---
