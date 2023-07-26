@@ -32,7 +32,7 @@ import {
   insertLoggerOutputByVault,
   clearExpiredLoggerOutputRecords,
 } from "./localdb";
-import type InvioPlugin from "./main"; // unavoidable
+import InvioPlugin from "./main"; // unavoidable
 import { RemoteClient } from "./remote";
 import { messyConfigToNormal } from "./configPersist";
 import type { TransItemType } from "./i18n";
@@ -46,6 +46,8 @@ import {
   restoreLogWritterInplace,
 } from "./moreOnLog";
 
+const settingsPrefix = `Invio-Settings>`;
+const settingsSuffix = `<&`
 class PasswordModal extends Modal {
   plugin: InvioPlugin;
   newPassword: string;
@@ -352,6 +354,45 @@ export class InvioSettingTab extends PluginSettingTab {
 
   static saveSettings(plugin: InvioPlugin) {
     plugin.saveSettings();
+  }
+
+
+  static async exportSettings(plugin: InvioPlugin) {
+    const t = (x: TransItemType, vars?: any) => {
+      return plugin.i18n.t(x, vars);
+    };
+    const data = await plugin.loadData();
+    await navigator.clipboard.writeText(`${settingsPrefix} ${data.d} ${settingsSuffix}`);
+    new Notice(t("settings_export_msg"));
+  }
+
+  static async importSettings(plugin: InvioPlugin, restoredStr: string) {
+    const t = (x: TransItemType, vars?: any) => {
+      return plugin.i18n.t(x, vars);
+    };
+    if (!restoredStr) {
+      new Notice(t("settings_import_err")); 
+      return;
+    }
+    if (!(restoredStr.startsWith(settingsPrefix) && restoredStr.endsWith(settingsSuffix))) {
+      new Notice(t("settings_import_err"));
+      return;
+    }
+
+    await plugin.loadSettings(restoredStr.replace(settingsPrefix, '').replace(settingsSuffix, '').trim());
+    // Create dir if necessary.
+    const dir = plugin.settings.localWatchDir;
+    if (dir && (typeof dir === 'string')) {
+      await mkdirpInVault(dir, plugin.app.vault);
+      await plugin.switchWorkingDir(dir);
+
+      setTimeout(() => {
+        plugin.syncRun('auto');
+      }, 100)
+    } else {
+      log.error('Imported settings not configured correctly.')
+    }
+    await plugin.saveSettings();
   }
 
   display(): void {
@@ -838,8 +879,7 @@ export class InvioSettingTab extends PluginSettingTab {
       text: t("settings_importexport"),
     });
 
-    const settingsPrefix = `Invio-Settings>`;
-    const settingsSuffix = `<&`
+
     new Setting(importExportDiv)
       .setName(t("settings_export"))
       .setDesc(t("settings_export_desc"))
@@ -847,9 +887,7 @@ export class InvioSettingTab extends PluginSettingTab {
         button.setButtonText(t("settings_export_desc_button"));
         button.onClick(async () => {
           // new ExportSettingsQrCodeModal(this.app, this.plugin).open();
-          const data = await this.plugin.loadData();
-          await navigator.clipboard.writeText(`${settingsPrefix} ${data.d} ${settingsSuffix}`);
-          new Notice(t("settings_export_msg"));
+          InvioSettingTab.exportSettings(this.plugin);
         });
       });
 
@@ -868,29 +906,7 @@ export class InvioSettingTab extends PluginSettingTab {
       .addButton(async (button) => {
         button.setButtonText(t("settings_import_desc_button"));
         button.onClick(async () => {
-          if (!restoredStr) {
-            new Notice(t("settings_import_err")); 
-            return;
-          }
-          if (!(restoredStr.startsWith(settingsPrefix) && restoredStr.endsWith(settingsSuffix))) {
-            new Notice(t("settings_import_err"));
-            return;
-          }
-
-          await this.plugin.loadSettings(restoredStr.replace(settingsPrefix, '').replace(settingsSuffix, '').trim());
-          // Create dir if necessary.
-          const dir = this.plugin.settings.localWatchDir;
-          if (dir && (typeof dir === 'string')) {
-            await mkdirpInVault(dir, this.plugin.app.vault);
-            await this.plugin.switchWorkingDir(dir);
-
-            setTimeout(() => {
-              this.plugin.syncRun('auto');
-            }, 100)
-          } else {
-            log.error('Imported settings not configured correctly.')
-          }
-          await this.plugin.saveSettings();
+          await InvioSettingTab.importSettings(this.plugin, restoredStr);
           this.hide();
           this.display();
         });

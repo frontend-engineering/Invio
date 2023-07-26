@@ -709,7 +709,7 @@ export default class InvioPlugin extends Plugin {
             .setIcon("document")
           })
 
-          if (file.path !== this.settings.localWatchDir) {
+          if ((file.path !== this.settings.localWatchDir) && (file.path.indexOf('/') < 0) ) {
             menu.addItem((item) => {
               item
                 .setTitle(`${Menu_Tab}Set as working folder`)
@@ -725,6 +725,14 @@ export default class InvioPlugin extends Plugin {
                 .setIcon("document")
                 .onClick(async () => {
                   this.syncRun("manual")
+                });
+            })
+            menu.addItem((item) => {
+              item
+                .setTitle(`${Menu_Tab}Share This Folder`)
+                .setIcon("document")
+                .onClick(async () => {
+                  await InvioSettingTab.exportSettings(this)
                 });
             })
           }
@@ -883,6 +891,26 @@ export default class InvioPlugin extends Plugin {
       icon: iconNameSyncLogo,
       callback: async () => {
         this.syncRun('force');
+      }
+    })
+
+    this.addCommand({
+      id: 'export-settings',
+      name: t('command_export_settings'),
+      icon: iconNameSyncLogo,
+      callback: async () => {
+        await InvioSettingTab.exportSettings(this);
+      }
+    })
+
+
+    this.addCommand({
+      id: 'import-settings',
+      name: t('command_import_settings'),
+      icon: iconNameSyncLogo,
+      callback: async () => {
+        const str = await navigator.clipboard.readText();
+        InvioSettingTab.importSettings(this, str);
       }
     })
 

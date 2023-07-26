@@ -37,6 +37,8 @@
   "command_startsync": "start sync the folder",
   "command_startsync_file": "start sync current file",
   "command_forcesync": "Force full synchronization",
+  "command_import_settings": "Import settings from clipboard",
+  "command_export_settings": "Export settings to clipboard",
   "command_drynrun": "start sync (dry run only)",
   "command_exportsyncplans_json": "export sync plans in json format",
   "command_exportsyncplans_table": "export sync plans in table format",

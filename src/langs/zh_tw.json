@@ -37,6 +37,8 @@
   "command_startsync": "开始同步文件夹",
   "command_startsync_file": "开始同步当前文件",
   "command_forcesync": "强制全量同步",
+  "command_import_settings": "剪切板导入配置",
+  "command_export_settings": "导出配置到剪贴板",
   "command_drynrun": "开始同步（空跑模式）",
   "command_exportsyncplans_json": "匯出同步計劃為 json 格式（export sync plans in json format）",
   "command_exportsyncplans_table": "匯出同步計劃為表格格式（export sync plans in table format）",
