@@ -384,6 +384,16 @@ export default class InvioPlugin extends Plugin {
               const fState: FileOrFolderMixedState = { key: f.path, syncStatus: 'syncing' }
               return fState;
             })
+          } else if (fileList?.length > 0) {
+            fileList.forEach(filePath => {
+              const file = allFiles.find(file => file.path === filePath);
+              if (file) {
+                remoteChangingFiles.push({
+                  key: file.path,
+                  syncStatus: 'syncing',
+                });
+              }
+            })
           }
           [ ...remoteChangingFiles, ...toLocalFiles ].forEach(f => {
             initData[f.key] = f;
