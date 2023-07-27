@@ -495,6 +495,35 @@ export class HTMLGenerator {
 			// use the headers inner text as the id
 			headerEl.setAttribute("id", headerEl.textContent?.replaceAll(" ", "_") ?? "");
 		});
+
+		const backlinkNodes = file.document.querySelectorAll('.tree-item.search-result');
+		if (backlinkNodes?.length > 0) {
+			backlinkNodes.forEach(node => {
+				const title = (node.querySelector('.tree-item-inner') as HTMLElement).innerText;
+				let targetFile = app.metadataCache.getFirstLinkpathDest(title, file.markdownFile.path);
+				if (targetFile) {
+					let targetPath = new Path(targetFile.path);
+					if (htmlCompatibleExt.includes(targetPath.extensionName)) targetPath.setExtension("html");
+					if (InvioSettingTab.settings.makeNamesWebStyle) targetPath.makeWebStyle();
+					const finalPath = targetPath.makeUnixStyle().asString;
+
+					// Setup matched link route
+					const matchedTextNodes = node.querySelectorAll('.search-result-file-match');
+					if (matchedTextNodes) {
+						matchedTextNodes.forEach(element => {
+							const matchedANodes: HTMLElement = document.createElement('a');
+							matchedANodes.classList.add('search-result-file-match');
+							matchedANodes.setAttribute("target", "_self");
+							matchedANodes.setAttribute('href', finalPath);
+							matchedANodes.innerHTML = element.innerHTML;
+							element.parentElement.replaceChild(matchedANodes, element);
+						});
+					}
+				}
+			})
+		}
+		
+		
 	}
 
 	private static getPageOnlyMeta(file: TFile) {

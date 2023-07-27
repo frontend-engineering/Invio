@@ -267,3 +267,10 @@
     content: "" !important;
     visibility: hidden !important;
 }
+
+.search-result-file-match {
+    display: block;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--text-muted);
+}
