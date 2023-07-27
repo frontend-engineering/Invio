@@ -1,6 +1,6 @@
 import { Path } from "../utils/path";
 import { InvioSettingTab } from "../settings";
-import { GlobalDataGenerator, LinkTree } from "./global-gen";
+import { GlobalDataGenerator, LinkTree, TFileWithMeta } from "./global-gen";
 import { MarkdownRenderer } from "./markdown-renderer";
 import { AssetHandler } from "./asset-handler";
 import { ExportFile } from "./export-file";
@@ -26,6 +26,7 @@ export interface IMetaConfig {
 	description?: string;
 	keywords?: string[];
 	canonical?: string;
+	sort?: number;
 	publish?: boolean;
 	permalink?: string;
 }
@@ -37,7 +38,12 @@ export class HTMLGenerator {
 	public static async beginBatch(plugin: InvioPlugin, exportingFiles: TFile[]) {
 		GlobalDataGenerator.clearGraphCache();
 		GlobalDataGenerator.clearFileTreeCache();
-		GlobalDataGenerator.getFileTree(exportingFiles);
+		const files = exportingFiles.map(f => {
+			const pageConfig = this.getPageOnlyMeta(f);
+			(f as TFileWithMeta).sort = pageConfig?.sort || 0
+			return f;
+		})
+		GlobalDataGenerator.getFileTree(files);
 		await StatsView.activateStatsView(plugin);
 		const view = StatsView.getStatsView(plugin);
 		await AssetHandler.updateAssetCache(view);
@@ -491,6 +497,10 @@ export class HTMLGenerator {
 		});
 	}
 
+	private static getPageOnlyMeta(file: TFile) {
+		const pageConfig = (app.metadataCache.getFileCache(file).frontmatter || {}) as IMetaConfig;
+		return pageConfig;
+	}
 	private static getMeta(file: ExportFile): IMetaConfig {
 		// Get site config
 		const indexPath = file.exportedFolder.joinString('index.md');

@@ -1,6 +1,7 @@
 import { Path } from "src/utils/path";
 import { InvioSettingTab } from "src/settings";
 import { HeadingCache, TAbstractFile, TFile, TFolder } from "obsidian";
+import { log } from '../moreOnLog';
 
 export const enum TreeItemType
 {
@@ -9,6 +10,9 @@ export const enum TreeItemType
 	Folder = "folder",
 	None = "none"
 }
+
+export type TFileWithMeta = TFile & { sort?: number };
+export type TAbstractFileWithMeta = TAbstractFile & { sort?: number };
 
 function isHeadingCache(obj: any): obj is HeadingCache 
 {
@@ -26,6 +30,7 @@ export class LinkTree
 	public href: string | undefined = undefined;
 	public root: LinkTree | undefined = undefined;
 	public isRoot: boolean = false;
+	public sort: number = 0;
 
 	/**
 	 * Sets the source of this tree item. This also sets the type, title and href based on the source.
@@ -71,11 +76,12 @@ export class LinkTree
 		return this.#type;
 	}
 
-	constructor(source: TAbstractFile | HeadingCache | undefined, parent: LinkTree | undefined, depth: number, root: LinkTree | undefined = undefined)
+	constructor(source: TAbstractFile | HeadingCache | undefined, parent: LinkTree | undefined, depth: number, root: LinkTree | undefined = undefined, sort: number | undefined = 0)
 	{
 		this.source = source;
 		this.parent = parent;
 		this.depth = depth;
+		this.sort = sort;
 
 		if(root == undefined) this.root = this.findRoot();
 	}
@@ -99,15 +105,15 @@ export class LinkTree
 	 * Creates a tree from a list of files.
 	 * @returns The root of the tree.
 	 */
-	public static fromFiles(files: TFile[]): LinkTree
+	public static fromFiles(files: TFileWithMeta[]): LinkTree
 	{
 		let root = new LinkTree(undefined, undefined, 0);
 
 		for (let file of files)
 		{
-			let pathSections: TAbstractFile[] = [];
+			let pathSections: TAbstractFileWithMeta[] = [];
 
-			let parentFile: TAbstractFile = file;
+			let parentFile: TAbstractFileWithMeta = file;
 			while (parentFile != undefined)
 			{
 				pathSections.push(parentFile);
@@ -124,7 +130,7 @@ export class LinkTree
 				let child = parent.children.find(c => c.title == section.name && c.type == sectionType && c.depth == i);
 				if (child == undefined)
 				{
-					child = new LinkTree(section, parent, i, root);
+					child = new LinkTree(section, parent, i, root, section.sort);
 					parent.children.push(child);
 				}
 				parent = child;
@@ -194,12 +200,26 @@ export class LinkTree
 		return list;
 	}
 
+	public sortMeta(reverse: boolean = false)
+	{
+		this.children.sort((a, b) => {
+			const aSort = a.sort || Number.MAX_SAFE_INTEGER;
+			const bSort = b.sort || Number.MAX_SAFE_INTEGER;
+			return (reverse ? (bSort >= aSort ? 1 : -1) : (aSort >= bSort ? 1 : -1))
+		});
+		for (let child of this.children)
+		{
+			child.sortMeta(reverse);
+		}
+	}
+
+
 	public sortAlphabetically(reverse: boolean = false)
 	{
 		this.children.sort((a, b) => reverse ? b.title.localeCompare(a.title) : a.title.localeCompare(b.title));
 		for (let child of this.children)
 		{
-			child.sortAlphabetically();
+			child.sortAlphabetically(reverse);
 		}
 	}
 
@@ -338,7 +358,7 @@ export class GlobalDataGenerator
 	// size is the depth of the file from the root
 	// the list will be sorted first by size, then by title
 	// the list will include folders and files
-	public static getFileTree(exportedFiles: TFile[] | undefined = undefined): LinkTree
+	public static getFileTree(exportedFiles: TFileWithMeta[] | undefined = undefined): LinkTree
 	{
 		if (this.fileTreeCache != undefined) return this.fileTreeCache;
 		if (exportedFiles == undefined) return new LinkTree(undefined, undefined, 0);
@@ -346,6 +366,7 @@ export class GlobalDataGenerator
 		let fileTree = LinkTree.fromFiles(exportedFiles);
 		fileTree.sortAlphabetically();
 		fileTree.sortByIsFolder(true);
+		fileTree.sortMeta();
 		if(InvioSettingTab.settings.makeNamesWebStyle) fileTree.makeLinksWebStyle();
 
 		this.fileTreeCache = fileTree;
