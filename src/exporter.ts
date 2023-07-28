@@ -58,7 +58,7 @@ const openUrl = async (url: string) => {
 // Publish list of files
 export const publishFiles = async (
     client: RemoteClient,
-    vault: any,
+    app: any,
     pathList: string[],
     allFiles: TFile[],
     password: string = "",
@@ -67,6 +67,7 @@ export const publishFiles = async (
     view?: StatsView,
     cb?: (key: string, status: 'START' | 'DONE' | 'FAIL', meta?: any) => any,
 ) => {
+    const vault = app.vault;
     const htmlPath = AssetHandler.initHtmlPath();
 
     if (allFiles.length > 100000 || allFiles.length < 0)
@@ -123,9 +124,23 @@ export const publishFiles = async (
             path: `${sitemapDownload.relativeDownloadPath.asString}/${sitemapDownload.filename}`,
             key: settings.localWatchDir + '/' + sitemapDownload.filename,
         }) 
-        log.info('sitemap - ', sitemapDomStr, htmlPath);
+        log.info('generating sitemap...');
         externalFiles.push(sitemapDownload);
     }
+    // metadataCache
+    const filesMetadata: any = {};
+    allFiles.forEach(file => {
+        filesMetadata[file.path] = app.metadataCache.getFileCache(file)
+    });
+
+    const metaDownload = new Downloadable('meta.json', JSON.stringify(filesMetadata), htmlPath.joinString(settings.localWatchDir));
+    Object.assign(metaDownload, {
+        path: `${metaDownload.relativeDownloadPath.asString}/${metaDownload.filename}`,
+        key: settings.localWatchDir + '/' + metaDownload.filename,
+    }) 
+    log.info('generating meta...');
+    externalFiles.push(metaDownload);
+    
     externalFiles = externalFiles.filter((file, index) => externalFiles.findIndex((f) => f.relativeDownloadPath == file.relativeDownloadPath && f.filename === file.filename) == index);
     await Utils.downloadFiles(externalFiles, htmlPath, view);
     log.info('download files to: ', htmlPath, externalFiles);

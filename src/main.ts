@@ -518,7 +518,7 @@ export default class InvioPlugin extends Plugin {
             pubPathList.push(indexFile.path);
           }
         }
-        await publishFiles(client, this.app.vault, pubPathList, allFiles, '', this.settings, triggerSource, view, (pathName: string, status: string, meta?: any) => {
+        await publishFiles(client, this.app, pubPathList, allFiles, '', this.settings, triggerSource, view, (pathName: string, status: string, meta?: any) => {
           log.info('publishing ', pathName, status);
           if (status === 'START') {
             log.info('set file start publishing', pathName);
@@ -541,7 +541,7 @@ export default class InvioPlugin extends Plugin {
               }
             }
           }
-          await publishFiles(client, this.app.vault, forceList, allFiles, '', this.settings, triggerSource);
+          await publishFiles(client, this.app, forceList, allFiles, '', this.settings, triggerSource);
         }
         HTMLGenerator.endBatch();
       } else {
