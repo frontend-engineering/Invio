@@ -7,6 +7,8 @@ import graphWASM from "assets/graph_wasm.wasm";
 
 import tinyColorJS from "assets/tinycolor.txt.js";
 // @ts-ignore
+import webpageUtilJS from 'assets/webpage.util.txt.js';
+// @ts-ignore
 import webpageJS from "assets/webpage.txt.js";
 
 import appStyles from "assets/obsidian-styles.txt.css";
@@ -58,7 +60,7 @@ export class AssetHandler
 
 		await this.loadAppStyles();
 		this.webpageStyles = webpageStyles;
-		this.webpageJS = webpageJS;
+		this.webpageJS = webpageUtilJS + ';' + webpageJS;
 		this.graphViewJS = graphViewJS;
 		this.graphWASMJS = graphWASMJS;
 		this.renderWorkerJS = renderWorkerJS;
