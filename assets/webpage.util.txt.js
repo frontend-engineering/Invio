@@ -515,6 +515,7 @@ class SearchView {
 			console.log('update search...');
 			this.updateSearch();
 		});
+		document.addEventListener("click", this.onDocumentClick.bind(this))
 	}
 
 	addMessage(text) {    
@@ -522,6 +523,10 @@ class SearchView {
 		messageEl.classList.add("search-message");
 		this.resultEl.appendChild(messageEl);
 		messageEl.innerText = text;
+	}
+	onDocumentClick = function(e) {
+		e.defaultPrevented;
+		this.resultEl.remove()
 	}
 	updateSearch() {
 		while (this.resultEl.firstChild) {
