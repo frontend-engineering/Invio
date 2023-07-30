@@ -427,68 +427,53 @@ class SuggestionsList {
 
 window.SuggestionsList = SuggestionsList;
 
-function positionTooltip(originRect, tooltipEl, options) {
+function positionTooltip(targetPosition, tooltip, options) {
 	options = options || {};
 
-	const gap = options.gap || 0;
-	const verticalPreference = options.preference || 'bottom';
-	const containerEl = options.offsetParent || tooltipEl.offsetParent || tooltipEl.doc.documentElement;
-	const horizontalAlignment = options.horizontalAlignment || 'left';
+	tooltip.style.display = 'block';
 
-	const containerScrollTop = containerEl.scrollTop + 10;
-	const containerBottom = containerEl.scrollTop + containerEl.clientHeight - 10;
+	const gap = options.gap !== undefined ? options.gap : 0;
+	const preference = options.preference !== undefined ? options.preference : 'bottom';
+	const offsetParent = options.offsetParent !== undefined ? options.offsetParent : tooltip.offsetParent || tooltip.ownerDocument.documentElement;
+	const horizontalAlignment = options.horizontalAlignment !== undefined ? options.horizontalAlignment : 'left';
 
-	const tooltipTop = Math.min(originRect.top, containerBottom);
-	const tooltipBottom = Math.max(originRect.bottom, containerScrollTop);
+	const topBound = Math.min(targetPosition.top, offsetParent.scrollTop + offsetParent.clientHeight - tooltip.offsetHeight - 10);
+	const bottomBound = Math.max(targetPosition.bottom, offsetParent.scrollTop + 10);
 
-	const tooltipHeight = tooltipEl.offsetHeight;
+	const isAboveTarget = targetPosition.top - offsetParent.scrollTop >= tooltip.offsetHeight + gap;
+	const isBelowTarget = offsetParent.scrollTop + offsetParent.clientHeight - targetPosition.bottom >= tooltip.offsetHeight + gap;
 
-	let tooltipVerticalPosition = 0;
-	let result;
+	let top = 0;
+	let result = '';
 
-	if (tooltipTop - containerScrollTop >= tooltipHeight + gap) {
-		// Fits on top 
-		result = 'top';
-		tooltipVerticalPosition = tooltipTop - gap - tooltipHeight;
-	} else if (containerBottom - originRect.bottom >= tooltipHeight + gap) {
-		// Fits on bottom              
-		result = 'bottom';
-		tooltipVerticalPosition = tooltipBottom + gap;
-	} else {
-		// Overlap
-		result = 'overlap';
-
-		if (verticalPreference === 'top') {
-			tooltipVerticalPosition = containerScrollTop + gap;
+	if (!isAboveTarget || (preference === 'bottom' && isBelowTarget)) {
+		if (offsetParent.clientHeight < tooltip.offsetHeight + gap) {
+			top = offsetParent.scrollTop;
+			result = 'overlap';
+		} else if (preference === 'top') {
+			top = offsetParent.scrollTop + gap;
+			result = 'overlap';
 		} else {
-			tooltipVerticalPosition = containerBottom - tooltipHeight;
+			top = bottomBound + gap;
+			result = 'bottom';
 		}
-	}  
-
-	let horizontalPosition
-
-	const containerLeft = containerEl.scrollLeft + 10;
-	const containerRight = containerEl.scrollLeft + containerEl.clientWidth - 10;
-
-	const tooltipWidth = tooltipEl.offsetWidth;
-
-	if (horizontalAlignment === 'left') {
-		horizontalPosition = originRect.left;
 	} else {
-		horizontalPosition = originRect.right - tooltipWidth;
+		top = topBound - gap;
+		result = 'top';
 	}
 
-	horizontalPosition = Math.max(horizontalPosition, containerLeft);
-	horizontalPosition = Math.min(horizontalPosition, containerRight - tooltipWidth);
+	let left = horizontalAlignment === 'left' ? targetPosition.left : targetPosition.right - tooltip.offsetWidth;
 
-	tooltipEl.style.top = `${tooltipVerticalPosition}px`;
-	tooltipEl.style.left = `${horizontalPosition}px`;
+	if (left < offsetParent.scrollLeft + 10) {
+		left = offsetParent.scrollLeft + 10;
+	} else if (left + tooltip.offsetWidth > offsetParent.scrollLeft + offsetParent.clientWidth - 10) {
+		left = offsetParent.scrollLeft + offsetParent.clientWidth - tooltip.offsetWidth - 10;
+	}
 
-	return {
-		top: tooltipVerticalPosition,
-		left: horizontalPosition,
-		result
-	};
+	tooltip.style.top = `${top}px`;
+	tooltip.style.left = `${left}px`;
+
+	return { top, left, result };
 }
 
 class SearchView {
@@ -518,7 +503,7 @@ class SearchView {
 		document.addEventListener("click", this.onDocumentClick.bind(this))
 	}
 
-	addMessage(text) {    
+	addMessage(text) {
 		const messageEl = document.createElement('div');
 		messageEl.classList.add("search-message");
 		this.resultEl.appendChild(messageEl);
