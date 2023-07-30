@@ -384,7 +384,10 @@ async function loadDocument(url, pushHistory = true, scrollTo = true)
 		let splitURL = url.split("#");
 		let pathnameTarget = splitURL[0] ?? url;
 		let headingTarget = splitURL.length > 1 ? splitURL[1] : null;
-		if (headingTarget) document.getElementById(headingTarget).scrollIntoView();
+		if (headingTarget) {
+			headingTarget = decodeURIComponent(headingTarget).replaceAll(' ', '_');
+			document.getElementById(headingTarget).scrollIntoView();
+		}
 
 		// Change the root path to match the match from the new page
 		setupRootPath(doc);
