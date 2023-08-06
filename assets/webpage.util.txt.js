@@ -297,6 +297,9 @@ class SuggestionsList {
 		// 注册点击、鼠标移入事件
 		this.containerEl.addEventListener("click", this.onSuggestionClick.bind(this));
 		this.containerEl.addEventListener("mousemove", this.onSuggestionMouseover.bind(this));
+		key('up', this.moveUp.bind(this));
+		key('down', this.moveDown.bind(this));
+		key('enter', this.onEnter.bind(this));
 	}
 
 	moveUp(event) {
@@ -317,6 +320,10 @@ class SuggestionsList {
 				return false;
 			}
 		}
+	}
+
+	onEnter(event) {
+		this.useSelectedItem(event);
 	}
 
 	setSuggestions(suggestions) {
@@ -501,6 +508,7 @@ class SearchView {
 			this.updateSearch();
 		});
 		document.addEventListener("click", this.onDocumentClick.bind(this))
+		key('esc', this.onDocumentClick.bind(this));
 	}
 
 	addMessage(text) {
