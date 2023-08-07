@@ -227,7 +227,7 @@ export default class InvioPlugin extends Plugin {
         () => self.saveSettings()
       );
       // const Prefix = 'op-remote-source-raw/';
-      const remoteRsp = await client.listFromRemote(RemoteSrcPrefix);
+      const remoteRsp = await client.listFromRemote(RemoteSrcPrefix + this.settings.localWatchDir);
       log.info('remote: ', remoteRsp);
       const remoteContents = remoteRsp.Contents.filter(item => item.key !== RemoteSrcPrefix);
 
