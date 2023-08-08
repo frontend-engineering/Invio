@@ -105,6 +105,7 @@ export default class InvioPlugin extends Plugin {
   autoRunIntervalID?: number;
   i18n: I18n;
   vaultRandomID: string;
+  recentSyncedFiles: any;
 
   isUnderWatch(file: TAbstractFile) {
     const rootDir = this.settings.localWatchDir;
@@ -114,6 +115,29 @@ export default class InvioPlugin extends Plugin {
       }
     }
     return false;
+  }
+
+  shouldAddToSyncFile(file: TFile): boolean {
+    if (file.extension !== 'md') {
+      return false;
+    }
+    return true;
+  };
+
+  async addRecentSyncedFile(file: TFile): Promise<void> {
+    log.info('file synced: ', file);
+    if (!file || !this.shouldAddToSyncFile(file)) {
+      return;
+    }
+
+    !this.recentSyncedFiles && (this.recentSyncedFiles = {});
+    const contents = await this.app.vault.read(file);
+
+    this.recentSyncedFiles[file.path] = {
+      contents,
+      ...file.stat
+    }
+    log.info('file snapshot: ', this.recentSyncedFiles);
   }
 
   // async checkDomain() {
@@ -308,6 +332,7 @@ export default class InvioPlugin extends Plugin {
       const { plan, sortedKeys, deletions, sizesGoWrong, touchedFileMap } = await getSyncPlan(
         remoteStates,
         local,
+        this.recentSyncedFiles,
         fileList?.length > 0,
         fileList,
         localConfigDirContents,
@@ -392,6 +417,7 @@ export default class InvioPlugin extends Plugin {
             fileList.forEach(filePath => {
               const file = allFiles.find(file => file.path === filePath);
               if (file) {
+
                 remoteChangingFiles.push({
                   key: file.path,
                   syncStatus: 'syncing',
@@ -463,6 +489,12 @@ export default class InvioPlugin extends Plugin {
               return;
             }
             log.info('sync done ', pathName, decision);
+            if ((decision === 'uploadLocalToRemote') || (decision === 'downloadRemoteToLocal')) {
+              const syncedFile = this.app.vault.getAbstractFileByPath(pathName);
+              if (syncedFile instanceof TFile) {
+                this.addRecentSyncedFile(syncedFile);
+              }
+            }
             // TODO: Get remote link, but need remote domain first
             view?.update(pathName, { syncStatus: 'sync-done', remoteLink: '' });
             view?.info(`${i}/${totalCount} - file ${pathName} sync done`);
