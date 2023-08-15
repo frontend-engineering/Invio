@@ -24,8 +24,11 @@ Invio automatically converts your Obsidian documents into HTML web pages and syn
 ## Docs
 
 Invio is in active development. Roadmap and more features could be found in official docs.
+<p align="center">
+   <img width="100%" src="./assets/roadmap.png" />
+</p>
 
-Read [Invio Official Document](https://docs.webinfra.cloud/Invio/index.html)
+Read [Invio Official Document](https://docs.webinfra.cloud/Invio/Roadmap.html)
 
 
 ## Download and Install
