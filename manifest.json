@@ -1,7 +1,7 @@
 {
     "id": "invio",
     "name": "Invio",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "minAppVersion": "0.13.21",
     "description": "Export docs as websites and deploy them to AWS S3 or compatible COS. Invio streamlines the process of publishing, enabling users to easily share their work online.",
     "author": "frontend-engineering",
