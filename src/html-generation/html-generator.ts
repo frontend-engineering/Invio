@@ -96,6 +96,11 @@ export class HTMLGenerator {
 			leftSidebar.appendChild(toggle);
 		}
 
+		if (!InvioSettingTab.settings.hideSearch) {
+			const search = this.generateSearchBar(usingDocument);
+			leftSidebar.appendChild(search);
+		}
+
 		// inject file tree
 		if (InvioSettingTab.settings.includeFileTree) {
 			let tree = GlobalDataGenerator.getFileTree();
@@ -656,6 +661,28 @@ export class HTMLGenerator {
 		return toggle;
 	}
 
+	public static generateSearchBar(usingDocument: Document = document): HTMLElement {
+		const outerContainer = usingDocument.createElement('div');
+		outerContainer.classList.add('search-view-outer');
+
+		const container = usingDocument.createElement('div');
+		container.classList.add('search-view-container');
+		outerContainer.appendChild(container);
+
+		const icon = usingDocument.createElement('span')
+		icon.classList.add('published-search-icon');
+		icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`
+		container.appendChild(icon);
+
+		const input = usingDocument.createElement('input');
+		input.classList.add('search-bar');
+		input.type = 'text';
+		input.setAttribute('placeholder', 'Search page or heading...');
+		container.appendChild(input);
+
+		return outerContainer;
+	}
+
 	private static generateTreeItem(item: LinkTree, usingDocument: Document, minCollapsableDepth = 1, startClosed: boolean = true): HTMLDivElement {
 		let arrowIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle"><path d="M3 8L12 17L21 8"></path></svg>`;
 
@@ -746,6 +773,8 @@ export class HTMLGenerator {
 		   var xmltext = oSerializer.serializeToString(doc);
 		   return `<?xml version="1.0" encoding="UTF-8"?>${xmltext}`;
 	}
+
+	static generateMetadataCache(fileList: TFile[]) {}
 
 	private static generateBrandHeader(usingDocument: Document, brand: string, icon: string, slogan: string, homeLink: string) {
 		// site-body-left-column-site-name

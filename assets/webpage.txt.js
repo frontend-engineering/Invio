@@ -384,7 +384,10 @@ async function loadDocument(url, pushHistory = true, scrollTo = true)
 		let splitURL = url.split("#");
 		let pathnameTarget = splitURL[0] ?? url;
 		let headingTarget = splitURL.length > 1 ? splitURL[1] : null;
-		if (headingTarget) document.getElementById(headingTarget).scrollIntoView();
+		if (headingTarget) {
+			headingTarget = decodeURIComponent(headingTarget).replaceAll(' ', '_');
+			document.getElementById(headingTarget).scrollIntoView();
+		}
 
 		// Change the root path to match the match from the new page
 		setupRootPath(doc);
@@ -513,6 +516,49 @@ async function loadLeftSidebar(document) {
 	return container;
 }
 
+
+async function loadMeta(document) {
+	let container = document.querySelector('.sidebar-left > .sidebar-content')
+	if (!container) {
+		console.log('no container found for left sidebar');
+		return;
+	}
+	let response;
+
+	try
+	{
+		const dataNode = document.getElementById('invio-hidden-data-node');
+		let baseDir = '';
+		if (dataNode?.dataset.root) {
+			baseDir = dataNode?.dataset.root;
+		} else {
+			const hostPath = getURLPath();
+			baseDir = hostPath.split('/')[0];
+		}
+
+		const sidebarUrl = `${baseDir}/meta.json`
+		response = await fetch(sidebarUrl);
+	}
+	catch (error)
+	{
+		console.log("Cannot fetch meta data");
+		return;
+	}
+
+	if (response.ok)
+	{
+		let meta = (await response.json());
+		console.log('got meta: ', meta);
+		return meta;
+	}
+	else
+	{
+		console.error('fetch failed: ', response);
+		return ''
+	}
+}
+
+
 function setupThemeToggle(setupOnNode)
 {
 	if (localStorage.getItem("theme_toggle") != null)
@@ -632,6 +678,20 @@ function setupThemeToggle(setupOnNode)
 	// 	lastScheme = newColorScheme;
     // });
 
+}
+
+function setupSearch(setupOnNode, metadata) {
+	const searchView = new window.SearchView(setupOnNode, metadata);
+	// const searchBar = setupOnNode.querySelector('.search-view-container');
+	// if (!searchBar) return;
+	// searchBar.querySelector('.search-bar').addEventListener('input', e => {
+	// 	console.log('intpu search - ', e);
+	// 	e.preventDefault();
+	// 	if (!e.data) return;
+	// 	const resultData = search(e.data);
+	// 	console.log('intpu search result - ', resultData);
+
+	// })
 }
 
 function setupHeaders(setupOnNode)
@@ -989,4 +1049,12 @@ window.onload = function()
 			initializePage(document);
 		})
 
+	loadMeta(document)
+		.then(meta => {
+			if (!meta) {
+				// TODO: Hide search bar
+				return;
+			}
+			setupSearch(document, meta);
+		})
 }

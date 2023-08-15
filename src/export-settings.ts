@@ -23,6 +23,7 @@ export interface ExportSettingsData
 
 	// Page Features
 	addDarkModeToggle: boolean;
+	hideSearch: boolean;
 	includeOutline: boolean;
 	includeFileTree: boolean;
 	includeGraphView: boolean;
@@ -69,6 +70,7 @@ export const DEFAULT_SETTINGS: ExportSettingsData =
 
 	// Page Features
 	addDarkModeToggle: true,
+	hideSearch: false,
 	includeOutline: true,
 	includeGraphView: true,
 	includeFileTree: true,

@@ -369,12 +369,14 @@ const isSkipItem = (
       }
     }
   }
+  if (watchDir && !key.startsWith(watchDir)) {
+    return true;
+  }
+
   if (syncConfigDir && isInsideObsFolder(key, configDir)) {
     return false;
   }
-  if (!key.startsWith(watchDir)) {
-    return true;
-  }
+
   return (
     isHiddenPath(key, true, false) ||
     (!syncUnderscoreItems && isHiddenPath(key, false, true)) ||
@@ -386,6 +388,8 @@ const isSkipItem = (
 const ensembleMixedStates = async (
   remoteStates: FileOrFolderMixedState[],
   local: TAbstractFile[],
+  vault: Vault,
+  recentSyncedFiles: any,
   selectedMode: boolean,
   selectedLocalFilePaths: string[] | undefined,
   localConfigDirContents: ObsConfigDirFileType[] | undefined,
@@ -417,7 +421,21 @@ const ensembleMixedStates = async (
       // ignore
       continue;
     } else if (entry instanceof TFile) {
-      const mtimeLocal = Math.max(entry.stat.mtime ?? 0, entry.stat.ctime ?? 0);
+      let mtimeLocal = Math.max(entry.stat.mtime ?? 0, entry.stat.ctime ?? 0);
+
+      const snap = recentSyncedFiles && recentSyncedFiles[entry.path];
+      if (snap) {
+        log.info('snap found: ', snap);
+        const curContents = await vault.read(entry);
+        if (entry.stat.size === snap.size) {
+          if (curContents === snap.contents) {
+            log.info('current contents same with last sync, not changed');
+            mtimeLocal = snap.mtime;
+          }
+        } else {
+          log.info('current contents changed');
+        }
+      }
       r = {
         key: entry.path,
         existLocal: true,
@@ -1010,6 +1028,7 @@ const SIZES_GO_WRONG_DECISIONS: Set<DecisionType> = new Set([
 export const getSyncPlan = async (
   remoteStates: FileOrFolderMixedState[],
   local: TAbstractFile[],
+  recentSyncedFiles: any,
   selectedMode: boolean, // Selected mode only care about files in selectedLocalFilePaths
   selectedLocalFilePaths: string[] | undefined, // Only care file in this list and ignore all other files, work when selectedMode is true
   localConfigDirContents: ObsConfigDirFileType[] | undefined,
@@ -1028,6 +1047,8 @@ export const getSyncPlan = async (
   const mixedStates = await ensembleMixedStates(
     remoteStates,
     local,
+    vault,
+    recentSyncedFiles,
     selectedMode,
     selectedLocalFilePaths,
     localConfigDirContents,
