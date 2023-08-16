@@ -827,7 +827,7 @@ export default class InvioPlugin extends Plugin {
 
     this.registerEvent(
       this.app.vault.on('modify', async (file) => {
-        log.debug('file modified: ', file, this.isUnderWatch(file));
+        log.debug('file modified: ', file);
         if (this.isUnderWatch(file)) {
           this.setRibbonPendingStatus();
           setTimeout(() => {

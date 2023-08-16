@@ -9,7 +9,7 @@ Invio automatically converts your Obsidian documents into HTML web pages and syn
 
 
 ## Features
-
+- Synchronize your Obsidian docs to AWS S3, similar to the functionality of Obsidian Sync but with data stored in AWS
 - Publish your docs to html webpage auto, while keeping all your styles. Inspired by [Webpage HTML Export](https://github.com/KosmosisDire/obsidian-webpage-export)
 - COS supports: Amazon S3 or COS compatable like tencent Cloud
 - **Scheduled auto sync supported.** You can also manually trigger the sync using sidebar ribbon
