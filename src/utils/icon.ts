@@ -145,12 +145,17 @@ interface CreateOptions {
  * @param iconName Name of the icon or emoji to add.
  * @param color Optional color of the icon to add.
  */
-const createIconNode = (plugin: InvioPlugin, path: string, svgStr: string, color: string = '#44cf6e'): void => {
+const createIconNode = (plugin: InvioPlugin, path: string, svgStr: string, color: string = '#44cf6e', repeated: boolean): void => {
   // Get the container from the provided options or try to find the node that has the
   // path from the document itself.
   const node = document.querySelector(`[data-path="${path}"]`);
   if (!node) {
     console.error('element with data path not found', path);
+    if (!repeated) {
+      setTimeout(() => {
+        createIconNode(plugin, path, svgStr, color, true);
+      }, 3000)
+    }
     return;
   }
 
