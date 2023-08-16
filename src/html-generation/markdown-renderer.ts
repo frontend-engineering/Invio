@@ -1,14 +1,13 @@
 /* eslint-disable @typescript-eslint/no-namespace */
-import { MarkdownView, Notice, WorkspaceLeaf } from "obsidian";
+import { MarkdownView, Notice, WorkspaceLeaf, PaneType, SplitDirection, App } from "obsidian";
+import { clipboard} from 'electron';
 import { InvioSettingTab } from "src/settings";
 import { Utils } from "src/utils/utils";
 import { ExportFile } from "./export-file";
 import { AssetHandler } from "./asset-handler";
-import { TabManager } from "src/utils/tab-manager";
-const { clipboard } = require('electron')
 import { RenderLog } from "./render-log";
 import { StatsView } from "src/statsView";
-
+import type InvioPlugin from "../main"; // unavoidable
 
 export namespace MarkdownRenderer
 {
@@ -155,14 +154,19 @@ export namespace MarkdownRenderer
 			element.textContent = element.value;
 		});
 	}
+
+	function newTab(app: App, navType: PaneType | boolean, splitDirection: SplitDirection = 'vertical'): WorkspaceLeaf {
+		let leaf = navType === 'split' ? app.workspace.getLeaf(navType, splitDirection) : app.workspace.getLeaf(navType);
+		return leaf;
+	}
 	
-    export async function beginBatch()
+    export async function beginBatch(plugin: InvioPlugin)
 	{
 		problemLog = "";
         errorInBatch = false;
 		cancelled = false;
 
-		renderLeaf = TabManager.openNewTab("window", "vertical");
+		renderLeaf = newTab(plugin.app, "window", "vertical");
 		// @ts-ignore
 		const parentFound = await Utils.waitUntil(() => renderLeaf && renderLeaf.parent, 2000, 10);
 		if (!parentFound) 

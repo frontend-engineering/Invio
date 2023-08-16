@@ -47,7 +47,7 @@ export class HTMLGenerator {
 		await StatsView.activateStatsView(plugin);
 		const view = StatsView.getStatsView(plugin);
 		await AssetHandler.updateAssetCache(view);
-		await MarkdownRenderer.beginBatch();
+		await MarkdownRenderer.beginBatch(plugin);
 		return view;
 	}
 
