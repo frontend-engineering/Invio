@@ -70,6 +70,8 @@ export interface OnedriveConfig {
 }
 
 export interface InvioPluginSettings {
+  token: string;
+  user: any;
   s3: S3Config;
   password: string;
   remoteDomain: string;
@@ -101,7 +103,7 @@ export interface RemoteItem {
 }
 
 export const COMMAND_URI = "invio";
-export const COMMAND_CALLBACK = "invio-cb";
+export const COMMAND_CALLBACK = "invio-auth-cb";
 export const COMMAND_CALLBACK_ONEDRIVE = "invio-cb-onedrive";
 export const COMMAND_CALLBACK_DROPBOX = "invio-cb-dropbox";
 

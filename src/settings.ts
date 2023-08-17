@@ -425,12 +425,41 @@ export class InvioSettingTab extends PluginSettingTab {
           })
       });
 
-    // ===============Exporter Settings ======================
+    // ===============Hosting Settings ======================
 
-		containerEl.createEl('h2', { text: 'Publish Settings', cls: 'settings-pub-header' });
+		containerEl.createEl('h2', { text: 'Hosting Settings', cls: 'settings-pub-header' });
 
-    // ===============Exporter Settings End===================
-    
+    const hostingDiv = containerEl.createEl("div");
+    const hostingEl = new Setting(hostingDiv)
+      .setName('Auto Hosting')
+      .setDesc('Skip S3 and domain config');
+    console.log('settings token: ', this.plugin.settings);
+    if (this.plugin.settings.token) {
+      hostingEl.addText((text) => {
+        text
+          .setPlaceholder("")
+          .setValue(this.plugin.settings.user?.name)
+      })
+      .addButton(async (button) => {
+        button.setButtonText('Logout');
+        button.onClick(async () => {
+          log.info('Log out... ', this.plugin.settings.token);
+          this.plugin.settings.token = null;
+          await this.plugin.saveSettings();
+          this.hide();
+          this.display();
+        });
+      })
+    } else {
+      hostingEl.addButton(async (button) => {
+        button.setButtonText('auth');
+        button.onClick(async () => {
+          log.info('start authing: ');
+          (window as any).electron.remote.shell.openExternal(`http://localhost:8888/exporter`);
+        });
+      });
+    }
+      
     
     //////////////////////////////////////////////////
     // below for service chooser (part 1/2)
@@ -683,6 +712,9 @@ export class InvioSettingTab extends PluginSettingTab {
     //         await this.plugin.saveSettings();
     //       });
     //   });
+
+    // ===============Hosting Settings End===================
+
 
     //////////////////////////////////////////////////
     // below for basic settings

@@ -9,6 +9,7 @@ import {
   FileSystemAdapter,
   TAbstractFile,
   TFolder,
+  SettingTab,
 } from "obsidian";
 import cloneDeep from "lodash/cloneDeep";
 import type {
@@ -68,6 +69,8 @@ const Menu_Tab = `    `;
 
 const DEFAULT_SETTINGS: InvioPluginSettings = {
   s3: DEFAULT_S3_CONFIG,
+  token: '',
+  user: null,
   password: "",
   remoteDomain: '',
   serviceType: "s3",
@@ -96,6 +99,7 @@ interface OAuth2Info {
 
 export default class InvioPlugin extends Plugin {
   settings: InvioPluginSettings;
+  settingTab?: InvioSettingTab;
   db: InternalDBs;
   syncStatus: SyncStatusType;
   oauth2Info: OAuth2Info;
@@ -869,6 +873,24 @@ export default class InvioPlugin extends Plugin {
     this.registerObsidianProtocolHandler(
       COMMAND_CALLBACK,
       async (inputParams) => {
+        log.info('protocol: ', COMMAND_CALLBACK, inputParams)
+        const { action, token, user } = inputParams;
+        if (action === 'invio-auth-cb') {
+          if (token && user) {
+            this.settings.token = token;
+            try {
+              this.settings.user = JSON.parse(user);
+            } catch (error) {
+              log.error('parse user info failed: ', error);
+              this.settings.token = '';
+              this.settings.user = null;
+            }
+            await this.saveSettings();
+            this.settingTab?.hide();
+            this.settingTab?.display();
+          }
+          return;
+        }
         new Notice(
           t("protocol_callbacknotsupported", {
             params: JSON.stringify(inputParams),
@@ -946,7 +968,8 @@ export default class InvioPlugin extends Plugin {
       }
     })
 
-    this.addSettingTab(new InvioSettingTab(this.app, this));
+    this.settingTab = new InvioSettingTab(this.app, this);
+    this.addSettingTab(this.settingTab);
 
     // this.registerDomEvent(document, "click", (evt: MouseEvent) => {
     //   log.info("click", evt);
