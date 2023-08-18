@@ -49,6 +49,7 @@ import { DeletionOnRemote, MetadataOnRemote } from "./metadataOnRemote";
 import { SyncAlgoV2Modal } from "./syncAlgoV2Notice";
 import { TouchedPlanModel } from './touchedPlanModel';
 import { LoadingModal } from './loadingModal';
+import { CreateProjectModal } from './components/CreateProjectModal';
 
 import { applyLogWriterInplace, log } from "./moreOnLog";
 import AggregateError from "aggregate-error";
@@ -1025,7 +1026,20 @@ export default class InvioPlugin extends Plugin {
     icon.removeIconInNode(document.body);
     const { iconSvgSyncWait } = getIconSvg();
     icon.createIconNode(this, this.settings.localWatchDir, iconSvgSyncWait);
-    await this.saveSettings(); 
+
+
+    const curDir = this.settings.localWatchDir;
+
+    const existed = await checkRemoteHosting(this);
+    if (!existed) {
+      const cb = () => {
+        this.switchWorkingDir(value);
+      };
+      const modal = new CreateProjectModal(this.app, this, curDir, curDir, null, cb.bind(this));
+      modal.open();
+    } else {
+      await this.saveSettings(); 
+    }
   }
 
   async checkIfOauthExpires() {}

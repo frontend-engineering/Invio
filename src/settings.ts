@@ -425,7 +425,7 @@ export class InvioSettingTab extends PluginSettingTab {
           })
       });
 
-    // ===============Hosting Settings ======================
+    // =============== Hosting Settings ======================
 
 		containerEl.createEl('h2', { text: 'Hosting Settings', cls: 'settings-pub-header' });
 
