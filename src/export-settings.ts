@@ -20,6 +20,7 @@ export interface ExportSettingsData
 	// Export Options
 	dataviewBlockWaitTime: number;
 	showWarningsInExportLog: boolean;
+	incrementalExport: boolean;
 
 	// Page Features
 	addDarkModeToggle: boolean;
@@ -67,6 +68,7 @@ export const DEFAULT_SETTINGS: ExportSettingsData =
 	// Export Options
 	dataviewBlockWaitTime: 700,
 	showWarningsInExportLog: true,
+	incrementalExport: false,
 
 	// Page Features
 	addDarkModeToggle: true,
