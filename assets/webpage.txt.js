@@ -646,11 +646,17 @@ function setupThemeToggle(setupOnNode)
 		localStorage.setItem("theme_toggle", state ? "true" : "false");
 	}
 
+	let togging = false;
 	setupOnNode.querySelector(".theme-toggle-input")?.addEventListener('change', event => {
 		event.stopPropagation();
     	event.preventDefault();
+		if (togging) return;
+		togging = true;
 		console.log("Theme toggle changed to: " + !(localStorage.getItem("theme_toggle") == "true"));
 		setThemeToggle(!(localStorage.getItem("theme_toggle") == "true"));
+		setTimeout(() => {
+			togging = false;
+		}, 300)
 	})
 
     // window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => 
