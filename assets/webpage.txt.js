@@ -646,11 +646,12 @@ function setupThemeToggle(setupOnNode)
 		localStorage.setItem("theme_toggle", state ? "true" : "false");
 	}
 
-    setupOnNode.querySelector(".theme-toggle-input")?.addEventListener("change", event =>
-	{
+	setupOnNode.querySelector(".theme-toggle-input")?.addEventListener('change', event => {
+		event.stopPropagation();
+    	event.preventDefault();
 		console.log("Theme toggle changed to: " + !(localStorage.getItem("theme_toggle") == "true"));
 		setThemeToggle(!(localStorage.getItem("theme_toggle") == "true"));
-	});
+	})
 
     // window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => 
 	// {
