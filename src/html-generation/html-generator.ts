@@ -5,7 +5,7 @@ import { MarkdownRenderer } from "./markdown-renderer";
 import { AssetHandler } from "./asset-handler";
 import { ExportFile } from "./export-file";
 import { Downloadable } from "src/utils/downloadable";
-import { TFile } from "obsidian";
+import { TFile, setIcon } from "obsidian";
 import { log } from "../moreOnLog";
 import { StatsView } from "src/statsView";
 import InvioPlugin from "src/main";
@@ -61,6 +61,7 @@ export class HTMLGenerator {
 		let usingDocument = file.document;
 
 		let sidebars = this.generateSideBars(file.contentElement, file);
+		this.generateSideBarBtns(file, sidebars);
 		let rightSidebar = sidebars.right;
 		let leftSidebar = sidebars.left;
 		usingDocument.body.appendChild(sidebars.container);
@@ -201,11 +202,10 @@ export class HTMLGenerator {
 
 		// make sure the page scales correctly at different widths
 		file.sizerElement.style.paddingBottom = "";
-		file.sizerElement.style.paddingBottom = "32px";
-		file.sizerElement.style.padding = "var(--file-margins)";
 		file.sizerElement.style.paddingTop = "var(--file-margins)";
 		file.sizerElement.style.paddingLeft = "var(--file-margins)";
 		file.sizerElement.style.paddingRight = "var(--file-margins)";
+		file.sizerElement.style.paddingBottom = "50vh";
 		file.sizerElement.style.width = "100%";
 		file.sizerElement.style.position = "absolute";
 
@@ -268,6 +268,7 @@ export class HTMLGenerator {
 
 		/*
 		- div.webpage-container
+			- div.sidebar-mobile-btns
 
 			- div.sidebar-left
 				- div.sidebar-content
@@ -313,6 +314,33 @@ export class HTMLGenerator {
 		pageContainer.appendChild(rightSidebar);
 
 		return { container: pageContainer, left: leftContent, leftScroll: leftSidebarScroll, right: rightContent, rightScroll: rightSidebarScroll, center: documentContainer };
+	}
+
+	private static generateSideBarBtns(file: ExportFile, {left, right, container}: {left: HTMLElement, right: HTMLElement, container: HTMLElement}): {leftBtn: HTMLElement, rightBtn: HTMLElement, mobileSideBarBtns: HTMLElement}
+	{
+		const docEl = file.document;
+		/*
+		- div.sidebar-mobile-btns
+			- a.sidebar-mobile-btn--left
+			- a.sidebar-mobile-btn--right
+		*/
+
+		let mobileSideBarBtns = docEl.createElement("div");
+		const leftBtn = docEl.createElement("a");
+		const rightBtn = docEl.createElement("a");
+
+		mobileSideBarBtns.setAttribute("class", "sidebar-mobile-btns");
+		leftBtn.setAttribute("class", "sidebar-mobile-btn--left");
+		rightBtn.setAttribute("class", "sidebar-mobile-btn--right");
+
+		setIcon(leftBtn, "sidebar-left");
+		setIcon(rightBtn, "sidebar-right");
+
+		mobileSideBarBtns.appendChild(leftBtn);
+		mobileSideBarBtns.appendChild(rightBtn);
+		container.appendChild(mobileSideBarBtns);
+
+		return {leftBtn, rightBtn, mobileSideBarBtns};
 	}
 
 	private static getRelativePaths(file: ExportFile): { mediaPath: Path, jsPath: Path, cssPath: Path, rootPath: Path } {
