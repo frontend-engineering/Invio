@@ -4,7 +4,7 @@ import * as path from "path";
 import { base32, base64url } from "rfc4648";
 import XRegExp from "xregexp";
 import emojiRegex from "emoji-regex";
-
+import { DEFAULT_FILE_NAME_FOR_METADATAONREMOTE } from './metadataOnRemote';
 import { log } from "./moreOnLog";
 
 declare global {
@@ -51,6 +51,16 @@ export const isHiddenPath = (
     }
   }
   return false;
+};
+
+
+
+export const isMetaPath = (
+  item: string
+) => {
+  const k = normalizePath(item); // TODO: only unix path now
+  const k2 = k.split("/").slice(-1)[0]; // TODO: only unix path now
+  return k2 === DEFAULT_FILE_NAME_FOR_METADATAONREMOTE;
 };
 
 /**

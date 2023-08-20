@@ -445,6 +445,7 @@ export default class InvioPlugin extends Plugin {
           this.app.vault,
           plan,
           sortedKeys,
+          this.settings.localWatchDir, // Or use hosting
           metadataFile,
           origMetadataOnRemote,
           sizesGoWrong,
