@@ -32,6 +32,7 @@ import {
 } from "./localdb";
 import {
   isHiddenPath,
+  isMetaPath,
   isVaildText,
   mkdirpInVault,
   getFolderLevels,
@@ -276,8 +277,8 @@ export const parseRemoteItems = async (
         changeRemoteMtimeUsingMapping: false,
       };
     }
-    if (r.key === DEFAULT_FILE_NAME_FOR_METADATAONREMOTE) {
-      metadataFile = Object.assign({}, r);
+    if (isMetaPath(r.key)) {
+      metadataFile = Object.assign({}, r); 
     }
     if (r.key === DEFAULT_FILE_NAME_FOR_METADATAONREMOTE2) {
       throw Error(
@@ -380,7 +381,7 @@ const isSkipItem = (
   return (
     isHiddenPath(key, true, false) ||
     (!syncUnderscoreItems && isHiddenPath(key, false, true)) ||
-    key === DEFAULT_FILE_NAME_FOR_METADATAONREMOTE ||
+    isMetaPath(key) ||
     key === DEFAULT_FILE_NAME_FOR_METADATAONREMOTE2
   );
 };
@@ -1152,6 +1153,7 @@ export const getSyncPlan = async (
 };
 
 const uploadExtraMeta = async (
+  slug: string,
   client: RemoteClient,
   metadataFile: FileOrFolderMixedState | undefined,
   origMetadata: MetadataOnRemote | undefined,
@@ -1192,7 +1194,7 @@ const uploadExtraMeta = async (
   const resultText = serializeMetadataOnRemote(newMetadata);
 
   await client.uploadToRemote(
-    key,
+    metadataFile?.key || `${slug}/${key}`,
     RemoteSrcPrefix,
     undefined,
     false,
@@ -1466,6 +1468,7 @@ export const doActualSync = async (
   vault: Vault,
   syncPlan: SyncPlanType,
   sortedKeys: string[],
+  slug: string, // For targeting dir
   metadataFile: FileOrFolderMixedState,
   origMetadata: MetadataOnRemote,
   sizesGoWrong: FileOrFolderMixedState[],
@@ -1489,6 +1492,7 @@ export const doActualSync = async (
 
   log.debug(`start syncing extra data firstly`);
   await uploadExtraMeta(
+    slug,
     client,
     metadataFile,
     origMetadata,
