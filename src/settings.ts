@@ -11,6 +11,7 @@ import {
 import type { TextComponent } from "obsidian";
 import { createElement, Eye, EyeOff } from "lucide";
 import {
+  InvioPluginSettings,
   API_VER_REQURL,
   DEFAULT_DEBUG_FOLDER,
   SUPPORTED_SERVICES_TYPE,
@@ -37,7 +38,7 @@ import { RemoteClient } from "./remote";
 import { messyConfigToNormal } from "./configPersist";
 import type { TransItemType } from "./i18n";
 import { checkHasSpecialCharForDir, mkdirpInVault } from "./misc";
-import { ExportSettingsData, DEFAULT_SETTINGS } from './export-settings';
+import { ExportSettingsData, DEFAULT_EXP_SETTINGS } from './export-settings';
 import icon, { getIconSvg } from './utils/icon';
 import { Utils } from "./utils/utils";
 import {
@@ -45,9 +46,34 @@ import {
   log,
   restoreLogWritterInplace,
 } from "./moreOnLog";
+import { DEFAULT_S3_CONFIG } from "./remoteForS3";
 
 const settingsPrefix = `Invio-Settings>`;
 const settingsSuffix = `<&`
+
+export const DEFAULT_SETTINGS: InvioPluginSettings = {
+  s3: DEFAULT_S3_CONFIG,
+  useHost: false,
+  hostPair: null,
+  token: '',
+  user: null,
+  password: "",
+  remoteDomain: '',
+  serviceType: "s3",
+  currLogLevel: "info",
+  // vaultRandomID: "", // deprecated
+  autoRunEveryMilliseconds: -1,
+  initRunAfterMilliseconds: -1,
+  agreeToUploadExtraMetadata: false,
+  concurrency: 5,
+  syncConfigDir: false,
+  localWatchDir: "PublishDocs",
+  syncUnderscoreItems: true,
+  lang: "auto",
+  logToDB: false,
+  skipSizeLargerThan: -1,
+};
+
 class PasswordModal extends Modal {
   plugin: InvioPlugin;
   newPassword: string;
@@ -345,7 +371,7 @@ const wrapTextWithPasswordHide = (text: TextComponent) => {
 
 export class InvioSettingTab extends PluginSettingTab {
   readonly plugin: InvioPlugin;
-	static settings: ExportSettingsData = DEFAULT_SETTINGS;
+	static settings: ExportSettingsData = DEFAULT_EXP_SETTINGS;
 
   constructor(app: App, plugin: InvioPlugin) {
     super(app, plugin);

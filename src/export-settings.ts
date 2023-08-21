@@ -46,7 +46,7 @@ export interface ExportSettingsData
 	lastExportPath: string;
 }
 
-export const DEFAULT_SETTINGS: ExportSettingsData =
+export const DEFAULT_EXP_SETTINGS: ExportSettingsData =
 {
 	// Inlining Options
 	inlineCSS: true,

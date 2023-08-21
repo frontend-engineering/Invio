@@ -19,8 +19,6 @@ import type {
 } from "./baseTypes";
 import {
   COMMAND_CALLBACK,
-  COMMAND_CALLBACK_ONEDRIVE,
-  COMMAND_CALLBACK_DROPBOX,
   COMMAND_URI,
 } from "./baseTypes";
 import { importQrCodeUri } from "./importExport";
@@ -36,8 +34,7 @@ import {
   clearExpiredSyncPlanRecords,
 } from "./localdb";
 import { RemoteClient } from "./remote";
-import { DEFAULT_S3_CONFIG } from "./remoteForS3";
-import { InvioSettingTab } from "./settings";
+import { InvioSettingTab, DEFAULT_SETTINGS } from "./settings";
 import { fetchMetadataFile, parseRemoteItems, SyncStatusType, RemoteSrcPrefix } from "./sync";
 import { doActualSync, getSyncPlan, isPasswordOk } from "./sync";
 import { messyConfigToNormal, normalConfigToMessy } from "./configPersist";
@@ -53,10 +50,10 @@ import { CreateProjectModal } from './components/CreateProjectModal';
 
 import { applyLogWriterInplace, log } from "./moreOnLog";
 import AggregateError from "aggregate-error";
-import {
-  exportVaultLoggerOutputToFiles,
-  exportVaultSyncPlansToFiles,
-} from "./debugMode";
+// import {
+//   exportVaultLoggerOutputToFiles,
+//   exportVaultSyncPlansToFiles,
+// } from "./debugMode";
 import { SizesConflictModal } from "./syncSizesConflictNotice";
 import { publishFiles, unpublishFile } from './exporter'
 import { AssetHandler } from './html-generation/asset-handler';
@@ -68,26 +65,6 @@ import { StatsView, VIEW_TYPE_STATS, LogType } from "./statsView";
 const { iconNameSyncWait, iconNameSyncPending, iconNameSyncRunning, iconNameLogs, iconNameSyncLogo } = UsingIconNames;
 const Menu_Tab = `    `;
 
-const DEFAULT_SETTINGS: InvioPluginSettings = {
-  s3: DEFAULT_S3_CONFIG,
-  token: '',
-  user: null,
-  password: "",
-  remoteDomain: '',
-  serviceType: "s3",
-  currLogLevel: "info",
-  // vaultRandomID: "", // deprecated
-  autoRunEveryMilliseconds: -1,
-  initRunAfterMilliseconds: -1,
-  agreeToUploadExtraMetadata: false,
-  concurrency: 5,
-  syncConfigDir: false,
-  localWatchDir: "PublishDocs",
-  syncUnderscoreItems: true,
-  lang: "auto",
-  logToDB: false,
-  skipSizeLargerThan: -1,
-};
 
 interface OAuth2Info {
   verifier?: string;
@@ -255,7 +232,6 @@ export default class InvioPlugin extends Plugin {
         this.app.vault.getName(),
         () => self.saveSettings()
       );
-      // const Prefix = 'op-remote-source-raw/';
       const remoteRsp = await client.listFromRemote(RemoteSrcPrefix + this.settings.localWatchDir);
       log.info('remote: ', remoteRsp);
       const remoteContents = remoteRsp.Contents.filter(item => item.key !== RemoteSrcPrefix);
