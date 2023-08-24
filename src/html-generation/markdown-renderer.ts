@@ -8,7 +8,7 @@ import { AssetHandler } from "./asset-handler";
 import { RenderLog } from "./render-log";
 import { StatsView } from "src/statsView";
 import type InvioPlugin from "../main"; // unavoidable
-
+import { Path } from "src/utils/path.js";
 export namespace MarkdownRenderer
 {
 	export let problemLog = "";
@@ -16,7 +16,7 @@ export namespace MarkdownRenderer
     export let errorInBatch = false;
 	export let cancelled = false;
 
-    export async function renderMarkdown(file: ExportFile, view?: StatsView): Promise<string>
+    export async function renderMarkdown(file: ExportFile, view: StatsView, rootPath?: Path): Promise<string>
 	{
 		if (!renderLeaf)
 		{
@@ -117,7 +117,7 @@ export namespace MarkdownRenderer
 		{
 			postProcessHTML(file, container);
 
-			await AssetHandler.loadMathjaxStyles();
+			await AssetHandler.loadMathjaxStyles(rootPath);
 
 			return container.innerHTML;
 		}

@@ -57,7 +57,7 @@ export class HTMLGenerator {
 
 	// rootPath is used for collecting context nodes
 	public static async generateWebpage(file: ExportFile, rootPath: Path, view: StatsView): Promise<ExportFile> {
-		await this.getDocumentHTML(file, false, view);
+		await this.getDocumentHTML(file, rootPath, false, view);
 		let usingDocument = file.document;
 
 		let sidebars = this.generateSideBars(file.contentElement, file);
@@ -136,7 +136,7 @@ export class HTMLGenerator {
 		pageContainerEl.appendChild(footerBar);
 	}
 
-	public static async getDocumentHTML(file: ExportFile, addSelfToDownloads: boolean = false, view?: StatsView): Promise<ExportFile> {
+	public static async getDocumentHTML(file: ExportFile, rootPath: Path, addSelfToDownloads: boolean = false, view?: StatsView): Promise<ExportFile> {
 		// set custom line width on body
 		let body = file.document.body;
 
@@ -163,7 +163,7 @@ export class HTMLGenerator {
 
 		// create obsidian document containers
 		let markdownViewEl = file.document.body.createDiv();
-		let content = await MarkdownRenderer.renderMarkdown(file, view);
+		let content = await MarkdownRenderer.renderMarkdown(file, view, rootPath);
 		if (MarkdownRenderer.cancelled) throw new Error("Markdown rendering cancelled");
 		markdownViewEl.outerHTML = content;
 
@@ -229,7 +229,8 @@ export class HTMLGenerator {
 
 		if (addSelfToDownloads) file.downloads.push(file.getSelfDownloadable());
 		file.downloads.push(...outlinedImages);
-		file.downloads.push(...await AssetHandler.getDownloads());
+		await AssetHandler.reparseAppStyles(rootPath);
+		file.downloads.push(...await AssetHandler.getDownloads(rootPath));
 
 		if (InvioSettingTab.settings.makeNamesWebStyle) {
 			file.downloads.forEach((file) => {
@@ -343,11 +344,11 @@ export class HTMLGenerator {
 		return {leftBtn, rightBtn, mobileSideBarBtns};
 	}
 
-	private static getRelativePaths(file: ExportFile): { mediaPath: Path, jsPath: Path, cssPath: Path, rootPath: Path } {
+	private static getRelativePaths(file: ExportFile, root?: Path): { mediaPath: Path, jsPath: Path, cssPath: Path, rootPath: Path } {
 		let rootPath = file.pathToRoot;
-		let imagePath = AssetHandler.mediaFolderName.makeUnixStyle();
-		let jsPath = AssetHandler.jsFolderName.makeUnixStyle();
-		let cssPath = AssetHandler.cssFolderName.makeUnixStyle();
+		let imagePath = (root? root.join(AssetHandler.mediaFolderName) : AssetHandler.mediaFolderName).makeUnixStyle();
+		let jsPath = (root? root.join(AssetHandler.jsFolderName) : AssetHandler.jsFolderName).makeUnixStyle();
+		let cssPath = (root? root.join(AssetHandler.cssFolderName) : AssetHandler.cssFolderName).makeUnixStyle();
 
 		if (InvioSettingTab.settings.makeNamesWebStyle) {
 			imagePath = imagePath.makeWebStyle();
@@ -368,7 +369,7 @@ export class HTMLGenerator {
 		if (pageConfig?.title) {
 			pageTitle = pageConfig.title;
 		}
-		let relativePaths = this.getRelativePaths(file);
+		let relativePaths = this.getRelativePaths(file, rootPath);
 
 		let meta = `
 			<title>${pageTitle}</title>
