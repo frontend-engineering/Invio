@@ -16,6 +16,7 @@ import type {
   FileOrFolderMixedState,
   InvioPluginSettings,
   SyncTriggerSourceType,
+  THostConfig,
 } from "./baseTypes";
 import {
   COMMAND_CALLBACK,
@@ -61,6 +62,8 @@ import { Path } from './utils/path';
 import { HTMLGenerator } from './html-generation/html-generator';
 import icon, { UsingIconNames, getIconSvg, addIconForconflictFile } from './utils/icon';
 import { StatsView, VIEW_TYPE_STATS, LogType } from "./statsView";
+import { syncWithRemoteProject, switchProject } from './hosting';
+import Utils from './utils';
 
 const { iconNameSyncWait, iconNameSyncPending, iconNameSyncRunning, iconNameLogs, iconNameSyncLogo } = UsingIconNames;
 const Menu_Tab = `    `;
@@ -122,21 +125,6 @@ export default class InvioPlugin extends Plugin {
     log.info('file snapshot: ', this.recentSyncedFiles);
   }
 
-  // async checkDomain() {
-  //   // Domain check
-  //   return new Promise((resolve) => {
-  //     if (this.settings?.remoteDomain) {
-  //       resolve(this.settings.remoteDomain);
-  //     }
-  //     if (!this.settings?.remoteDomain) {
-  //       // Show modal to get
-  //       new DomaindModal(this.app, this, this.settings?.remoteDomain, (newDomain) => {
-  //         resolve(newDomain);
-  //       }).open()
-  //     }
-  //   })
-  // }
-
   async syncRun(triggerSource: SyncTriggerSourceType = "manual", fileList?: string[]) {
     const t = (x: TransItemType, vars?: any) => {
       return this.i18n.t(x, vars);
@@ -165,6 +153,24 @@ export default class InvioPlugin extends Plugin {
         new Notice(this.currSyncMsg);
       }
       return;
+    }
+
+    if (!this.settings.localWatchDir) {
+      new Notice(
+        t("syncrun_no_watchdir_err")
+      );
+      return;
+    }
+    if (this.settings.useHost) {
+      log.info('using host service');
+      if (!this.settings.hostConfig) {
+        log.info('need auth');
+        return Utils.gotoAuth();
+      }
+      if (!this.settings.hostConfig.hostPair?.dir || (this.settings.hostConfig.hostPair?.dir !== this.settings.localWatchDir)) {
+        log.info('sync with remote project');
+        await syncWithRemoteProject(this.settings.localWatchDir, this);
+      }
     }
 
     let originLabel = `${this.manifest.name}`;
@@ -222,13 +228,13 @@ export default class InvioPlugin extends Plugin {
         })
       );
 
-
-
       this.syncStatus = "getting_remote_files_list";
       const self = this;
       const client = new RemoteClient(
         this.settings.serviceType,
         this.settings.s3,
+        this.settings.hostConfig,
+        this.settings.useHost,
         this.app.vault.getName(),
         () => self.saveSettings()
       );
@@ -854,16 +860,24 @@ export default class InvioPlugin extends Plugin {
         log.info('protocol: ', COMMAND_CALLBACK, inputParams)
         const { action, token, user } = inputParams;
         if (action === 'invio-auth-cb') {
+          if (!this.settings.useHost) {
+            return;
+          }
+          if (!this.settings.hostConfig) {
+            this.settings.hostConfig = {} as THostConfig;
+          }
           if (token && user) {
-            this.settings.token = token;
+            this.settings.hostConfig.token = token;
             try {
-              this.settings.user = JSON.parse(user);
+              this.settings.hostConfig.user = JSON.parse(user);
             } catch (error) {
               log.error('parse user info failed: ', error);
-              this.settings.token = '';
-              this.settings.user = null;
+              this.settings.hostConfig.token = '';
+              this.settings.hostConfig.user = null;
             }
-            await this.saveSettings();
+            if (this.settings.localWatchDir) {
+              await syncWithRemoteProject(this.settings.localWatchDir, this);
+            }
             this.settingTab?.hide();
             this.settingTab?.display();
           }
@@ -998,25 +1012,38 @@ export default class InvioPlugin extends Plugin {
     await this.saveData(normalConfigToMessy(this.settings));
   }
 
-  async switchWorkingDir(value: string) {
-    this.settings.localWatchDir = value.trim();
-    icon.removeIconInNode(document.body);
-    const { iconSvgSyncWait } = getIconSvg();
-    icon.createIconNode(this, this.settings.localWatchDir, iconSvgSyncWait);
-
-
-    const curDir = this.settings.localWatchDir;
-
-    const existed = await checkRemoteHosting(this);
-    if (!existed) {
-      const cb = () => {
-        this.switchWorkingDir(value);
-      };
-      const modal = new CreateProjectModal(this.app, this, curDir, curDir, null, cb.bind(this));
-      modal.open();
-    } else {
-      await this.saveSettings(); 
+  async enableHostService() {
+    const t = (x: TransItemType, vars?: any) => {
+      return this.i18n.t(x, vars);
+    };
+    if (!this.settings.localWatchDir) {
+      new Notice(t('syncrun_no_watchdir_err'));
+      return;
     }
+    await syncWithRemoteProject(this.settings.localWatchDir, this);
+  }
+
+  async disableHostService() {
+    // Clean settings
+    Object.assign(this.settings.s3, {
+      s3Endpoint: '',
+      s3Region: '',
+      s3BucketName: '',
+      s3AccessKeyID: '',
+      s3SecretAccessKey: ''
+    });
+    await this.saveSettings();
+  }
+
+  async switchWorkingDir(value: string) {
+    const dirname = value.trim();
+    switchProject(dirname, this)
+      .then(name => {
+        this.settings.localWatchDir = name;
+        icon.removeIconInNode(document.body);
+        const { iconSvgSyncWait } = getIconSvg();
+        icon.createIconNode(this, this.settings.localWatchDir, iconSvgSyncWait);
+      })
   }
 
   async checkIfOauthExpires() {}

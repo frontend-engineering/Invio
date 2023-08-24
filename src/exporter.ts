@@ -13,6 +13,7 @@ import { Downloadable } from './utils/downloadable';
 import { log } from "./moreOnLog";
 import { RemoteClient } from "./remote";
 import { StatsView } from './statsView';
+import { InvioPluginSettings } from './baseTypes';
 
 export const exportFile = async (file: TFile, exportFromPath: Path, exportToPath: Path | undefined = undefined, rootPath: Path | undefined, view: StatsView) : Promise<ExportFile | undefined> => {
     if(file.extension != "md")
@@ -62,7 +63,7 @@ export const publishFiles = async (
     pathList: string[],
     allFiles: TFile[],
     password: string = "",
-    settings: any,
+    settings: InvioPluginSettings,
     triggerSource: string,
     view?: StatsView,
     cb?: (key: string, status: 'START' | 'DONE' | 'FAIL', meta?: any) => any,
@@ -174,8 +175,16 @@ export const publishFiles = async (
                 // RenderLog.progress(i++, toUploads.length, "Uploading Docs", "Upload success: " + upload.key, "var(--color-accent)");
                 view?.info(`Upload success: ${upload.key}`);
                 if (cb && upload.md) {
-                    const domain = settings.remoteDomain || `https://${settings.s3.s3BucketName}.${settings.s3.s3Endpoint}`;
-                    cb(upload.md, 'DONE', `${domain}/${resp?.key}`);
+                    if (settings.useHost) {
+                        if (settings.hostConfig?.hostPair?.slug) {
+                            const slug = settings.hostConfig?.hostPair.slug;
+                            const domain = `https://${slug}.turbosite.cloud`;
+                            cb(upload.md, 'DONE', `${domain}/${resp?.key}`);
+                        }
+                    } else {
+                        const domain = settings.remoteDomain || `https://${settings.s3.s3BucketName}.${settings.s3.s3Endpoint}`;
+                        cb(upload.md, 'DONE', `${domain}/${resp?.key}`);
+                    }
                 }
                 return resp;
             }).catch(err => {

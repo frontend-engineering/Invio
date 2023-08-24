@@ -7,6 +7,7 @@
   "sometext": "這裡有一段文字。",
 
   "syncrun_alreadyrunning": "{{pluginName}} 正處於此階段：{{syncStatus}}!",
+  "syncrun_no_watchdir_err": "请先配置本地同步文件夹",
   "syncrun_syncingribbon": "{{pluginName}}：正在由 {{triggerSource}} 觸發執行",
   "syncrun_syncingribbon_err": "{{pluginName}}: 文件同步失败",
   "syncrun_step0": "0/{{maxSteps}} Invio 在空跑（dry run）模式，不會發生實際的檔案交換。",

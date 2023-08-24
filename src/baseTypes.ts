@@ -69,9 +69,29 @@ export interface OnedriveConfig {
   remoteBaseDir?: string;
 }
 
-export interface InvioPluginSettings {
+export type THostPair = {
+  dir: string;
+  slug: string;
+}
+
+export type TS3Credential = {
+  accessKeyId: string;
+  secretAccessKey: string;
+  sessionToken: string;
+  expiration: Date;
+}
+export type THostConfig = {
   token: string;
-  user: any;
+  user?: any;
+  hostPair?: THostPair,
+  credential?: TS3Credential
+}
+export interface InvioPluginSettings {
+  useHost: boolean;
+  // token: string;
+  // user: any;
+  // hostPair?: THostPair;
+  hostConfig?: THostConfig;
   s3: S3Config;
   password: string;
   remoteDomain: string;

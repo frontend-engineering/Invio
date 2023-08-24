@@ -41,6 +41,7 @@ import { checkHasSpecialCharForDir, mkdirpInVault } from "./misc";
 import { ExportSettingsData, DEFAULT_EXP_SETTINGS } from './export-settings';
 import icon, { getIconSvg } from './utils/icon';
 import { Utils } from "./utils/utils";
+import Utils2 from './utils';
 import {
   applyLogWriterInplace,
   log,
@@ -54,9 +55,11 @@ const settingsSuffix = `<&`
 export const DEFAULT_SETTINGS: InvioPluginSettings = {
   s3: DEFAULT_S3_CONFIG,
   useHost: false,
-  hostPair: null,
-  token: '',
-  user: null,
+  hostConfig: {
+    hostPair: null,
+    token: '',
+    user: null,
+  },
   password: "",
   remoteDomain: '',
   serviceType: "s3",
@@ -453,39 +456,70 @@ export class InvioSettingTab extends PluginSettingTab {
 
     // =============== Hosting Settings ======================
 
-		containerEl.createEl('h2', { text: 'Hosting Settings', cls: 'settings-pub-header' });
+    const useHostDiv = containerEl.createEl("div");
+    useHostDiv.createEl("h2", { text: 'Hosting Service Config' });
+    new Setting(useHostDiv)
+      .setName('Fast startup: use Invio Hosting Service Or Self Hosting')
+      .setDesc('Invio Hosting Service allows you to quickly experience the Invio service without complex initial configurations.')
+      .addToggle(tog => {
+        console.log('tog');
+        tog.setValue(this.plugin.settings.useHost)
+        .onChange(async (val) => {
+          this.plugin.settings.useHost = val;
+          if (this.plugin.settings.useHost) {
+            await this.plugin.enableHostService()
+              .catch(err => {
+                new Notice('Invio Host Service is not reachable, please try again later'); 
+                this.plugin.settings.useHost = false;
+              })
+              .finally(() => {
+                this.hide();
+                this.display();
+              })
+          } else {
+            await this.plugin.disableHostService();
+            this.hide();
+            this.display();
+          }
+        })
+      })
 
-    const hostingDiv = containerEl.createEl("div");
-    const hostingEl = new Setting(hostingDiv)
-      .setName('Auto Hosting')
-      .setDesc('Skip S3 and domain config');
-    console.log('settings token: ', this.plugin.settings);
-    if (this.plugin.settings.token) {
-      hostingEl.addText((text) => {
-        text
-          .setPlaceholder("")
-          .setValue(this.plugin.settings.user?.name)
-      })
-      .addButton(async (button) => {
-        button.setButtonText('Logout');
-        button.onClick(async () => {
-          log.info('Log out... ', this.plugin.settings.token);
-          this.plugin.settings.token = null;
-          await this.plugin.saveSettings();
-          this.hide();
-          this.display();
+    if (this.plugin.settings.useHost) {
+
+      const hostingDiv = containerEl.createEl("div", { cls: 'settings-config-section' });
+      hostingDiv.createEl('h2', { text: 'Auto Hosting Settings', cls: 'settings-pub-header' });
+
+      const hostingEl = new Setting(hostingDiv)
+        .setName('Auto Hosting')
+        .setDesc('Skip S3 and domain config');
+      console.log('settings token: ', this.plugin.settings);
+      if (this.plugin.settings.hostConfig?.token) {
+        hostingEl.addText((text) => {
+          text
+            .setPlaceholder("")
+            .setValue(this.plugin.settings.hostConfig?.user?.name)
+        })
+        .addButton(async (button) => {
+          button.setButtonText('Logout');
+          button.onClick(async () => {
+            log.info('Log out... ', this.plugin.settings.hostConfig?.token);
+            this.plugin.settings.hostConfig.token = null;
+            await this.plugin.saveSettings();
+            this.hide();
+            this.display();
+          });
+        })
+      } else {
+        hostingEl.addButton(async (button) => {
+          button.setButtonText('auth');
+          button.onClick(async () => {
+            log.info('start authing: ');
+            Utils2.gotoAuth();
+          });
         });
-      })
-    } else {
-      hostingEl.addButton(async (button) => {
-        button.setButtonText('auth');
-        button.onClick(async () => {
-          log.info('start authing: ');
-          (window as any).electron.remote.shell.openExternal(`http://localhost:8888/exporter`);
-        });
-      });
+      }  
     }
-      
+		
     
     //////////////////////////////////////////////////
     // below for service chooser (part 1/2)
@@ -499,7 +533,11 @@ export class InvioSettingTab extends PluginSettingTab {
     // below for s3
     //////////////////////////////////////////////////
 
-    const s3Div = containerEl.createEl("div");
+    if (!this.plugin.settings.useHost) {
+
+    const s3Div = containerEl.createEl("div", { cls: 'settings-config-section' });
+    s3Div.createEl('h2', { text: 'Self Hosting Settings', cls: 'settings-pub-header' });
+
     // const s3Div = containerEl.createEl("div", { cls: "s3-hide" });
     // s3Div.toggleClass("s3-hide", this.plugin.settings.serviceType !== "s3");
     // s3Div.createEl("h2", { text: t("settings_s3") });
@@ -700,7 +738,7 @@ export class InvioSettingTab extends PluginSettingTab {
           }
         });
       });
-
+    }
     //////////////////////////////////////////////////
     // below for general chooser (part 2/2)
     //////////////////////////////////////////////////
@@ -745,9 +783,9 @@ export class InvioSettingTab extends PluginSettingTab {
     //////////////////////////////////////////////////
     // below for basic settings
     //////////////////////////////////////////////////
+    containerEl.createEl("h2", { text: t("settings_basic") });
 
-    const basicDiv = containerEl.createEl("div");
-    basicDiv.createEl("h2", { text: t("settings_basic") });
+    const basicDiv = containerEl.createEl("div", { cls: 'settings-config-section' });
 
     // let newPassword = `${this.plugin.settings.password}`;
     // new Setting(basicDiv)
@@ -932,11 +970,10 @@ export class InvioSettingTab extends PluginSettingTab {
     //////////////////////////////////////////////////
 
     // import and export
-    const importExportDiv = containerEl.createEl("div");
-    importExportDiv.createEl("h2", {
+    containerEl.createEl("h2", {
       text: t("settings_importexport"),
     });
-
+    const importExportDiv = containerEl.createEl("div", { cls: 'settings-config-section' });
 
     new Setting(importExportDiv)
       .setName(t("settings_export"))
@@ -988,7 +1025,7 @@ export class InvioSettingTab extends PluginSettingTab {
         });
       });
 
-    const bonusDiv = containerEl.createEl('div');
+    const bonusDiv = containerEl.createEl('div', { cls: 'settings-config-section' });
     bonusDiv.createEl('h2', { text: 'Stay up to date' });
 
     const twitterContainer = bonusDiv.createEl('p')

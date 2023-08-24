@@ -29,6 +29,8 @@ import {
   DEFAULT_CONTENT_TYPE,
   RemoteItem,
   S3Config,
+  THostConfig,
+  TS3Credential,
   VALID_REQURL,
 } from "./baseTypes";
 import { decryptArrayBuffer, encryptArrayBuffer } from "./encrypt";
@@ -37,11 +39,15 @@ import {
   bufferToArrayBuffer,
   mkdirpInVault,
 } from "./misc";
-
+import Utils from './utils';
 export { S3Client } from "@aws-sdk/client-s3";
 
 import { log } from "./moreOnLog";
 
+// export const HostServerUrl = 'http://localhost:8888';
+// export const AppHostServerUrl = 'http://localhost:8888';
+export const HostServerUrl = 'https://api.turbosite.cloud';
+export const AppHostServerUrl = 'https://app.turbosite.cloud';
 ////////////////////////////////////////////////////////////////////////////////
 // special handler using Obsidian requestUrl
 ////////////////////////////////////////////////////////////////////////////////
@@ -190,23 +196,74 @@ const fromS3HeadObjectToRemoteItem = (
   } as RemoteItem;
 };
 
-export const getS3Client = (s3Config: S3Config) => {
+const getCOSCredential = async (hostConfig: THostConfig, key: string) => {
+  const { token } = hostConfig;
+  const param: RequestUrlParam = {
+    body: JSON.stringify({ slug: key }),
+    method: 'POST',
+    url: `${HostServerUrl}/api/s3/cred?priatoken=${token}`,
+  };
+
+  return requestUrl(param).then(resp => {
+    console.log('request cred resp: ', resp.json);
+    return resp.json;
+  })
+}
+
+const validCredential = (cred: TS3Credential) => {
+  if (!cred?.accessKeyId) return null;
+  if (!cred?.expiration) return null;
+  if (new Date(cred.expiration).valueOf() < Date.now()) return null;
+  return cred;
+}
+
+// Use Host Service or self-host
+export const getS3Client = async (s3Config: S3Config, hostConfig?: THostConfig, useHost?: boolean) => {
   let endpoint = s3Config.s3Endpoint;
   if (!(endpoint.startsWith("http://") || endpoint.startsWith("https://"))) {
     endpoint = `https://${endpoint}`;
   }
 
+  log.info('s3 client gen: ', s3Config, hostConfig, useHost);
   let s3Client: S3Client;
+  let credential = {
+    accessKeyId: s3Config.s3AccessKeyID,
+    secretAccessKey: s3Config.s3SecretAccessKey,
+  };
+
+  if (useHost) {
+    if (!hostConfig?.token) {
+      // Goto Auth
+      Utils.gotoAuth();
+    }
+    // Check existing project
+    const projectSlug = hostConfig?.hostPair?.slug;
+    const cred = hostConfig?.credential;
+    if (!validCredential(cred)) {
+      const resp = await getCOSCredential(hostConfig, projectSlug);
+      log.info('got cred: ', resp);
+      // Memory Only
+      hostConfig.credential = {
+        accessKeyId: resp.cred?.AccessKeyId,
+        secretAccessKey: resp.cred?.SecretAccessKey,
+        sessionToken: resp.cred?.SessionToken,
+        expiration: resp.cred?.Expiration
+      }
+    }
+
+    if (hostConfig.credential?.accessKeyId) {
+      credential = hostConfig.credential;
+    } else {
+      throw new Error('Request credential failed');
+    }
+  }
 
   if (VALID_REQURL && s3Config.bypassCorsLocally) {
     s3Client = new S3Client({
       region: s3Config.s3Region,
       endpoint: endpoint,
       forcePathStyle: s3Config.forcePathStyle,
-      credentials: {
-        accessKeyId: s3Config.s3AccessKeyID,
-        secretAccessKey: s3Config.s3SecretAccessKey,
-      },
+      credentials: credential,
       requestHandler: new ObsHttpHandler(),
     });
   } else {
@@ -312,6 +369,7 @@ export const uploadToRemote = async (
 
     const bytesIn5MB = 5242880;
     const body = new Uint8Array(remoteContent);
+
     const upload = new Upload({
       client: s3Client,
       queueSize: s3Config.partsConcurrency, // concurrency
