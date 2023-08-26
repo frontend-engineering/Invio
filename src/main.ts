@@ -610,6 +610,7 @@ export default class InvioPlugin extends Plugin {
         triggerSource: triggerSource,
         syncStatus: this.syncStatus,
       });
+      HTMLGenerator.endBatch();
       loadingModal?.close();
       log.error(msg);
       log.error(error);
