@@ -46,6 +46,7 @@ export const syncWithRemoteProject = async (dirname: string, plugin: InvioPlugin
       dir: name,
       slug,
     }
+    settings.hostConfig.credential = null;
 
     Object.assign(plugin.settings.s3, {
       s3Endpoint: endpoint,
@@ -73,6 +74,8 @@ export const syncWithRemoteProject = async (dirname: string, plugin: InvioPlugin
         dir: project?.name,
         slug: project?.slug,
       }
+      settings.hostConfig.credential = null;
+
       await plugin.saveSettings();
       resolve(project?.name);
     };
