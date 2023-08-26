@@ -13,17 +13,20 @@ export class RemoteClient {
   readonly s3Config?: S3Config;
   readonly hostConfig?: THostConfig;
   readonly useHost?: boolean;
+  readonly localWatchDir?: string;
   constructor(
     serviceType: SUPPORTED_SERVICES_TYPE,
     s3Config?: S3Config,
     hostConfig?: THostConfig,
     useHost?: boolean,
+    localWatchDir?: string,
     vaultName?: string,
     saveUpdatedConfigFunc?: () => Promise<any>
   ) {
     this.serviceType = serviceType;
     this.useHost = useHost;
     this.hostConfig = hostConfig;
+    this.localWatchDir = localWatchDir;
     // the client may modify the config inplace,
     // so we use a ref not copy of config here
     if (serviceType === "s3") {
@@ -46,7 +49,7 @@ export class RemoteClient {
     remoteKey?: string
   ) => {
     if (this.serviceType === "s3") {
-      const s3Client = await s3.getS3Client(this.s3Config, this.hostConfig, this.useHost);
+      const s3Client = await s3.getS3Client(this.s3Config, this.hostConfig, this.useHost, this.localWatchDir);
       return await s3.uploadToRemote(
         s3Client,
         this.s3Config,
@@ -67,7 +70,7 @@ export class RemoteClient {
 
   listFromRemote = async (prefix?: string) => {
     if (this.serviceType === "s3") {
-      const s3Client = await s3.getS3Client(this.s3Config, this.hostConfig, this.useHost);
+      const s3Client = await s3.getS3Client(this.s3Config, this.hostConfig, this.useHost, this.localWatchDir);
       return await s3.listFromRemote(
         s3Client,
         this.s3Config,
@@ -89,7 +92,7 @@ export class RemoteClient {
     renamedTo: string = ''
   ) => {
     if (this.serviceType === "s3") {
-      const s3Client = await s3.getS3Client(this.s3Config, this.hostConfig, this.useHost);
+      const s3Client = await s3.getS3Client(this.s3Config, this.hostConfig, this.useHost, this.localWatchDir);
       return await s3.downloadFromRemote(
         s3Client,
         this.s3Config,
@@ -114,7 +117,7 @@ export class RemoteClient {
     remoteEncryptedKey: string = ""
   ) => {
     if (this.serviceType === "s3") {
-      const s3Client = await s3.getS3Client(this.s3Config, this.hostConfig, this.useHost);
+      const s3Client = await s3.getS3Client(this.s3Config, this.hostConfig, this.useHost, this.localWatchDir);
       return await s3.deleteFromRemote(
         s3Client,
         this.s3Config,
@@ -130,7 +133,7 @@ export class RemoteClient {
 
   checkConnectivity = async (callbackFunc?: any) => {
     if (this.serviceType === "s3") {
-      const s3Client = await s3.getS3Client(this.s3Config, this.hostConfig, this.useHost);
+      const s3Client = await s3.getS3Client(this.s3Config, this.hostConfig, this.useHost, this.localWatchDir);
       return await s3.checkConnectivity(
         s3Client,
         this.s3Config,

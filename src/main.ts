@@ -235,6 +235,7 @@ export default class InvioPlugin extends Plugin {
         this.settings.s3,
         this.settings.hostConfig,
         this.settings.useHost,
+        this.settings.localWatchDir,
         this.app.vault.getName(),
         () => self.saveSettings()
       );

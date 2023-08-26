@@ -210,15 +210,18 @@ const getCOSCredential = async (hostConfig: THostConfig, key: string) => {
   })
 }
 
-const validCredential = (cred: TS3Credential) => {
+const validCredential = (hostConfig: THostConfig, localWatchDir: string) => {
+  const { credential: cred, hostPair } = hostConfig || {};
   if (!cred?.accessKeyId) return null;
   if (!cred?.expiration) return null;
+
+  if (hostPair?.dir !== localWatchDir) return null;
   if (new Date(cred.expiration).valueOf() < Date.now()) return null;
   return cred;
 }
 
 // Use Host Service or self-host
-export const getS3Client = async (s3Config: S3Config, hostConfig?: THostConfig, useHost?: boolean) => {
+export const getS3Client = async (s3Config: S3Config, hostConfig?: THostConfig, useHost?: boolean, localWatchDir?: string) => {
   let endpoint = s3Config.s3Endpoint;
   if (!(endpoint.startsWith("http://") || endpoint.startsWith("https://"))) {
     endpoint = `https://${endpoint}`;
@@ -240,9 +243,9 @@ export const getS3Client = async (s3Config: S3Config, hostConfig?: THostConfig, 
     // Check existing project
     const projectSlug = hostConfig?.hostPair?.slug;
     const cred = hostConfig?.credential;
-    if (!validCredential(cred)) {
+    if (!validCredential(hostConfig, localWatchDir)) {
       const resp = await getCOSCredential(hostConfig, projectSlug);
-      log.info('got cred: ', resp);
+      log.info('got new cred');
       // Memory Only
       hostConfig.credential = {
         accessKeyId: resp.cred?.AccessKeyId,
@@ -250,6 +253,8 @@ export const getS3Client = async (s3Config: S3Config, hostConfig?: THostConfig, 
         sessionToken: resp.cred?.SessionToken,
         expiration: resp.cred?.Expiration
       }
+    } else {
+      log.info('existed credential');
     }
 
     if (hostConfig.credential?.accessKeyId) {
