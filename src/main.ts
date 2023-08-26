@@ -709,7 +709,9 @@ export default class InvioPlugin extends Plugin {
       log.debug('layout ready...');
       // Add custom icon for root dir
       setTimeout(() => {
-        icon.createIconNode(this, this.settings.localWatchDir, iconSvgSyncWait);
+        if (this.settings.localWatchDir) {
+          this.switchWorkingDir(this.settings.localWatchDir);
+        }
       }, 300);
       // TODO: Change file icons to show sync status, like sync done, sync failed, pending to sync, etc.
     })
@@ -1038,14 +1040,13 @@ export default class InvioPlugin extends Plugin {
 
   async switchWorkingDir(value: string) {
     const dirname = value.trim();
-    switchProject(dirname, this)
-      .then(name => {
-        if (!name) return;
-        this.settings.localWatchDir = name;
-        icon.removeIconInNode(document.body);
-        const { iconSvgSyncWait } = getIconSvg();
-        icon.createIconNode(this, this.settings.localWatchDir, iconSvgSyncWait);
-      })
+    const name = await switchProject(dirname, this);
+    if (!name) return;
+    this.settings.localWatchDir = name;
+    icon.removeIconInNode(document.body);
+    const { iconSvgSyncWait } = getIconSvg();
+    icon.createIconNode(this, this.settings.localWatchDir, iconSvgSyncWait);
+    await this.saveSettings();
   }
 
   async checkIfOauthExpires() {}
