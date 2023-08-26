@@ -1039,6 +1039,7 @@ export default class InvioPlugin extends Plugin {
     const dirname = value.trim();
     switchProject(dirname, this)
       .then(name => {
+        if (!name) return;
         this.settings.localWatchDir = name;
         icon.removeIconInNode(document.body);
         const { iconSvgSyncWait } = getIconSvg();

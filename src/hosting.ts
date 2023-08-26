@@ -89,9 +89,11 @@ export const switchProject = async (dirname: string, plugin: InvioPlugin) => {
   }
   if (!settings.hostConfig?.token) {
     // goto auth
-    return Utils.gotoAuth();
+    Utils.gotoAuth();
+    return null;
   }
 
+  log.info('switching project: ', settings.hostConfig);
   if (settings.hostConfig?.hostPair?.dir === dirname) {
     // no need to update hosting config
     // Maybe need recheck remote
