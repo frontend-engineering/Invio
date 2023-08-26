@@ -7,7 +7,7 @@
   "sometext": "Here are some texts.",
 
   "syncrun_alreadyrunning": "{{pluginName}} already running in stage {{syncStatus}}!",
-  "syncrun_no_watchdir_err": "Please choose a local folder first!",
+  "syncrun_no_watchdir_err": "Invio: Please choose a local folder to get started!",
   "syncrun_syncingribbon": "{{pluginName}}: syncing from {{triggerSource}}",
   "syncrun_syncingribbon_err": "{{pluginName}}: file syncing failed",
   "syncrun_step0": "0/{{maxSteps}} Invio running in dry mode, not actual file changes would happen.",

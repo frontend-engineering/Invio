@@ -711,6 +711,10 @@ export default class InvioPlugin extends Plugin {
       setTimeout(() => {
         if (this.settings.localWatchDir) {
           this.switchWorkingDir(this.settings.localWatchDir);
+        } else {
+          new Notice(
+            t("syncrun_no_watchdir_err")
+          );
         }
       }, 300);
       // TODO: Change file icons to show sync status, like sync done, sync failed, pending to sync, etc.
