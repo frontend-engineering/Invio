@@ -25,6 +25,7 @@ export class CreateProjectModal extends Modal {
     const token = this.plugin.settings.hostConfig?.token;
     if (!token) {
       Utils.gotoAuth();
+      throw new Error('Unauthorized');
     }
 
     return fetch(`${HostServerUrl}/api/invio?priatoken=${token}`, {

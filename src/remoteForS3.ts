@@ -235,6 +235,7 @@ export const getS3Client = async (s3Config: S3Config, hostConfig?: THostConfig, 
     if (!hostConfig?.token) {
       // Goto Auth
       Utils.gotoAuth();
+      throw new Error('Unauthorized');
     }
     // Check existing project
     const projectSlug = hostConfig?.hostPair?.slug;
