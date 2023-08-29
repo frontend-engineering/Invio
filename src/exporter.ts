@@ -142,7 +142,12 @@ export const publishFiles = async (
     log.info('generating meta...');
     externalFiles.push(metaDownload);
     
-    externalFiles = externalFiles.filter((file, index) => externalFiles.findIndex((f) => f.relativeDownloadPath == file.relativeDownloadPath && f.filename === file.filename) == index);
+    externalFiles = externalFiles.filter((file, index) => {
+        const idx = externalFiles.findIndex((f) => {
+            return (f.relativeDownloadPath?.asString == file.relativeDownloadPath?.asString) && (f.filename === file.filename)
+        });
+        return idx === index;
+    });
     await Utils.downloadFiles(externalFiles, htmlPath, view);
     log.info('download files to: ', htmlPath, externalFiles);
 
