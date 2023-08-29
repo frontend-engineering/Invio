@@ -7,6 +7,7 @@ import type {
 import * as s3 from "./remoteForS3";
 
 import { log } from "./moreOnLog";
+import { RemoteSrcPrefix } from "./sync";
 
 export class RemoteClient {
   readonly serviceType: SUPPORTED_SERVICES_TYPE;
@@ -36,6 +37,84 @@ export class RemoteClient {
     }
   }
 
+  // localWatchDir -> slug
+  getUseHostSlug() {
+    if (!this.localWatchDir) {
+      throw new Error('FolderNotFound');
+    }
+    if (!this.useHost) {
+      return this.localWatchDir;
+    }
+    
+    if (!this.hostConfig?.hostPair?.dir) {
+      throw new Error('ProjectNotSync');
+    }
+    if (this.hostConfig?.hostPair?.dir !== this.localWatchDir) {
+      throw new Error('NeedSwitchProject');
+    }
+    return this.hostConfig?.hostPair.slug;
+  }
+
+  getUseHostDirname() {
+    if (!this.localWatchDir) {
+      throw new Error('FolderNotFound');
+    }
+    if (!this.useHost) {
+      return this.localWatchDir;
+    }
+
+    if (!this.hostConfig?.hostPair?.dir) {
+      throw new Error('ProjectNotSync');
+    }
+    if (this.hostConfig?.hostPair?.dir !== this.localWatchDir) {
+      throw new Error('NeedSwitchProject');
+    }
+    return this.hostConfig?.hostPair.dir;
+  }
+
+  getUseHostSlugPath(key: string) {
+    if (!this.useHost) {
+      return key;
+    }
+    const hasPrefix = key?.startsWith(RemoteSrcPrefix);
+    const paths = key?.split('/');
+    if (paths?.length > 0) {
+      const dir = hasPrefix ? paths[1] : paths[0];
+      if (dir !== this.localWatchDir) {
+        throw new Error('NeedSwitchProject');
+      }
+      if (hasPrefix) {
+        paths[1] = this.getUseHostSlug();
+      } else {
+        paths[0] = this.getUseHostSlug();
+      }
+      return paths.join('/');
+    }
+    return '';
+  }
+
+  getUseHostLocalPath(slug: string) {
+    if (!this.useHost) {
+      return slug;
+    }
+    const hasPrefix = slug?.startsWith(RemoteSrcPrefix);
+    const paths = slug?.split('/');
+    if (paths?.length > 0) {
+      const dir = hasPrefix ? paths[1] : paths[0];
+      if (dir !== this.getUseHostSlug()) {
+        throw new Error('NeedSwitchProject');
+      }
+      if (hasPrefix) {
+        paths[1] = this.getUseHostDirname();
+      } else {
+        paths[0] = this.getUseHostDirname();
+      }
+      log.info('get local path: ', paths.join('/'));
+      return paths.join('/');
+    }
+    return ''; 
+  }
+
   uploadToRemote = async (
     fileOrFolderPath: string,
     prefix: string,
@@ -61,21 +140,30 @@ export class RemoteClient {
         remoteEncryptedKey,
         uploadRaw,
         rawContent,
-        remoteKey
+        remoteKey ? `${this.getUseHostSlugPath(remoteKey)}` : `${prefix}${this.getUseHostSlugPath(fileOrFolderPath)}`
       );
     } else {
       throw Error(`not supported service type ${this.serviceType}`);
     }
   };
 
-  listFromRemote = async (prefix?: string) => {
+  listFromRemote = async (dir?: string, prefix?: string) => {
     if (this.serviceType === "s3") {
+      const slug = (prefix || '') + this.getUseHostSlugPath(dir);
+
       const s3Client = await s3.getS3Client(this.s3Config, this.hostConfig, this.useHost, this.localWatchDir);
-      return await s3.listFromRemote(
+      const remoteRsp = await s3.listFromRemote(
         s3Client,
         this.s3Config,
-        prefix
+        slug
       );
+      return (remoteRsp?.Contents || []).map(item => {
+        if (!item) {
+          return item;
+        }
+        item.key = this.getUseHostLocalPath(item.key);
+        return item;
+      })
     } else {
       throw Error(`not supported service type ${this.serviceType}`);
     }
@@ -96,14 +184,14 @@ export class RemoteClient {
       return await s3.downloadFromRemote(
         s3Client,
         this.s3Config,
-        fileOrFolderPath,
+        this.getUseHostSlugPath(fileOrFolderPath),
         prefix,
         vault,
         mtime,
         password,
         remoteEncryptedKey,
         skipSaving,
-        renamedTo
+        renamedTo || fileOrFolderPath
       );
     } else {
       throw Error(`not supported service type ${this.serviceType}`);
@@ -121,7 +209,7 @@ export class RemoteClient {
       return await s3.deleteFromRemote(
         s3Client,
         this.s3Config,
-        fileOrFolderPath,
+        this.getUseHostSlugPath(fileOrFolderPath),
         prefix,
         password,
         remoteEncryptedKey

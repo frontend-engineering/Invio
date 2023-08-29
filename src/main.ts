@@ -239,9 +239,8 @@ export default class InvioPlugin extends Plugin {
         this.app.vault.getName(),
         () => self.saveSettings()
       );
-      const remoteRsp = await client.listFromRemote(RemoteSrcPrefix + this.settings.localWatchDir);
-      log.info('remote: ', remoteRsp);
-      const remoteContents = remoteRsp.Contents.filter(item => item.key !== RemoteSrcPrefix);
+      const remoteContents = await client.listFromRemote(this.settings.localWatchDir, RemoteSrcPrefix);
+      log.info('remote: ', remoteContents);
 
       getNotice(
         loadingModal,

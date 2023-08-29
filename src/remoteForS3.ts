@@ -242,7 +242,6 @@ export const getS3Client = async (s3Config: S3Config, hostConfig?: THostConfig, 
     }
     // Check existing project
     const projectSlug = hostConfig?.hostPair?.slug;
-    const cred = hostConfig?.credential;
     if (!validCredential(hostConfig, localWatchDir)) {
       const resp = await getCOSCredential(hostConfig, projectSlug);
       log.info('got new cred');

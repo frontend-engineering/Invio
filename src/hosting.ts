@@ -49,7 +49,7 @@ export const syncWithRemoteProject = async (dirname: string, plugin: InvioPlugin
     settings.hostConfig.credential = null;
 
     Object.assign(plugin.settings.s3, {
-      s3Endpoint: endpoint,
+      s3Endpoint: endpoint?.replace(/^https?:\/\//i, ''),
       s3Region: region,
       s3BucketName: bucket,
       s3AccessKeyID: '',

@@ -101,7 +101,7 @@ export const publishFiles = async (
         // RenderLog.progress(i++, path.length, "Exporting Docs", "Exporting: " + file.path, "var(--color-accent)");
         view?.info("Exporting: " + file.path);
 
-        const exportedFile = await exportFile(file, new Path(path), htmlFilePath, new Path(settings.localWatchDir), view);
+        const exportedFile = await exportFile(file, new Path(path), htmlFilePath, new Path(client.getUseHostSlug()), view);
         if (exportedFile) {
             externalFiles.push(...exportedFile.downloads.map((d: Downloadable) => {
                 const afterPath = exportedFile.exportToFolder.join(d.relativeDownloadPath);
@@ -118,6 +118,7 @@ export const publishFiles = async (
             log.info('download list: ', externalFiles);
         }
     }
+    // Or useHost
     if (settings.remoteDomain) {
         const sitemapDomStr = HTMLGenerator.generateSitemap(allFiles, settings.remoteDomain);
         const sitemapDownload = new Downloadable('sitemap.xml', sitemapDomStr, htmlPath.joinString(settings.localWatchDir));
