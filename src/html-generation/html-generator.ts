@@ -109,7 +109,7 @@ export class HTMLGenerator {
 
 			let fileTree: HTMLDivElement = this.generateHTMLTree(tree, usingDocument, pageTitle, "file-tree", true, 1, 1, false);
 			// leftSidebar.appendChild(fileTree);
-			const dataNode = this.generateRootDirNode(file, usingDocument);
+			const dataNode = this.generateRootDirNode(file, rootPath.asString, usingDocument);
 			leftSidebar.appendChild(dataNode);
 			const rootDir = new Path(file.exportPath.asString.split('/')[0])
 			file.downloads.push(new Downloadable('_common-left-tree.html', fileTree.outerHTML, rootDir));
@@ -849,9 +849,9 @@ export class HTMLGenerator {
 		return container;
 	}
 
-	private static generateRootDirNode(file: ExportFile, usingDocument: Document) {
-		const rootDir = file.exportPath.directory.asString?.split('/')[0];
-		const container = document.createElement('div');
+	private static generateRootDirNode(file: ExportFile, rootPath: string, usingDocument: Document) {
+		const rootDir = rootPath || file.exportPath.directory.asString?.split('/')[0];
+		const container = usingDocument.createElement('div');
 		container.id = 'invio-hidden-data-node'
 		container.style.display = 'none';
 		container.setAttribute('data-root', rootDir);
