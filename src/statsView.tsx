@@ -8,11 +8,13 @@ import type {
 import { StatsViewComponent } from "./components/StatsView";
 import { createRoot } from "react-dom/client";
 import useStore, { LogType, LogItem } from './components/store';
+import { UsingIconNames } from './utils/icon';
+
 const { init, updateRecord, addLog, clean } = useStore.getState();
 
 export * from './components/store';
 export const VIEW_TYPE_STATS = "stats-view";
-
+const { iconNameSyncLogo } = UsingIconNames;
 export class StatsView extends ItemView {
     readonly plugin
     data: any
@@ -21,6 +23,7 @@ export class StatsView extends ItemView {
         super(leaf);
         this.plugin = plugin;
         this.data = undefined;
+        this.icon = iconNameSyncLogo;
     }
 
     static getStatsView(plugin: Plugin) {
