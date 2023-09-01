@@ -21,13 +21,23 @@ export class CreateProjectModal extends Modal {
     this.domain = domain;
     this.confirmCB = cb;
   }
+
+  t(x: TransItemType, vars?: any) {
+    return this.plugin.i18n.t(x, vars);
+  }
+
   async createProject() {
     const token = this.plugin.settings.hostConfig?.token;
     if (!token) {
       Utils.gotoAuth();
       throw new Error('Unauthorized');
     }
-
+    if (!this.slug || !this.name) {
+      throw new Error(this.t('modal_project_empty_err'));
+    }
+    if (!/^[a-zA-Z0-9]{6,12}$/.test(this.slug)) {
+      throw new Error(this.t('modal_project_slug_err'))
+    }
     return fetch(`${HostServerUrl}/api/invio?priatoken=${token}`, {
       method: 'POST',
       body: JSON.stringify({
@@ -36,11 +46,7 @@ export class CreateProjectModal extends Modal {
         domain: this.domain || ''
       })
     })
-    .then(resp => resp.json())
-    .then(resp => {
-      log.info('create project resp  - ', resp);
-      return resp
-    })
+    .then(resp => resp.json());
   }
 
   onOpen() {
@@ -79,19 +85,6 @@ export class CreateProjectModal extends Modal {
       );
 
     new Setting(formContainer)
-      .setName('Domain')
-      .setDesc('Your custom domain')
-      .addText((text) =>
-        text
-          .setPlaceholder("www.baidu.com")
-          .setValue(this.domain)
-          .onChange(txt => {
-            this.domain = txt;
-            log.info('domain changed: ', this.domain);
-          })
-      );
-
-    new Setting(formContainer)
       .addButton((button) => {
         button.setButtonText('cancel');
         button.onClick(async () => {
@@ -112,8 +105,7 @@ export class CreateProjectModal extends Modal {
             .then(project => {
               if (project?.slugError) {
                 this.slugError = project.slugError;
-                // this.confirmCB(null, project.slugError);
-                console.log('slug error = ', this.slugError);
+                log.error('slug error: ', this.slugError);
                 new Notice(this.slugError, 3500);
                 return;
               }
@@ -126,6 +118,7 @@ export class CreateProjectModal extends Modal {
             .catch(err => {
               log.error('create project failed: ', JSON.stringify(err));
               // TODO: Show error info
+              new Notice(err?.message, 3500);
               return err;
             })
         });

@@ -97,6 +97,10 @@
   "modal_sizesconflict_copybutton": "Click to copy all the below sizes conflicts info",
   "modal_sizesconflict_copynotice": "All the sizes conflicts info have been copied to the clipboard!",
 
+
+  "modal_project_empty_err": "Slug or Name cannot be empty",
+  "modal_project_slug_err": "The slug can only contain letters and numbers, with a length of 6 to 12 characters.",
+
   "settings_basic": "Basic Settings",
   "settings_domain": "Domain",
   "settings_domain_desc": "The option to point a domain to your S3 (or other COS) is optional, but recommended for previewing and generating a website that is SEO-friendly. \n Like https://search.google.com",
@@ -157,6 +161,18 @@
   "settings_s3_urlstyle_desc": "Whether to force path-style URLs for S3 objects (e.g., https://s3.amazonaws.com/*/ instead of https://*.s3.amazonaws.com/).",
   "settings_s3_connect_succ": "Great! The bucket can be accessed.",
   "settings_s3_connect_fail": "The S3 bucket cannot be reached.",
+
+  "settings_host": "Hosting Service Config",
+  "settings_host_switch_title": "Fast startup: use Invio Hosting Service Or Self Hosting",
+  "settings_host_switch_desc": "Invio Hosting Service allows you to quickly experience the Invio service without complex initial configurations.",
+  "settings_host_enable_error": "Invio Host Service is not reachable, please try again later",
+  "settings_host_auto_settings": "Auto Hosting Settings",
+  "settings_host_auto_name": "Auto Hosting",
+  "settings_host_auto_desc": "Skip S3 and domain config",
+  "settings_host_auto_login": "Login",
+  "settings_host_auto_logout": "Logout",
+
+  "settings_host_self_settings": "Self Hosting Settings",
 
   "settings_dropbox": "Remote For Dropbox",
   "settings_dropbox_disclaimer1": "Disclaimer: This app is NOT an official Dropbox product.",

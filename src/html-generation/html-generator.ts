@@ -105,13 +105,15 @@ export class HTMLGenerator {
 		// inject file tree
 		if (InvioSettingTab.settings.includeFileTree) {
 			let tree = GlobalDataGenerator.getFileTree();
-			if (InvioSettingTab.settings.makeNamesWebStyle) tree.makeLinksWebStyle();
+			const rootDir = new Path(file.exportPath.asString.split('/')[0])
+			if (rootDir !== rootPath) {
+				tree.makeLinksRemote(rootDir.asString, rootPath.asString);
+			}
 
 			let fileTree: HTMLDivElement = this.generateHTMLTree(tree, usingDocument, pageTitle, "file-tree", true, 1, 1, false);
 			// leftSidebar.appendChild(fileTree);
 			const dataNode = this.generateRootDirNode(file, rootPath.asString, usingDocument);
 			leftSidebar.appendChild(dataNode);
-			const rootDir = new Path(file.exportPath.asString.split('/')[0])
 			file.downloads.push(new Downloadable('_common-left-tree.html', fileTree.outerHTML, rootDir));
 		}
 
@@ -229,8 +231,11 @@ export class HTMLGenerator {
 
 		if (addSelfToDownloads) file.downloads.push(file.getSelfDownloadable());
 		file.downloads.push(...outlinedImages);
-		await AssetHandler.reparseAppStyles(rootPath);
-		file.downloads.push(...await AssetHandler.getDownloads(rootPath));
+
+		const downloadDir = new Path(file.exportPath.asString.split('/')[0]);
+		await AssetHandler.reparseAppStyles(downloadDir, rootPath.asString);
+		log.info('assets download root path: ', rootPath, downloadDir)
+		file.downloads.push(...await AssetHandler.getDownloads(downloadDir));
 
 		if (InvioSettingTab.settings.makeNamesWebStyle) {
 			file.downloads.forEach((file) => {

@@ -155,23 +155,7 @@ export default class InvioPlugin extends Plugin {
       return;
     }
 
-    if (!this.settings.localWatchDir) {
-      new Notice(
-        t("syncrun_no_watchdir_err")
-      );
-      return;
-    }
-    if (this.settings.useHost) {
-      log.info('using host service');
-      if (!this.settings.hostConfig) {
-        log.info('need auth');
-        return Utils.gotoAuth();
-      }
-      if (!this.settings.hostConfig.hostPair?.dir || (this.settings.hostConfig.hostPair?.dir !== this.settings.localWatchDir)) {
-        log.info('sync with remote project');
-        await syncWithRemoteProject(this.settings.localWatchDir, this);
-      }
-    }
+    await this.checkIfRemoteProjectSync();
 
     let originLabel = `${this.manifest.name}`;
     if (this.syncRibbon !== undefined) {
@@ -1019,12 +1003,13 @@ export default class InvioPlugin extends Plugin {
     await this.saveData(normalConfigToMessy(this.settings));
   }
 
+  t(x: TransItemType, vars?: any) {
+    return this.i18n?.t(x, vars);
+  }
+
   async enableHostService() {
-    const t = (x: TransItemType, vars?: any) => {
-      return this.i18n.t(x, vars);
-    };
     if (!this.settings.localWatchDir) {
-      new Notice(t('syncrun_no_watchdir_err'));
+      new Notice(this.t('syncrun_no_watchdir_err'));
       return;
     }
     await syncWithRemoteProject(this.settings.localWatchDir, this);
@@ -1051,6 +1036,26 @@ export default class InvioPlugin extends Plugin {
     const { iconSvgSyncWait } = getIconSvg();
     icon.createIconNode(this, this.settings.localWatchDir, iconSvgSyncWait);
     await this.saveSettings();
+  }
+
+  async checkIfRemoteProjectSync() {
+    if (!this.settings.localWatchDir) {
+      new Notice(
+        this.t("syncrun_no_watchdir_err")
+      );
+      return;
+    }
+    if (this.settings.useHost) {
+      log.info('using host service');
+      if (!this.settings.hostConfig) {
+        log.info('need auth');
+        return Utils.gotoAuth();
+      }
+      if (!this.settings.hostConfig.hostPair?.dir || (this.settings.hostConfig.hostPair?.dir !== this.settings.localWatchDir)) {
+        log.info('sync with remote project');
+        await syncWithRemoteProject(this.settings.localWatchDir, this);
+      }
+    }
   }
 
   async checkIfOauthExpires() {}

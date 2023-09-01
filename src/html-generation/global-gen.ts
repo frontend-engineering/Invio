@@ -240,6 +240,19 @@ export class LinkTree
 			child.makeLinksWebStyle();
 		}
 	}
+
+	public makeLinksRemote(dirRoot: string, remoteRoot?: string)
+	{
+		for (let child of this.children)
+		{
+			let href = child.href ?? "";
+			if (href.startsWith(dirRoot)) {
+				href = href.replace(dirRoot, remoteRoot);
+			}
+			// child.href = Path.toWebStyle(href) || href;
+			child.makeLinksRemote(dirRoot, remoteRoot);
+		}
+	}
 }
 
 export class GlobalDataGenerator

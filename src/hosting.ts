@@ -7,6 +7,7 @@ import { HostServerUrl } from './remoteForS3';
 
 // Check hosting service
 export const checkRemoteHosting = async (plugin: InvioPlugin, dirname?: string) => {
+  log.info('checking remote host service info: ', dirname);
   const dir = dirname || plugin.settings.localWatchDir;
   if (!dir) {
     return false;
@@ -64,10 +65,12 @@ export const syncWithRemoteProject = async (dirname: string, plugin: InvioPlugin
       log.info('project created: ', project, err);
       if (err) {
         reject(err);
+        return;
       }
       if (!project) {
         // Error
         log.error('create project failed: ', project);
+        reject('Project create failed');
         return;
       }
       settings.hostConfig.hostPair = {

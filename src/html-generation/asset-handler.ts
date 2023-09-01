@@ -73,10 +73,10 @@ export class AssetHandler
 		this.updateAssetCache();
 	}
 
-	public static async reparseAppStyles(rootPath: Path) {
+	public static async reparseAppStyles(rootPath: Path, remotePath: string) {
 		this.appInternalAssets = [];
 		this.appStyles = "";
-		await this.loadAppStyles(rootPath);
+		await this.loadAppStyles(rootPath, remotePath);
 	}
 
 	public static async getDownloads(parentPath?: Path) : Promise<Downloadable[]>
@@ -196,7 +196,7 @@ export class AssetHandler
 		return new Path(pathString).directory.absolute();
 	}
 
-	private static async loadAppStyles(rootPath?: Path)
+	private static async loadAppStyles(rootPath?: Path, remotePath?: string)
 	{
 		let appSheet = document.styleSheets[1];
 		let stylesheets = document.styleSheets;
@@ -234,8 +234,11 @@ export class AssetHandler
 					const folderPath = rootPath ? rootPath.join(curFolderPath) : curFolderPath;
 
 					this.appInternalAssets.push(new Downloadable(fileName, assetContent, folderPath));
-					if (rootPath) {
-						cssText = cssText.replaceAll(asset, `${folderPath.asString}/${fileName}`);
+
+					if (remotePath) {
+						const remoteLink = `${remotePath}/${curFolderPath.asString}/${fileName}`;
+						log.info('remote link: ', remoteLink);
+						cssText = cssText.replaceAll(asset, remoteLink);
 					}
 				}
 				this.appStyles += cssText;

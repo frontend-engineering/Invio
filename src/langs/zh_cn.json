@@ -97,6 +97,9 @@
   "modal_sizesconflict_copybutton": "点击以复制以下所有文件大小冲突信息",
   "modal_sizesconflict_copynotice": "所有的文件大小冲突信息，已被复制到剪贴板！",
 
+  "modal_project_empty_err": "Slug和Name不能为空",
+  "modal_project_slug_err": "slug只能包含字母和数字，长度6～12位",
+
   "settings_basic": "基本设置",
   "settings_domain": "域名",
   "settings_domain_desc": "（可选）绑定的指向S3（或其他COS）的域名，主要用于预览和部署网页时SEO相关配置的自动注入。\n例如：https://search.google.com",
@@ -156,6 +159,18 @@
   "settings_s3_urlstyle_desc": "是否对 S3 对象强制使用 path style URL（例如使用 https://s3.amazonaws.com/*/ 而不是 https://*.s3.amazonaws.com/）。",
   "settings_s3_connect_succ": "很好！可以访问到对应存储桶。",
   "settings_s3_connect_fail": "无法访问到对应存储桶。",
+
+  "settings_host": "托管服务配置",
+  "settings_host_switch_title": "是否使用Invio自动托管",
+  "settings_host_switch_desc": "为降低配置成本，Invio 提供免费托管服务，包括S3存储空间和免费子域名",
+  "settings_host_enable_error": "Invio 服务连接失败，请稍后重试",
+  "settings_host_auto_settings": "Invio 自动托管配置",
+  "settings_host_auto_name": "Invio 自动托管",
+  "settings_host_auto_desc": "无需配置，登录即可直接使用",
+  "settings_host_auto_login": "登录",
+  "settings_host_auto_logout": "退出",
+
+  "settings_host_self_settings": "自托管配置",
 
   "settings_dropbox": "Dropbox 设置",
   "settings_dropbox_disclaimer1": "声明：此插件不是 Dropbox 官方产品。",
