@@ -56,7 +56,12 @@ export class HTMLGenerator {
 	}
 
 	// rootPath is used for collecting context nodes
-	public static async generateWebpage(file: ExportFile, rootPath: Path, view: StatsView): Promise<ExportFile> {
+	public static async generateWebpage(
+		file: ExportFile,
+		rootPath: Path,
+		view: StatsView,
+		remoteDomain?: string, // website assets file's host domain
+	): Promise<ExportFile> {
 		await this.getDocumentHTML(file, rootPath, false, view);
 		let usingDocument = file.document;
 
@@ -118,7 +123,7 @@ export class HTMLGenerator {
 		}
 
 		await this.appendFooter(file);
-		await this.fillInHead(file, rootPath);
+		await this.fillInHead(file, rootPath, remoteDomain);
 
 		file.downloads.unshift(file.getSelfDownloadable());
 
@@ -365,11 +370,11 @@ export class HTMLGenerator {
 		return { mediaPath: imagePath, jsPath: jsPath, cssPath: cssPath, rootPath: rootPath };
 	}
 
-	private static async fillInHead(file: ExportFile, rootPath: Path) {
+	private static async fillInHead(file: ExportFile, rootPath: Path, remoteDomain: string = '') {
 		// const pageConfig = app.metadataCache.getFileCache(file.markdownFile).frontmatter;
 		const pageConfig = this.getMeta(file);
-		log.info('get file metadata: ', pageConfig);
-
+		log.info('get file metadata: ', pageConfig, remoteDomain);
+		log.info('head with remote domain: ', remoteDomain);
 		let pageTitle = file.markdownFile.basename;
 		if (pageConfig?.title) {
 			pageTitle = pageConfig.title;
@@ -431,9 +436,9 @@ export class HTMLGenerator {
 			</script>
 			`;
 
-			scripts += `\n<script type='module' src='${relativePaths.jsPath}/graph_view.js'></script>\n`;
-			scripts += `\n<script src='${relativePaths.jsPath}/graph_wasm.js'></script>\n`;
-			scripts += `\n<script src="${relativePaths.jsPath}/tinycolor.js"></script>\n`;
+			scripts += `\n<script type='module' src='${remoteDomain}${relativePaths.jsPath}/graph_view.js'></script>\n`;
+			scripts += `\n<script src='${remoteDomain}${relativePaths.jsPath}/graph_wasm.js'></script>\n`;
+			scripts += `\n<script src="${remoteDomain}${relativePaths.jsPath}/tinycolor.js"></script>\n`;
 			scripts += `\n<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.2.4/pixi.min.js" integrity="sha512-Ch/O6kL8BqUwAfCF7Ie5SX1Hin+BJgYH4pNjRqXdTEqMsis1TUYg+j6nnI9uduPjGaj7DN4UKCZgpvoExt6dkw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>\n`;
 		}
 
@@ -441,7 +446,7 @@ export class HTMLGenerator {
 			scripts += `\n<script>\n${AssetHandler.webpageJS}\n</script>\n`;
 		}
 		else {
-			scripts += `\n<script src='${relativePaths.jsPath}/webpage.js'></script>\n`;
+			scripts += `\n<script src='${remoteDomain}${remoteDomain}${relativePaths.jsPath}/webpage.js'></script>\n`;
 		}
 
 
@@ -478,10 +483,10 @@ export class HTMLGenerator {
 				`
 			${meta}
 
-			<link rel="stylesheet" href="${relativePaths.cssPath}/obsidian-styles.css">
-			<link rel="stylesheet" href="${relativePaths.cssPath}/theme.css">
-			<link rel="stylesheet" href="${relativePaths.cssPath}/plugin-styles.css">
-			<link rel="stylesheet" href="${relativePaths.cssPath}/snippets.css">
+			<link rel="stylesheet" href="${remoteDomain}${relativePaths.cssPath}/obsidian-styles.css">
+			<link rel="stylesheet" href="${remoteDomain}${relativePaths.cssPath}/theme.css">
+			<link rel="stylesheet" href="${remoteDomain}${relativePaths.cssPath}/plugin-styles.css">
+			<link rel="stylesheet" href="${remoteDomain}${relativePaths.cssPath}/snippets.css">
 			<style> ${cssSettings} </style>
 
 			${scripts}

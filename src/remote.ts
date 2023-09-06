@@ -9,6 +9,7 @@ import * as s3 from "./remoteForS3";
 import { log } from "./moreOnLog";
 import { RemoteSrcPrefix } from "./sync";
 
+export { ServerDomain, HostServerUrl, AppHostServerUrl } from './remoteForS3'
 export class RemoteClient {
   readonly serviceType: SUPPORTED_SERVICES_TYPE;
   readonly s3Config?: S3Config;

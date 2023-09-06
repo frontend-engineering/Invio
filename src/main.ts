@@ -34,7 +34,7 @@ import {
   clearExpiredLoggerOutputRecords,
   clearExpiredSyncPlanRecords,
 } from "./localdb";
-import { RemoteClient } from "./remote";
+import { RemoteClient, ServerDomain } from "./remote";
 import { InvioSettingTab, DEFAULT_SETTINGS } from "./settings";
 import { fetchMetadataFile, parseRemoteItems, SyncStatusType, RemoteSrcPrefix } from "./sync";
 import { doActualSync, getSyncPlan, isPasswordOk } from "./sync";
@@ -468,7 +468,13 @@ export default class InvioPlugin extends Plugin {
               }
             }
             // TODO: Get remote link, but need remote domain first
-            view?.update(pathName, { syncStatus: 'sync-done', remoteLink: '' });
+            let remoteLink  = '';
+            if (client?.useHost && client?.hostConfig?.hostPair?.slug) {
+              const publishedKey = client.getUseHostSlugPath(pathName).replace(/\.md$/, '.html');
+              remoteLink = `https://${client?.hostConfig?.hostPair?.slug}.${ServerDomain}/${publishedKey}`;
+            }
+
+            view?.update(pathName, { syncStatus: 'sync-done', remoteLink });
             view?.info(`${i}/${totalCount} - file ${pathName} sync done`);
           },
           (key: string) => {

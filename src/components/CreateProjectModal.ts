@@ -3,7 +3,7 @@ import type InvioPlugin from "../main"; // unavoidable
 import type { TransItemType } from "../i18n";
 import { log } from '../moreOnLog';
 import Utils from "../utils";
-import { HostServerUrl } from '../remoteForS3';
+import { HostServerUrl } from '../remote';
 
 export class CreateProjectModal extends Modal {
   readonly plugin: InvioPlugin;
@@ -16,7 +16,7 @@ export class CreateProjectModal extends Modal {
     super(app);
     this.plugin = plugin;
     this.name = name;
-    this.slug = slug;
+    this.slug = slug?.toLowerCase(); // 所有online资源不区分大小写
     this.slugError = '';
     this.domain = domain;
     this.confirmCB = cb;
@@ -37,6 +37,9 @@ export class CreateProjectModal extends Modal {
     }
     if (!/^[a-zA-Z0-9]{6,12}$/.test(this.slug)) {
       throw new Error(this.t('modal_project_slug_err'))
+    }
+    if (this.slug !== this.slug.toLowerCase()) {
+      throw new Error(this.t('modal_project_slug_case_err'))
     }
     return fetch(`${HostServerUrl}/api/invio?priatoken=${token}`, {
       method: 'POST',

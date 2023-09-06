@@ -100,6 +100,7 @@
 
   "modal_project_empty_err": "Slug or Name cannot be empty",
   "modal_project_slug_err": "The slug can only contain letters and numbers, with a length of 6 to 12 characters.",
+  "modal_project_slug_case_err": "Invio project slug is case-insensitive, it can only contain lower case characters.",
 
   "settings_basic": "Basic Settings",
   "settings_domain": "Domain",
@@ -171,6 +172,7 @@
   "settings_host_auto_desc": "Skip S3 and domain config",
   "settings_host_auto_login": "Login",
   "settings_host_auto_logout": "Logout",
+  "settings_host_dirname_case_conflict": "Invio detected a potential issue with folder name casing that may cause errors during syncing.",
 
   "settings_host_self_settings": "Self Hosting Settings",
 

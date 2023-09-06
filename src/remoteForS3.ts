@@ -198,16 +198,26 @@ const fromS3HeadObjectToRemoteItem = (
 
 const getCOSCredential = async (hostConfig: THostConfig, key: string) => {
   const { token } = hostConfig;
-  const param: RequestUrlParam = {
+  const param: Partial<RequestUrlParam> = {
     body: JSON.stringify({ slug: key }),
     method: 'POST',
-    url: `${HostServerUrl}/api/s3/cred?priatoken=${token}`,
   };
 
-  return requestUrl(param).then(resp => {
-    console.log('request cred resp: ', resp.json);
-    return resp.json;
-  })
+  return fetch(`${HostServerUrl}/api/s3/cred?priatoken=${token}`, param)
+    .then(resp => resp.json())
+    .then(resp => {
+      if (resp?.error) {
+        // Match with backend
+        if (resp.error === 'No valid project found') {
+          // 已经检查过project信息，所以不应该出现这个错误
+        }
+        if (resp.error === 'Usage limited') {
+          Utils.gotoAuth();
+        }
+        throw new Error(`Error: ${resp.error}`);
+      }
+      return resp;
+    })
 }
 
 const validCredential = (hostConfig: THostConfig, localWatchDir: string) => {
@@ -216,6 +226,7 @@ const validCredential = (hostConfig: THostConfig, localWatchDir: string) => {
   if (!cred?.expiration) return null;
 
   if (hostPair?.dir !== localWatchDir) return null;
+  if (!hostPair.slug) return null;
   if (new Date(cred.expiration).valueOf() < Date.now()) return null;
   return cred;
 }
@@ -241,8 +252,8 @@ export const getS3Client = async (s3Config: S3Config, hostConfig?: THostConfig, 
       throw new Error('Unauthorized');
     }
     // Check existing project
-    const projectSlug = hostConfig?.hostPair?.slug;
     if (!validCredential(hostConfig, localWatchDir)) {
+      const projectSlug = hostConfig?.hostPair?.slug;
       const resp = await getCOSCredential(hostConfig, projectSlug);
       log.info('got new cred');
       // Memory Only

@@ -99,6 +99,7 @@
 
   "modal_project_empty_err": "Slug和Name不能为空",
   "modal_project_slug_err": "slug只能包含字母和数字，长度6～12位",
+  "modal_project_slug_case_err": "Invio project slug 大小写不敏感，不允许包含大写字母",
 
   "settings_basic": "基本設定",
   "settings_domain": "域名",
@@ -169,6 +170,7 @@
   "settings_host_auto_desc": "无需配置，登录即可直接使用",
   "settings_host_auto_login": "登录",
   "settings_host_auto_logout": "退出",
+  "settings_host_dirname_case_conflict": "Invio 默认大小写不敏感，请检查目录名字，否则会在项目同步时导致未知后果",
 
   "settings_host_self_settings": "自托管配置",
 

@@ -11,11 +11,18 @@ import { AssetHandler } from './html-generation/asset-handler';
 import { RenderLog } from './html-generation/render-log';
 import { Downloadable } from './utils/downloadable';
 import { log } from "./moreOnLog";
-import { RemoteClient } from "./remote";
+import { RemoteClient, ServerDomain } from "./remote";
 import { StatsView } from './statsView';
 import { InvioPluginSettings } from './baseTypes';
 
-export const exportFile = async (file: TFile, exportFromPath: Path, exportToPath: Path | undefined = undefined, rootPath: Path | undefined, view: StatsView) : Promise<ExportFile | undefined> => {
+export const exportFile = async (
+    file: TFile,
+    exportFromPath: Path,
+    exportToPath: Path | undefined = undefined,
+    rootPath: Path | undefined,
+    view: StatsView,
+    remoteClient?: RemoteClient
+) : Promise<ExportFile | undefined> => {
     if(file.extension != "md")
     {
         new Notice(`❗ Unfortunately exporting ${file.extension.replace(/\./igm, "")} files is not supported yet.`, 7000);
@@ -35,7 +42,13 @@ export const exportFile = async (file: TFile, exportFromPath: Path, exportToPath
     try
     {
         exportedFile = new ExportFile(file, exportToPath.directory.absolute(), exportFromPath.directory, true, exportToPath.fullName, false);
-        await HTMLGenerator.generateWebpage(exportedFile, rootPath, view);
+        let remoteDomain;
+        if (remoteClient?.useHost) {
+            // 默认已经verify过COS数据了
+            const { s3BucketName: bucket, s3Endpoint: endpoint } = remoteClient.s3Config;
+            remoteDomain = `https://${bucket}.${endpoint}/`;
+        }
+        await HTMLGenerator.generateWebpage(exportedFile, rootPath, view, remoteDomain);
     }
     catch (e)
     {
@@ -101,7 +114,7 @@ export const publishFiles = async (
         // RenderLog.progress(i++, path.length, "Exporting Docs", "Exporting: " + file.path, "var(--color-accent)");
         view?.info("Exporting: " + file.path);
 
-        const exportedFile = await exportFile(file, new Path(path), htmlFilePath, new Path(client.getUseHostSlug()), view);
+        const exportedFile = await exportFile(file, new Path(path), htmlFilePath, new Path(client.getUseHostSlug()), view, client);
         if (exportedFile) {
             externalFiles.push(...exportedFile.downloads.map((d: Downloadable) => {
                 const afterPath = exportedFile.exportToFolder.join(d.relativeDownloadPath);
@@ -184,8 +197,11 @@ export const publishFiles = async (
                     if (settings.useHost) {
                         if (settings.hostConfig?.hostPair?.slug) {
                             const slug = settings.hostConfig?.hostPair.slug;
-                            const domain = `https://${slug}.turbosite.cloud`;
+                            const domain = `https://${slug}.${ServerDomain}`;
                             cb(upload.md, 'DONE', `${domain}/${resp?.key}`);
+                        } else {
+                            // Error case
+                            // Should not be here
                         }
                     } else {
                         const domain = settings.remoteDomain || `https://${settings.s3.s3BucketName}.${settings.s3.s3Endpoint}`;

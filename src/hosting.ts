@@ -3,8 +3,9 @@ import { InvioPluginSettings, S3Config } from "./baseTypes";
 import { log } from './moreOnLog';
 import { CreateProjectModal } from './components/CreateProjectModal';
 import Utils from './utils';
-import { HostServerUrl } from './remoteForS3';
-
+import { HostServerUrl } from './remote';
+import { Notice } from "obsidian";
+import type { TransItemType } from "./i18n";
 // Check hosting service
 export const checkRemoteHosting = async (plugin: InvioPlugin, dirname?: string) => {
   log.info('checking remote host service info: ', dirname);
@@ -16,13 +17,23 @@ export const checkRemoteHosting = async (plugin: InvioPlugin, dirname?: string) 
   if (!token) {
     throw new Error('NoAuth');
   }
+
+  const t = (x: TransItemType, vars?: any) => {
+    return plugin.i18n?.t(x, vars);
+  };
+
   return fetch(`${HostServerUrl}/api/invio?priatoken=${token}`)
       .then(resp => resp.json())
       .then(resp => {
-          console.log('projects: ', resp);
           const matched = resp?.find((p: any) => p.name === dir);
           if (matched) {
               return matched;
+          }
+          const matchedCaseInsensitive = resp?.find((p: any) => p.name?.toLowerCase() === dir?.toLowerCase()); // 文件夹大小写不敏感
+          if (matchedCaseInsensitive) {
+            // TODO: Alert deprecated case.
+            new Notice(t('settings_host_dirname_case_conflict'), 5000);
+            return matchedCaseInsensitive;
           }
           return null;
       });
@@ -82,7 +93,7 @@ export const syncWithRemoteProject = async (dirname: string, plugin: InvioPlugin
       await plugin.saveSettings();
       resolve(project?.name);
     };
-    const modal = new CreateProjectModal(plugin.app, plugin, dirname, dirname, null, cb.bind(plugin));
+    const modal = new CreateProjectModal(plugin.app, plugin, dirname, dirname.toLowerCase(), null, cb.bind(plugin));
     modal.open();
   });
   return name;
