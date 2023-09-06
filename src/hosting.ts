@@ -53,7 +53,7 @@ export const syncWithRemoteProject = async (dirname: string, plugin: InvioPlugin
   const settings = plugin.settings;
   const existed = await checkRemoteHosting(plugin, dirname);
   if (existed) {
-    const { name, slug, endpoint, region, bucket } = existed;
+    const { name, slug, endpoint, region, bucket, useHost: baseDomain } = existed;
     settings.hostConfig.hostPair = {
       dir: name,
       slug,
@@ -67,6 +67,11 @@ export const syncWithRemoteProject = async (dirname: string, plugin: InvioPlugin
       s3AccessKeyID: '',
       s3SecretAccessKey: ''
     });
+
+    if (baseDomain) {
+      // TODO: Set to localhost for DevMode
+      plugin.settings.remoteDomain = `https://${slug}.${baseDomain}`
+    }
 
     await plugin.saveSettings();
     return name;

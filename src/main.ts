@@ -468,11 +468,9 @@ export default class InvioPlugin extends Plugin {
               }
             }
             // TODO: Get remote link, but need remote domain first
-            let remoteLink  = '';
-            if (client?.useHost && client?.hostConfig?.hostPair?.slug) {
-              const publishedKey = client.getUseHostSlugPath(pathName).replace(/\.md$/, '.html');
-              remoteLink = `https://${client?.hostConfig?.hostPair?.slug}.${ServerDomain}/${publishedKey}`;
-            }
+            let remoteLink  = this.getRemoteDomain();
+            const publishedKey = client.getUseHostSlugPath(pathName).replace(/\.md$/, '.html');
+            remoteLink += `/${publishedKey}`;
 
             view?.update(pathName, { syncStatus: 'sync-done', remoteLink });
             view?.info(`${i}/${totalCount} - file ${pathName} sync done`);
@@ -535,7 +533,8 @@ export default class InvioPlugin extends Plugin {
             view?.update(pathName, { syncStatus: 'publishing' })
           } else if (status === 'DONE') {
             log.info('set file DONE publishing', pathName);
-            view?.update(pathName, { syncStatus: 'done', remoteLink: meta })
+            const domain = this.getRemoteDomain();
+            view?.update(pathName, { syncStatus: 'done', remoteLink: `${domain}/${meta}` })
           } else if (status === 'FAIL') {
             view?.update(pathName, { syncStatus: 'fail' })
           }
@@ -1013,6 +1012,19 @@ export default class InvioPlugin extends Plugin {
     return this.i18n?.t(x, vars);
   }
 
+  getRemoteDomain() {
+    let domain = this.settings.remoteDomain;
+    if (!domain) {
+      if (this.settings.useHost && this.settings.hostConfig?.hostPair?.slug) {
+        const slug = this.settings.hostConfig?.hostPair.slug;
+        domain = `https://${slug}.${ServerDomain}`;
+      } else {
+        domain = `https://${this.settings.s3.s3BucketName}.${this.settings.s3.s3Endpoint}`;
+      }
+    }
+    return domain;
+  }
+
   async enableHostService() {
     if (!this.settings.localWatchDir) {
       new Notice(this.t('syncrun_no_watchdir_err'));
@@ -1030,6 +1042,7 @@ export default class InvioPlugin extends Plugin {
       s3AccessKeyID: '',
       s3SecretAccessKey: ''
     });
+    this.settings.remoteDomain = '';
     await this.saveSettings();
   }
 

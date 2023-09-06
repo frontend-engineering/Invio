@@ -42,13 +42,13 @@ export const exportFile = async (
     try
     {
         exportedFile = new ExportFile(file, exportToPath.directory.absolute(), exportFromPath.directory, true, exportToPath.fullName, false);
-        let remoteDomain;
+        let remoteCOSDomain;
         if (remoteClient?.useHost) {
             // 默认已经verify过COS数据了
             const { s3BucketName: bucket, s3Endpoint: endpoint } = remoteClient.s3Config;
-            remoteDomain = `https://${bucket}.${endpoint}/`;
+            remoteCOSDomain = `https://${bucket}.${endpoint}/`;
         }
-        await HTMLGenerator.generateWebpage(exportedFile, rootPath, view, remoteDomain);
+        await HTMLGenerator.generateWebpage(exportedFile, rootPath, view, remoteCOSDomain);
     }
     catch (e)
     {
@@ -191,22 +191,9 @@ export const publishFiles = async (
                 upload.key
             ).then((resp) => {
                 if (!resp) return;
-                // RenderLog.progress(i++, toUploads.length, "Uploading Docs", "Upload success: " + upload.key, "var(--color-accent)");
                 view?.info(`Upload success: ${upload.key}`);
                 if (cb && upload.md) {
-                    if (settings.useHost) {
-                        if (settings.hostConfig?.hostPair?.slug) {
-                            const slug = settings.hostConfig?.hostPair.slug;
-                            const domain = `https://${slug}.${ServerDomain}`;
-                            cb(upload.md, 'DONE', `${domain}/${resp?.key}`);
-                        } else {
-                            // Error case
-                            // Should not be here
-                        }
-                    } else {
-                        const domain = settings.remoteDomain || `https://${settings.s3.s3BucketName}.${settings.s3.s3Endpoint}`;
-                        cb(upload.md, 'DONE', `${domain}/${resp?.key}`);
-                    }
+                    cb(upload.md, 'DONE', resp?.key);
                 }
                 return resp;
             }).catch(err => {
