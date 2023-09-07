@@ -238,7 +238,6 @@ export const getS3Client = async (s3Config: S3Config, hostConfig?: THostConfig, 
     endpoint = `https://${endpoint}`;
   }
 
-  log.info('s3 client gen: ', s3Config, hostConfig, useHost);
   let s3Client: S3Client;
   let credential = {
     accessKeyId: s3Config.s3AccessKeyID,

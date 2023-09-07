@@ -25,7 +25,7 @@ export namespace MarkdownRenderer
 
 		try
 		{
-			await renderLeaf.openFile(file.markdownFile, { active: false});
+			await renderLeaf.openFile(file.markdownFile, { active: false });
 		}
 		catch (e)
 		{
@@ -65,10 +65,10 @@ export namespace MarkdownRenderer
 
 		await Utils.changeViewMode(renderLeaf.view, "preview");
 		if (cancelled) throw new Error("Markdown rendering cancelled");
-
-
 		// @ts-ignore
 		preview.renderer.showAll = true;
+		// @ts-ignore
+		preview.renderer.renderExtraMinPx = 50000; // Contents longer than 50000px would be cut
 		// @ts-ignore
 		await preview.renderer.unfoldAllHeadings();
 		if (cancelled) throw new Error("Markdown rendering cancelled");
@@ -77,7 +77,6 @@ export namespace MarkdownRenderer
 		const lastRender = preview.renderer.lastRender;
 		// @ts-ignore
 		preview.renderer.rerender(true);
-
 		let isRendered = false;
 		// @ts-ignore
 		preview.renderer.onRendered(() => 
@@ -86,7 +85,7 @@ export namespace MarkdownRenderer
 		});
 
 		// @ts-ignore
-		const renderfinished = await Utils.waitUntil(() => (preview.renderer.lastRender != lastRender && isRendered) || cancelled, 30000, 50);
+		const renderfinished = await Utils.waitUntil(() => ((preview.renderer.lastRender != lastRender) && isRendered) || cancelled, 30000, 300);
 
 		if (cancelled) throw new Error("Markdown rendering cancelled");
 
@@ -98,7 +97,7 @@ export namespace MarkdownRenderer
 			view?.update(file.markdownFile.path, { syncStatus: 'fail' })
 			return generateFailDocument();
 		}
-
+	
 		// wait for dataview blocks to render
 		const text = renderLeaf.view.data;
 		const dataviews = text.matchAll(/```(dataview|dataviewjs)/g);
@@ -155,21 +154,16 @@ export namespace MarkdownRenderer
 		});
 	}
 
-	function newTab(app: App, navType: PaneType | boolean, splitDirection: SplitDirection = 'vertical'): WorkspaceLeaf {
-		let leaf = navType === 'split' ? app.workspace.getLeaf(navType, splitDirection) : app.workspace.getLeaf(navType);
-		return leaf;
-	}
-	
     export async function beginBatch(plugin: InvioPlugin)
 	{
 		problemLog = "";
         errorInBatch = false;
 		cancelled = false;
 
-		renderLeaf = newTab(plugin.app, "window", "vertical");
+		renderLeaf = app.workspace.getLeaf('window');
 		// @ts-ignore
-		const parentFound = await Utils.waitUntil(() => renderLeaf && renderLeaf.parent, 2000, 10);
-		if (!parentFound) 
+		const parentFound = await Utils.waitUntil(() => renderLeaf && renderLeaf.parent, 2000, 50);
+		if (!parentFound)
 		{
 			try
 			{
@@ -186,24 +180,26 @@ export namespace MarkdownRenderer
 
 		// hide the leaf so we can render without intruding on the user
 		// @ts-ignore
-		renderLeaf.parent.containerEl.style.height = "0";
+		renderLeaf.parent.containerEl.style.height = "100%";
 		// @ts-ignore
 		renderLeaf.parent.parent.containerEl.querySelector(".clickable-icon, .workspace-tab-header-container-inner").style.display = "none";
 		// @ts-ignore
-		renderLeaf.parent.containerEl.style.maxHeight = "var(--header-height)";
+		// renderLeaf.parent.containerEl.style.maxHeight = "var(--header-height)";
 		// @ts-ignore
 		renderLeaf.parent.parent.containerEl.classList.remove("mod-vertical");
 		// @ts-ignore
 		renderLeaf.parent.parent.containerEl.classList.add("mod-horizontal");
+
 		// @ts-ignore
-		renderLeaf.view.containerEl.win.resizeTo(1, 1);
+		// renderLeaf.view.containerEl.win.resizeTo(1, 1);
 		// @ts-ignore
-		renderLeaf.view.containerEl.win.moveTo(window.screen.width + 450, window.screen.height + 450);
+		// renderLeaf.view.containerEl.win.moveTo(window.screen.width + 450, window.screen.height + 450);
 
 		// @ts-ignore
 		const renderBrowserWindow = window.electron.remote.BrowserWindow.getFocusedWindow();
 		if (renderBrowserWindow) {
-			// renderBrowserWindow.setAlwaysOnTop(true, "floating", 1);
+			renderBrowserWindow.hide();
+			// renderBrowserWindow.setAlwaysOnTop(false, "floating", 1);
 			renderBrowserWindow.webContents.setFrameRate(120);
 			renderBrowserWindow.on("close", () =>
 			{
