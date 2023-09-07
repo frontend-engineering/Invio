@@ -5,7 +5,8 @@ Invio automatically converts your Obsidian documents into HTML web pages and syn
 
 [![BuildCI](https://github.com/frontend-engineering/Invio/actions/workflows/auto-build.yml/badge.svg)](https://github.com/frontend-engineering/Invio/actions/workflows/auto-build.yml)
 
-[![downloads of latest version](https://img.shields.io/github/downloads-pre/frontend-engineering/Invio/latest/total?style=social)](https://github.com/frontend-engineering/Invio/releases)
+
+[![downloads of latest version](https://img.shields.io/github/downloads/frontend-engineering/invio/total.svg)](https://github.com/frontend-engineering/Invio/releases)
 
 
 ## Features
