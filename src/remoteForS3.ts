@@ -44,10 +44,15 @@ export { S3Client } from "@aws-sdk/client-s3";
 
 import { log } from "./moreOnLog";
 
-// export const HostServerUrl = 'http://localhost:8888';
-// export const AppHostServerUrl = 'http://localhost:8888';
-export const HostServerUrl = 'https://api.turbosite.cloud';
-export const AppHostServerUrl = 'https://app.turbosite.cloud';
+export const ServerDomain = `turbosite.cloud`;
+
+export const HostServerUrl = `https://api.${ServerDomain}`;
+export const AppHostServerUrl = `https://app.${ServerDomain}`;
+
+// export const ServerDomain = `localhost:8888`;
+// export const HostServerUrl = `http://api.${ServerDomain}`;
+// export const AppHostServerUrl = `http://app.${ServerDomain}`;
+
 ////////////////////////////////////////////////////////////////////////////////
 // special handler using Obsidian requestUrl
 ////////////////////////////////////////////////////////////////////////////////
