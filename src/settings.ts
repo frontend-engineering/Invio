@@ -968,42 +968,44 @@ export class InvioSettingTab extends PluginSettingTab {
     //////////////////////////////////////////////////
 
     // import and export
-    containerEl.createEl("h2", {
-      text: t("settings_importexport"),
-    });
-    const importExportDiv = containerEl.createEl("div", { cls: 'settings-config-section' });
-
-    new Setting(importExportDiv)
-      .setName(t("settings_export"))
-      .setDesc(t("settings_export_desc"))
-      .addButton(async (button) => {
-        button.setButtonText(t("settings_export_desc_button"));
-        button.onClick(async () => {
-          // new ExportSettingsQrCodeModal(this.app, this.plugin).open();
-          InvioSettingTab.exportSettings(this.plugin);
-        });
+    if (!this.plugin.settings.useHost) {
+      containerEl.createEl("h2", {
+        text: t("settings_importexport"),
       });
-
-    let restoredStr = '';
-    new Setting(importExportDiv)
-      .setName(t("settings_import"))
-      .setDesc(t("settings_import_desc"))
-      .addText((text) =>
-        text
-          .setPlaceholder("Encrypted config string")
-          .setValue("")
-          .onChange((val) => {
-            restoredStr = val.trim();
-          })
-      )
-      .addButton(async (button) => {
-        button.setButtonText(t("settings_import_desc_button"));
-        button.onClick(async () => {
-          await InvioSettingTab.importSettings(this.plugin, restoredStr);
-          this.hide();
-          this.display();
+      const importExportDiv = containerEl.createEl("div", { cls: 'settings-config-section' });
+  
+      new Setting(importExportDiv)
+        .setName(t("settings_export"))
+        .setDesc(t("settings_export_desc"))
+        .addButton(async (button) => {
+          button.setButtonText(t("settings_export_desc_button"));
+          button.onClick(async () => {
+            // new ExportSettingsQrCodeModal(this.app, this.plugin).open();
+            InvioSettingTab.exportSettings(this.plugin);
+          });
         });
-      });
+  
+      let restoredStr = '';
+      new Setting(importExportDiv)
+        .setName(t("settings_import"))
+        .setDesc(t("settings_import_desc"))
+        .addText((text) =>
+          text
+            .setPlaceholder("Encrypted config string")
+            .setValue("")
+            .onChange((val) => {
+              restoredStr = val.trim();
+            })
+        )
+        .addButton(async (button) => {
+          button.setButtonText(t("settings_import_desc_button"));
+          button.onClick(async () => {
+            await InvioSettingTab.importSettings(this.plugin, restoredStr);
+            this.hide();
+          });
+        });
+    }
+    
 
     //////////////////////////////////////////////////
     // below for debug

@@ -246,11 +246,11 @@
 
   "settings_importexport": "匯入匯出部分設定",
   "settings_export": "匯出",
-  "settings_export_desc": "将本地配置信息导出为加密字符串，该密钥包含所有配置信息，请谨慎保存",
+  "settings_export_desc": "将本地配置信息导出为加密字符串，可分享给其他用户，对方即可获得等同于您的线上文件读写权限，请谨慎保存",
   "settings_export_desc_button": "导出",
   "settings_export_msg": "配置文件字符串已经复制到剪贴板!",
   "settings_import": "匯入",
-  "settings_import_desc": "通过密钥字符一键导入本地配置",
+  "settings_import_desc": "通过密钥字符一键导入本地配置，如配置中包含文件夹，会自动同步文件到本地",
   "settings_import_desc_button": "导入",
   "settings_import_err": "请输入有效字符",
 
