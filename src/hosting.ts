@@ -51,56 +51,53 @@ export const setupS3HostConfig = async (plugin: InvioPlugin, config: Partial<S3C
 
 export const syncWithRemoteProject = async (dirname: string, plugin: InvioPlugin) => {
   const settings = plugin.settings;
-  const existed = await checkRemoteHosting(plugin, dirname);
-  if (existed) {
-    const { name, slug, endpoint, region, bucket, useHost: baseDomain } = existed;
-    settings.hostConfig.hostPair = {
-      dir: name,
-      slug,
-    }
-    settings.hostConfig.credential = null;
-
-    Object.assign(plugin.settings.s3, {
-      s3Endpoint: endpoint?.replace(/^https?:\/\//i, ''),
-      s3Region: region,
-      s3BucketName: bucket,
-      s3AccessKeyID: '',
-      s3SecretAccessKey: ''
+  let projectInfo = await checkRemoteHosting(plugin, dirname);
+  if (!projectInfo) {
+    projectInfo = await new Promise((resolve, reject) => {
+      const cb = async (project: any, err?: any) => {
+        log.info('project created: ', project, err);
+        if (err) {
+          reject(err);
+          return;
+        }
+        if (!project) {
+          // Error
+          log.error('create project failed: ', project);
+          reject('Project create failed');
+          return;
+        }
+        return resolve(project);
+      };
+      const modal = new CreateProjectModal(plugin.app, plugin, dirname, dirname.toLowerCase(), null, cb.bind(plugin));
+      modal.open();
     });
-
-    if (baseDomain) {
-      // TODO: Set to localhost for DevMode
-      plugin.settings.remoteDomain = `https://${slug}.${baseDomain}`
-    }
-
-    await plugin.saveSettings();
-    return name;
   }
-  const name = await new Promise((resolve, reject) => {
-    const cb = async (project: any, err: any) => {
-      log.info('project created: ', project, err);
-      if (err) {
-        reject(err);
-        return;
-      }
-      if (!project) {
-        // Error
-        log.error('create project failed: ', project);
-        reject('Project create failed');
-        return;
-      }
-      settings.hostConfig.hostPair = {
-        dir: project?.name,
-        slug: project?.slug,
-      }
-      settings.hostConfig.credential = null;
 
-      await plugin.saveSettings();
-      resolve(project?.name);
-    };
-    const modal = new CreateProjectModal(plugin.app, plugin, dirname, dirname.toLowerCase(), null, cb.bind(plugin));
-    modal.open();
+  if (!projectInfo) {
+    throw new Error('Sync Project Failed');
+  }
+
+  const { name, slug, endpoint, region, bucket, useHost: baseDomain } = projectInfo;
+  settings.hostConfig.hostPair = {
+    dir: name,
+    slug,
+  }
+  settings.hostConfig.credential = null;
+
+  Object.assign(plugin.settings.s3, {
+    s3Endpoint: endpoint?.replace(/^https?:\/\//i, ''),
+    s3Region: region,
+    s3BucketName: bucket,
+    s3AccessKeyID: '',
+    s3SecretAccessKey: ''
   });
+
+  if (baseDomain) {
+    // TODO: Set to localhost for DevMode
+    plugin.settings.remoteDomain = `https://${slug}.${baseDomain}`
+  }
+
+  await plugin.saveSettings();
   return name;
 }
 
