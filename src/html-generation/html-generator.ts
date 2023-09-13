@@ -62,7 +62,7 @@ export class HTMLGenerator {
 		view: StatsView,
 		remoteDomain?: string, // website assets file's host domain
 	): Promise<ExportFile> {
-		await this.getDocumentHTML(file, rootPath, false, view);
+		await this.getDocumentHTML(file, rootPath, false, view, remoteDomain);
 		let usingDocument = file.document;
 
 		let sidebars = this.generateSideBars(file.contentElement, file);
@@ -117,7 +117,11 @@ export class HTMLGenerator {
 
 			let fileTree: HTMLDivElement = this.generateHTMLTree(tree, usingDocument, pageTitle, "file-tree", true, 1, 1, false);
 			// leftSidebar.appendChild(fileTree);
-			const dataNode = this.generateRootDirNode(file, rootPath.asString, usingDocument);
+			let prefix = rootPath.asString;
+			if (remoteDomain) {
+				prefix = remoteDomain + (remoteDomain.endsWith('/') ? '' : '/') + prefix;
+			}
+			const dataNode = this.generateRootDirNode(file, prefix, usingDocument);
 			leftSidebar.appendChild(dataNode);
 			file.downloads.push(new Downloadable('_common-left-tree.html', fileTree.outerHTML, rootDir));
 		}
@@ -143,7 +147,7 @@ export class HTMLGenerator {
 		pageContainerEl.appendChild(footerBar);
 	}
 
-	public static async getDocumentHTML(file: ExportFile, rootPath: Path, addSelfToDownloads: boolean = false, view?: StatsView): Promise<ExportFile> {
+	public static async getDocumentHTML(file: ExportFile, rootPath: Path, addSelfToDownloads: boolean = false, view?: StatsView, remoteDomain?: string): Promise<ExportFile> {
 		// set custom line width on body
 		let body = file.document.body;
 
@@ -238,7 +242,7 @@ export class HTMLGenerator {
 		file.downloads.push(...outlinedImages);
 
 		const downloadDir = new Path(file.exportPath.asString.split('/')[0]);
-		await AssetHandler.reparseAppStyles(downloadDir, rootPath.asString);
+		await AssetHandler.reparseAppStyles(downloadDir, rootPath.asString, remoteDomain);
 		log.info('assets download root path: ', rootPath, downloadDir)
 		file.downloads.push(...await AssetHandler.getDownloads(downloadDir));
 

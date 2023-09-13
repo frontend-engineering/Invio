@@ -73,10 +73,10 @@ export class AssetHandler
 		this.updateAssetCache();
 	}
 
-	public static async reparseAppStyles(rootPath: Path, remotePath: string) {
+	public static async reparseAppStyles(rootPath: Path, remotePath: string, remoteDomain?: string) {
 		this.appInternalAssets = [];
 		this.appStyles = "";
-		await this.loadAppStyles(rootPath, remotePath);
+		await this.loadAppStyles(rootPath, remotePath, remoteDomain);
 	}
 
 	public static async getDownloads(parentPath?: Path) : Promise<Downloadable[]>
@@ -196,7 +196,7 @@ export class AssetHandler
 		return new Path(pathString).directory.absolute();
 	}
 
-	private static async loadAppStyles(rootPath?: Path, remotePath?: string)
+	private static async loadAppStyles(rootPath?: Path, remotePath?: string, remoteDomain?: string)
 	{
 		let appSheet = document.styleSheets[1];
 		let stylesheets = document.styleSheets;
@@ -236,7 +236,10 @@ export class AssetHandler
 					this.appInternalAssets.push(new Downloadable(fileName, assetContent, folderPath));
 
 					if (remotePath) {
-						const remoteLink = `${remotePath}/${curFolderPath.asString}/${fileName}`;
+						let remoteLink = `${remotePath}/${curFolderPath.asString}/${fileName}`;
+						if (remoteDomain) {
+							remoteLink = remoteDomain + (remoteDomain.endsWith('/') ? '' : '/') + remoteLink;
+						}
 						log.info('remote link: ', remoteLink);
 						cssText = cssText.replaceAll(asset, remoteLink);
 					}
