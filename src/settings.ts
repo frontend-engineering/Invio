@@ -486,10 +486,23 @@ export class InvioSettingTab extends PluginSettingTab {
     if (this.plugin.settings.useHost) {
       const hostingDiv = containerEl.createEl("div", { cls: 'settings-config-section' });
       hostingDiv.createEl('h2', { text: t('settings_host_auto_settings'), cls: 'settings-pub-header' });
-
-      const hostingEl = new Setting(hostingDiv)
+      // const accountDiv = hostingDiv.createDiv('account');
+      // accountDiv.innerText = 'goto account';
+      const accountDiv = new Setting(hostingDiv)
         .setName(t('settings_host_auto_name'))
         .setDesc(t('settings_host_auto_desc'));
+
+      accountDiv.addButton(async (button) => {
+        button.setButtonText(t('settings_host_auto_account'));
+        button.onClick(async () => {
+          log.info('goto account page...');
+          await Utils2.gotoMainSite();
+          // await (window as any).electron.remote.shell.openPath('https://app.turbosite.cloud');
+        });
+      })
+      const hostingEl = new Setting(hostingDiv)
+        .setName(t('settings_host_auto_auth'))
+        .setDesc(t('settings_host_auto_auth_desc'));
 
       if (this.plugin.settings.hostConfig?.token) {
         hostingEl.addText((text) => {
