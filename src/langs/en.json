@@ -45,6 +45,12 @@
   "command_exportsyncplans_table": "export sync plans in table format",
   "command_exportlogsindb": "export logs saved in db",
 
+  "menu_invio_action": "Invio Action",
+  "menu_set_folder": "Set as working folder",
+  "menu_sync_folder": "Folder Publish",
+  "menu_share_folder": "Share This Folder",
+  "menu_sync_file": "File Publish",
+
   "modal_password_title": "Hold on and PLEASE READ ON...",
   "modal_password_shortdesc": "If the field is not empty, files would be encrypted locally before being uploaded.\nIf the field is empty, then files would be uploaded without encryption.",
   "modal_password_attn1": "Attention 1/5: The vault name is NOT encrypted. The plugin creates a folder with the vault name on some remote services.",

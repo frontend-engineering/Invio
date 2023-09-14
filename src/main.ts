@@ -720,7 +720,7 @@ export default class InvioPlugin extends Plugin {
           menu.addSeparator()
           .addItem((item) => {
             item
-            .setTitle(`Invio Action`)
+            .setTitle(t('menu_invio_action'))
             .setDisabled(true)
             .setIcon("document")
           })
@@ -728,7 +728,7 @@ export default class InvioPlugin extends Plugin {
           if ((file.path !== this.settings.localWatchDir) && (file.path.indexOf('/') < 0) ) {
             menu.addItem((item) => {
               item
-                .setTitle(`${Menu_Tab}Set as working folder`)
+                .setTitle(`${Menu_Tab}${t('menu_set_folder')}`)
                 .setIcon("document")
                 .onClick(async () => {
                   await this.switchWorkingDir(file.path);
@@ -737,7 +737,7 @@ export default class InvioPlugin extends Plugin {
           } else {
             menu.addItem((item) => {
               item
-                .setTitle(`${Menu_Tab}Folder Publish`)
+                .setTitle(`${Menu_Tab}${t('menu_sync_folder')}`)
                 .setIcon("document")
                 .onClick(async () => {
                   this.syncRun("manual")
@@ -745,7 +745,7 @@ export default class InvioPlugin extends Plugin {
             })
             menu.addItem((item) => {
               item
-                .setTitle(`${Menu_Tab}Share This Folder`)
+                .setTitle(`${Menu_Tab}${t('menu_share_folder')}`)
                 .setIcon("document")
                 .onClick(async () => {
                   await InvioSettingTab.exportSettings(this)
@@ -761,13 +761,13 @@ export default class InvioPlugin extends Plugin {
           menu.addSeparator()
             .addItem((item) => {
               item
-              .setTitle(`Invio Action`)
+              .setTitle(t('menu_invio_action'))
               .setDisabled(true)
               .setIcon("document")
             })
             .addItem((item) => {
               item
-                .setTitle(`${Menu_Tab}File Publish`)
+                .setTitle(`${Menu_Tab}${t('menu_sync_file')}`)
                 .setIcon("document")
                 .onClick(async () => {
                   await this.syncRun('manual', [file.path])

@@ -45,6 +45,12 @@
   "command_exportsyncplans_table": "导出同步计划为表格格式（export sync plans in table format）",
   "command_exportlogsindb": "从数据库导出终端日志（export logs saved in db）",
 
+  "menu_invio_action": "Invio 子菜单",
+  "menu_set_folder": "设置为工作目录",
+  "menu_sync_folder": "文件夹同步",
+  "menu_share_folder": "分享文件夹",
+  "menu_sync_file": "文件同步",
+
   "modal_password_title": "稍等一下，请阅读下文：",
   "modal_password_shortdesc": "如果密码不是空的，那么文件会在上传之前，在本地先用此密码加密。\n如果密码是空的，那么文件会被非加密地上传。",
   "modal_password_attn1": "注意 1/5：库（Vault）名字是不会加密的！本插件会在一些远程存储里创建一个和库名字有着同名的文件夹。",
