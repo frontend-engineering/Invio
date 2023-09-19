@@ -53,7 +53,7 @@ export class RemoteClient {
     if (this.hostConfig?.hostPair?.dir !== this.localWatchDir) {
       throw new Error('NeedSwitchProject');
     }
-    return this.hostConfig?.hostPair.slug;
+    return (this.hostConfig?.hostPair?.password ? 'p/' : '') + this.hostConfig?.hostPair.slug;
   }
 
   getUseHostDirname() {
@@ -80,7 +80,12 @@ export class RemoteClient {
     const hasPrefix = key?.startsWith(RemoteSrcPrefix);
     const paths = key?.split('/');
     if (paths?.length > 0) {
-      const dir = hasPrefix ? paths[1] : paths[0];
+      let dir = hasPrefix ? paths[1] : paths[0];
+      if (dir === 'p') {
+        paths.splice(0, 1);
+        dir = hasPrefix ? paths[1] : paths[0];
+      }
+
       if (dir !== this.localWatchDir) {
         throw new Error('NeedSwitchProject');
       }
@@ -100,15 +105,21 @@ export class RemoteClient {
     }
     const hasPrefix = slug?.startsWith(RemoteSrcPrefix);
     const paths = slug?.split('/');
+    let encrypted = false;
     if (paths?.length > 0) {
-      const dir = hasPrefix ? paths[1] : paths[0];
-      if (dir !== this.getUseHostSlug()) {
+      let dir = hasPrefix ? paths[1] : paths[0];
+      if (dir === 'p') {
+        encrypted = true;
+        dir = hasPrefix ? paths[2] : paths[1];
+      }
+      const getSlug = this.getUseHostSlug();
+      if (dir !== getSlug?.replace(/^p\//, '')) {
         throw new Error('NeedSwitchProject');
       }
       if (hasPrefix) {
-        paths[1] = this.getUseHostDirname();
+        paths[encrypted ? 2 : 1] = this.getUseHostDirname();
       } else {
-        paths[0] = this.getUseHostDirname();
+        paths[encrypted ? 1 : 0] = this.getUseHostDirname();
       }
       log.info('get local path: ', paths.join('/'));
       return paths.join('/');

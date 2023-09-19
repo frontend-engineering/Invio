@@ -9,14 +9,16 @@ export class CreateProjectModal extends Modal {
   readonly plugin: InvioPlugin;
   readonly name: string;
   slug: string;
+  password: string;
   slugError: string;
   domain: string;
   confirmCB: any;
-  constructor(app: App, plugin: InvioPlugin, name: string, slug: string, domain: string, cb?: any) {
+  constructor(app: App, plugin: InvioPlugin, name: string, slug: string, password: string, domain: string, cb?: any) {
     super(app);
     this.plugin = plugin;
     this.name = name;
     this.slug = slug?.toLowerCase(); // 所有online资源不区分大小写
+    this.password = password;
     this.slugError = '';
     this.domain = domain;
     this.confirmCB = cb;
@@ -45,6 +47,7 @@ export class CreateProjectModal extends Modal {
       method: 'POST',
       body: JSON.stringify({
         name: this.name,
+        password: this.password || '',
         slug: this.slug,
         domain: this.domain || ''
       })
@@ -87,6 +90,18 @@ export class CreateProjectModal extends Modal {
           })
       );
 
+    new Setting(formContainer)
+      .setName('Password')
+      .setDesc('Set project private')
+      .addText((text) =>
+        text
+          .setPlaceholder("")
+          .setValue(this.password)
+          .onChange(txt => {
+            this.password = txt;
+            log.info('password changed: ', this.password);
+          })
+      );
     new Setting(formContainer)
       .addButton((button) => {
         button.setButtonText('cancel');

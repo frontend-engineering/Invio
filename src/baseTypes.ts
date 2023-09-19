@@ -72,6 +72,7 @@ export interface OnedriveConfig {
 export type THostPair = {
   dir: string;
   slug: string;
+  password?: string;
 }
 
 export type TS3Credential = {

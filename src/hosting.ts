@@ -22,7 +22,7 @@ export const checkRemoteHosting = async (plugin: InvioPlugin, dirname?: string) 
     return plugin.i18n?.t(x, vars);
   };
 
-  return fetch(`${HostServerUrl}/api/invio?priatoken=${token}`)
+  return fetch(`${HostServerUrl}/api/invio?priatoken=${token}&syncDir=${dirname}`)
       .then(resp => resp.json())
       .then(resp => {
           const matched = resp?.find((p: any) => p.name === dir);
@@ -68,7 +68,7 @@ export const syncWithRemoteProject = async (dirname: string, plugin: InvioPlugin
         }
         return resolve(project);
       };
-      const modal = new CreateProjectModal(plugin.app, plugin, dirname, dirname.toLowerCase(), null, cb.bind(plugin));
+      const modal = new CreateProjectModal(plugin.app, plugin, dirname, dirname.toLowerCase(), '', null, cb.bind(plugin));
       modal.open();
     });
   }
@@ -77,9 +77,10 @@ export const syncWithRemoteProject = async (dirname: string, plugin: InvioPlugin
     throw new Error('Sync Project Failed');
   }
 
-  const { name, slug, endpoint, region, bucket, useHost: baseDomain } = projectInfo;
+  const { name, slug, password, endpoint, region, bucket, useHost: baseDomain } = projectInfo;
   settings.hostConfig.hostPair = {
     dir: name,
+    password,
     slug,
   }
   settings.hostConfig.credential = null;

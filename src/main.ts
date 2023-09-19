@@ -47,7 +47,6 @@ import { DeletionOnRemote, MetadataOnRemote } from "./metadataOnRemote";
 import { SyncAlgoV2Modal } from "./syncAlgoV2Notice";
 import { TouchedPlanModel } from './touchedPlanModel';
 import { LoadingModal } from './loadingModal';
-import { CreateProjectModal } from './components/CreateProjectModal';
 
 import { applyLogWriterInplace, log } from "./moreOnLog";
 import AggregateError from "aggregate-error";
