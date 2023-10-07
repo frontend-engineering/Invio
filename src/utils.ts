@@ -6,6 +6,7 @@ import os from 'os';
 import { createHash } from 'crypto';
 import { v4 } from 'uuid';
 import { AppHostServerUrl } from './remoteForS3';
+import { loadGA } from './ga';
 
 const logger = console;
 logger.info = console.log;
@@ -70,6 +71,8 @@ const showNotification = async (opt: MessageBoxOptions) => {
 
 const gotoAuth = (url?: string) => {
     (window as any).electron.remote.shell.openExternal(url || `${AppHostServerUrl}/exporter`);
+    const ga = loadGA();
+    ga?.trace('use_host_login');
 }
 
 const gotoMainSite = () => {

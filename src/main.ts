@@ -63,6 +63,7 @@ import icon, { UsingIconNames, getIconSvg, addIconForconflictFile } from './util
 import { StatsView, VIEW_TYPE_STATS, LogType } from "./statsView";
 import { syncWithRemoteProject, switchProject } from './hosting';
 import Utils from './utils';
+import { Analytics4, loadGA } from './ga';
 
 const { iconNameSyncWait, iconNameSyncPending, iconNameSyncRunning, iconNameLogs, iconNameSyncLogo } = UsingIconNames;
 const Menu_Tab = `    `;
@@ -90,6 +91,7 @@ export default class InvioPlugin extends Plugin {
   i18n: I18n;
   vaultRandomID: string;
   recentSyncedFiles: any;
+  ga: Analytics4;
 
   isUnderWatch(file: TAbstractFile) {
     const rootDir = this.settings.localWatchDir;
@@ -153,6 +155,13 @@ export default class InvioPlugin extends Plugin {
       }
       return;
     }
+
+    this.ga.trace('sync_run', {
+      trigger: triggerSource,
+      dirname: this.settings.localWatchDir,
+      useHost: this.settings.useHost,
+      fileNum: fileList?.length
+    });
 
     await this.checkIfRemoteProjectSync();
 
@@ -588,6 +597,12 @@ export default class InvioPlugin extends Plugin {
         }-${Date.now()}: finish sync, triggerSource=${triggerSource}`
       );
 
+      this.ga.trace('sync_run_done', {
+        trigger: triggerSource,
+        dirname: this.settings.localWatchDir,
+        useHost: this.settings.useHost,
+        fileNum: fileList?.length
+      }) 
       // TODO: Show stats model
       return toRemoteFiles;
     } catch (error) {
@@ -601,6 +616,14 @@ export default class InvioPlugin extends Plugin {
       loadingModal?.close();
       log.error(msg);
       log.error(error);
+      this.ga.trace('sync_run_err', {
+        trigger: triggerSource,
+        msg,
+        raw: error?.message,
+        dirname: this.settings.localWatchDir,
+        useHost: this.settings.useHost,
+        fileNum: fileList?.length
+      })
       getNotice(null, msg, 10 * 1000);
       if (error instanceof AggregateError) {
         for (const e of error.errors) {
@@ -626,7 +649,7 @@ export default class InvioPlugin extends Plugin {
 
   async onload() {
     log.info(`loading plugin ${this.manifest.id}`);
-  
+    this.ga = loadGA();
 		// init html generator
 		AssetHandler.initialize(this.manifest.id);
 
@@ -698,6 +721,9 @@ export default class InvioPlugin extends Plugin {
       // Add custom icon for root dir
       setTimeout(() => {
         if (this.settings.localWatchDir) {
+          this.ga.trace('boot_project', {
+            dirname: this.settings.localWatchDir
+          });
           this.switchWorkingDir(this.settings.localWatchDir);
         } else {
           new Notice(
@@ -730,6 +756,7 @@ export default class InvioPlugin extends Plugin {
                 .setTitle(`${Menu_Tab}${t('menu_set_folder')}`)
                 .setIcon("document")
                 .onClick(async () => {
+                  this.ga.trace('switch_project', { dirname: file.path });
                   await this.switchWorkingDir(file.path);
                 });
             })
@@ -748,6 +775,7 @@ export default class InvioPlugin extends Plugin {
                 .setIcon("document")
                 .onClick(async () => {
                   await InvioSettingTab.exportSettings(this)
+                  this.ga.trace('share_settings')
                 });
             })
           }
@@ -858,6 +886,10 @@ export default class InvioPlugin extends Plugin {
           if (!this.settings.useHost) {
             return;
           }
+          this.ga.trace('use_host_auth', {
+            action,
+            user
+          });
           if (!this.settings.hostConfig) {
             this.settings.hostConfig = {} as THostConfig;
           }

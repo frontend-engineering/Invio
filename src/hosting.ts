@@ -6,6 +6,7 @@ import Utils from './utils';
 import { HostServerUrl } from './remote';
 import { Notice } from "obsidian";
 import type { TransItemType } from "./i18n";
+import { loadGA } from './ga';
 // Check hosting service
 export const checkRemoteHosting = async (plugin: InvioPlugin, dirname?: string) => {
   log.info('checking remote host service info: ', dirname);
@@ -51,21 +52,34 @@ export const setupS3HostConfig = async (plugin: InvioPlugin, config: Partial<S3C
 
 export const syncWithRemoteProject = async (dirname: string, plugin: InvioPlugin) => {
   const settings = plugin.settings;
+  const ga = loadGA();
   let projectInfo = await checkRemoteHosting(plugin, dirname);
   if (!projectInfo) {
     projectInfo = await new Promise((resolve, reject) => {
       const cb = async (project: any, err?: any) => {
         log.info('project created: ', project, err);
         if (err) {
+          ga.trace('use_host_create_fail', {
+            dirname,
+            raw: err?.message || err,
+          })
           reject(err);
           return;
         }
         if (!project) {
           // Error
           log.error('create project failed: ', project);
+          ga.trace('use_host_create_fail', {
+            dirname,
+            raw: 'no project response',
+          })
           reject('Project create failed');
           return;
         }
+        ga.trace('use_host_create_done', {
+          dirname,
+          slug: project.slug,
+        })
         return resolve(project);
       };
       const modal = new CreateProjectModal(plugin.app, plugin, dirname, dirname.toLowerCase(), '', null, cb.bind(plugin));
@@ -78,6 +92,13 @@ export const syncWithRemoteProject = async (dirname: string, plugin: InvioPlugin
   }
 
   const { name, slug, password, endpoint, region, bucket, useHost: baseDomain } = projectInfo;
+  ga.trace('use_host_sync', {
+    bucket,
+    region,
+    name,
+    slug,
+    domain: baseDomain,
+  });
   settings.hostConfig.hostPair = {
     dir: name,
     password,
