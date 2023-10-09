@@ -7,6 +7,8 @@ import graphWASM from "assets/graph_wasm.wasm";
 
 import tinyColorJS from "assets/tinycolor.txt.js";
 // @ts-ignore
+import webWorkerJS from 'assets/webworker.txt.js';
+// @ts-ignore
 import keyJS from 'assets/key.txt.js';
 // @ts-ignore
 import webpageUtilJS from 'assets/webpage.util.txt.js';
@@ -54,6 +56,7 @@ export class AssetHandler
 	public static graphWASM: Buffer;
 	public static renderWorkerJS: string = "";
 	public static tinyColorJS: string = "";
+	public static webWorkerJS: string = '';
 
 	public static async initialize(pluginID: string)
 	{
@@ -68,6 +71,8 @@ export class AssetHandler
 		this.renderWorkerJS = renderWorkerJS;
 		// @ts-ignore
 		this.tinyColorJS = tinyColorJS;
+		// @ts-ignore
+		this.webWorkerJS = webWorkerJS;
 		this.graphWASM = Buffer.from(graphWASM);
 
 		this.updateAssetCache();
@@ -111,12 +116,14 @@ export class AssetHandler
 			let graphWASMJSDownload = new Downloadable("graph_wasm.js", this.graphWASMJS, jsFolderName);
 			let graphViewJSDownload = new Downloadable("graph_view.js", this.graphViewJS, jsFolderName);
 			let tinyColorJS = new Downloadable("tinycolor.js", this.tinyColorJS, jsFolderName);
+			let webworkerJS = new Downloadable("webWorker.js", this.webWorkerJS, jsFolderName);
 			
 			toDownload.push(renderWorkerJSDownload);
 			toDownload.push(graphWASMDownload);
 			toDownload.push(graphWASMJSDownload);
 			toDownload.push(graphViewJSDownload);
 			toDownload.push(tinyColorJS);
+			toDownload.push(webworkerJS);
 		}
 		return toDownload;
 	}

@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+    "assets-bundle": "node esbuild.assets.config.mjs",
     "format": "npx prettier --write .",
     "version": "node bump.mjs",
     "clean": "npx rimraf main.js",

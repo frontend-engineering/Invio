@@ -444,7 +444,6 @@ export class HTMLGenerator {
 
 			scripts += `\n<script type='module' src='${remoteDomain}${relativePaths.jsPath}/graph_view.js'></script>\n`;
 			scripts += `\n<script src='${remoteDomain}${relativePaths.jsPath}/graph_wasm.js'></script>\n`;
-			scripts += `\n<script src="${remoteDomain}${relativePaths.jsPath}/tinycolor.js"></script>\n`;
 			scripts += `\n<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.2.4/pixi.min.js" integrity="sha512-Ch/O6kL8BqUwAfCF7Ie5SX1Hin+BJgYH4pNjRqXdTEqMsis1TUYg+j6nnI9uduPjGaj7DN4UKCZgpvoExt6dkw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>\n`;
 		}
 
