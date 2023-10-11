@@ -235,12 +235,18 @@ devDependencies:
   dotenv:
     specifier: ^16.0.0
     version: registry.npmmirror.com/dotenv@16.0.0
+  downloadjs:
+    specifier: ^1.4.7
+    version: registry.npmmirror.com/downloadjs@1.4.7
   esbuild:
     specifier: 0.14.47
     version: registry.npmmirror.com/esbuild@0.14.47
   esbuild-css-modules-plugin:
     specifier: ^2.7.1
     version: registry.npmmirror.com/esbuild-css-modules-plugin@2.7.1(esbuild@0.14.47)
+  html-to-image:
+    specifier: ^1.11.11
+    version: registry.npmmirror.com/html-to-image@1.11.11
   jsdom:
     specifier: ^19.0.0
     version: registry.npmmirror.com/jsdom@19.0.0
@@ -263,7 +269,7 @@ devDependencies:
 packages:
 
   github.com/walkthunder/cos-nodejs-sdk-v5/9e2d9acd9d31e202e6627766c41ade884bd298a7:
-    resolution: {tarball: https://codeload.github.com/walkthunder/cos-nodejs-sdk-v5/tar.gz/9e2d9acd9d31e202e6627766c41ade884bd298a7}
+    resolution: {commit: 9e2d9acd9d31e202e6627766c41ade884bd298a7, repo: git+ssh://git@github.com/walkthunder/cos-nodejs-sdk-v5.git, type: git}
     name: tencent-cos-sdk-nodejs-v5
     version: 2.11.16
     engines: {node: '>= 6'}
@@ -2066,7 +2072,7 @@ packages:
     name: '@types/node-fetch'
     version: 2.6.4
     dependencies:
-      '@types/node': registry.npmmirror.com/@types/node@16.11.6
+      '@types/node': registry.npmmirror.com/@types/node@16.18.38
       form-data: registry.npmmirror.com/form-data@3.0.1
     dev: false
 
@@ -2079,7 +2085,6 @@ packages:
     resolution: {integrity: sha512-6sfo1qTulpVbkxECP+AVrHV9OoJqhzCsfTNp5NIG+enM4HyM3HvZCO798WShIXBN0+QtDIcutJCjsVYnQP5rIQ==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/@types/node/-/node-16.18.38.tgz}
     name: '@types/node'
     version: 16.18.38
-    dev: false
 
   registry.npmmirror.com/@types/parse5@7.0.0:
     resolution: {integrity: sha512-f2SeAxumolBmhuR62vNGTsSAvdz/Oj0k682xNrcKJ4dmRnTPODB74j6CPoNPzBPTHsu7Y7W7u93Mgp8Ovo8vWw==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/@types/parse5/-/parse5-7.0.0.tgz}
@@ -2486,7 +2491,7 @@ packages:
       acorn-walk: registry.npmmirror.com/acorn-walk@7.2.0
     dev: true
 
-  registry.npmmirror.com/acorn-import-assertions@1.9.0(acorn@8.7.1):
+  registry.npmmirror.com/acorn-import-assertions@1.9.0(acorn@8.10.0):
     resolution: {integrity: sha512-cmMwop9x+8KFhxvKrKfPYmN6/pKTYYHBqLa0DfvVZcKMJWNyWLnaqND7dx/qn66R7ewM1UX5XMaDVP5wlVTaVA==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/acorn-import-assertions/-/acorn-import-assertions-1.9.0.tgz}
     id: registry.npmmirror.com/acorn-import-assertions/1.9.0
     name: acorn-import-assertions
@@ -2494,7 +2499,7 @@ packages:
     peerDependencies:
       acorn: ^8
     dependencies:
-      acorn: registry.npmmirror.com/acorn@8.7.1
+      acorn: registry.npmmirror.com/acorn@8.10.0
     dev: true
 
   registry.npmmirror.com/acorn-jsx@5.3.2(acorn@8.10.0):
@@ -3811,6 +3816,12 @@ packages:
     name: dotenv
     version: 16.0.0
     engines: {node: '>=12'}
+    dev: true
+
+  registry.npmmirror.com/downloadjs@1.4.7:
+    resolution: {integrity: sha512-LN1gO7+u9xjU5oEScGFKvXhYf7Y/empUIIEAGBs1LzUq/rg5duiDrkuH5A2lQGd5jfMOb9X9usDa2oVXwJ0U/Q==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/downloadjs/-/downloadjs-1.4.7.tgz}
+    name: downloadjs
+    version: 1.4.7
     dev: true
 
   registry.npmmirror.com/dropbox@10.28.0(@types/node-fetch@2.6.4):
@@ -5166,6 +5177,12 @@ packages:
       whatwg-encoding: registry.npmmirror.com/whatwg-encoding@2.0.0
     dev: true
 
+  registry.npmmirror.com/html-to-image@1.11.11:
+    resolution: {integrity: sha512-9gux8QhvjRO/erSnDPv28noDZcPZmYE7e1vFsBLKLlRlKDSqNJYebj6Qz1TGd5lsRV+X+xYyjCKjuZdABinWjA==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/html-to-image/-/html-to-image-1.11.11.tgz}
+    name: html-to-image
+    version: 1.11.11
+    dev: true
+
   registry.npmmirror.com/http-cache-semantics@4.1.1:
     resolution: {integrity: sha512-er295DKPVsV82j5kw1Gjt+ADA/XYHsajl82cGNQG2eyoPkvgUhX+nDIyelzhIWbbsXP39EHcI6l5tYs2FYqYXQ==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/http-cache-semantics/-/http-cache-semantics-4.1.1.tgz}
     name: http-cache-semantics
@@ -5484,7 +5501,7 @@ packages:
     version: 27.5.1
     engines: {node: '>= 10.13.0'}
     dependencies:
-      '@types/node': registry.npmmirror.com/@types/node@16.11.6
+      '@types/node': registry.npmmirror.com/@types/node@16.18.38
       merge-stream: registry.npmmirror.com/merge-stream@2.0.0
       supports-color: registry.npmmirror.com/supports-color@8.1.1
     dev: true
@@ -8293,8 +8310,8 @@ packages:
       '@webassemblyjs/ast': registry.npmmirror.com/@webassemblyjs/ast@1.11.6
       '@webassemblyjs/wasm-edit': registry.npmmirror.com/@webassemblyjs/wasm-edit@1.11.6
       '@webassemblyjs/wasm-parser': registry.npmmirror.com/@webassemblyjs/wasm-parser@1.11.6
-      acorn: registry.npmmirror.com/acorn@8.7.1
-      acorn-import-assertions: registry.npmmirror.com/acorn-import-assertions@1.9.0(acorn@8.7.1)
+      acorn: registry.npmmirror.com/acorn@8.10.0
+      acorn-import-assertions: registry.npmmirror.com/acorn-import-assertions@1.9.0(acorn@8.10.0)
       browserslist: registry.npmmirror.com/browserslist@4.21.10
       chrome-trace-event: registry.npmmirror.com/chrome-trace-event@1.0.3
       enhanced-resolve: registry.npmmirror.com/enhanced-resolve@5.15.0

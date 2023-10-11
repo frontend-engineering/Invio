@@ -1,3 +1,5 @@
+var htmlToImage = require('html-to-image');
+var download = require('downloadjs');
 
 //#region Helpers
 
@@ -570,25 +572,32 @@ function formatPage() {
     preview.style.height = '100%'
 }
 
-function printAsPDF() {
+function printAsPNG() {
 	// Add CSS styles for print layout
 	const styles = `
 	  <style>
-		@media print {
-		  /* Apply any necessary styles for print layout */
-		  .sidebar-left, .sidebar-right {
-			display: none;
-		  }
-		  .document-container {
+		.sidebar-left, .sidebar-right {
+			display: none !important;
+		}
+		.document-container {
 			height: 100%;
-			padding-bottom: 0;
-
-		  }
-		  .document-container .markdown-preview-view {
+			padding-bottom: 0 !important;
+			overflow: visible;
+		}
+		.document-container .markdown-preview-view {
 			padding: unset;
-			overflow: scroll;
+			overflow: visible;
 			height: 100%;	
-		  }
+		}
+		.webpage-container {
+			overflow: scroll;
+		}
+		.markdown-preview-section {
+			position: relative !important;
+		}
+		.markdown-preview-section .site-footer {
+			position: absolute;
+			width: 100%;
 		}
 	  </style>
 	`;
@@ -604,23 +613,40 @@ function printAsPDF() {
   printWindow.document.write(styles + htmlContent);
   printWindow.document.close();
 
-  // Wait for a short delay to ensure content rendering
-  setTimeout(function () {
-    // Print the window as PDF
-    printWindow.print();
+//   window.toPng = htmlToImage.toPng;
+//   window.download = download;
+//   window.printWin = printWindow;
+//   window.printBody = printWindow.document.body;
 
-    // Close the print window after printing
-    setTimeout(function () {
-      printWindow.close();
-    }, 100);
-  }, 500);
+  printWindow.document.addEventListener('DOMContentLoaded', function() {
+	console.log('dom loaded');
+	const contentsNode = printWindow.document.body.querySelector('.markdown-preview-section');
+	const footerNode = printWindow.document.body.querySelector('.site-footer');
+	if (!contentsNode) {
+		console.error('valid contents not found');
+		return;
+	}
+
+	if (footerNode) {
+		contentsNode.appendChild(footerNode);
+	}
+
+	htmlToImage.toPng(contentsNode, { backgroundColor: '#fff' })
+		.then(function (dataUrl) {
+			console.log('data url: ', dataUrl);
+			download(dataUrl, document.title);
+		});
+		setTimeout(function () {
+			printWindow.close();
+		}, 300);
+  });
 }
 
 function setupPrintBtn(setupOnNode) {
 	setupOnNode.getElementById("print_btn")?.addEventListener('click', e => {
 		e.preventDefault();
-		console.log('print...');
-		printAsPDF();
+		console.log('print image...');
+		printAsPNG();
 	})
 }
 function setupThemeToggle(setupOnNode)

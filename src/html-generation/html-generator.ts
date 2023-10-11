@@ -689,6 +689,7 @@ export class HTMLGenerator {
 	public static generateDarkmodeToggle(inline: boolean = true, usingDocument: Document = document): HTMLElement {
 		// programatically generates the above html snippet
 		let toggle = usingDocument.createElement("div");
+		toggle.style.display = 'flex';
 		let label = usingDocument.createElement("label");
 		label.classList.add(inline ? "theme-toggle-container-inline" : "theme-toggle-container");
 		label.setAttribute("for", "theme_toggle");
@@ -700,9 +701,24 @@ export class HTMLGenerator {
 		div.classList.add("toggle-background");
 		label.appendChild(input);
 		label.appendChild(div);
+
 		toggle.appendChild(label);
 
+		const btn = this.generatePrintBtn(usingDocument);
+		toggle.appendChild(btn);
 		return toggle;
+	}
+
+	public static generatePrintBtn(usingDocument: Document = document) {
+		let btn = usingDocument.createElement("div");
+		btn.classList.add('print-btn');
+		btn.setAttribute('id', 'print_btn');
+
+		const icon = usingDocument.createElement('span')
+		icon.classList.add('print-btn-icon');
+		icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-printer"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>`
+		btn.appendChild(icon);
+		return btn;
 	}
 
 	public static generateSearchBar(usingDocument: Document = document): HTMLElement {

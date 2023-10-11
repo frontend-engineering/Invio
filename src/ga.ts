@@ -74,7 +74,9 @@ export class Analytics4 {
                     method: 'POST',
                     body: JSON.stringify(payload)
                 }
-            )
+            ).catch(err => {
+                console.warn('ga error ', err);
+            })
     };
 
     trace(eventName: string, params?: Record<string, unknown>) {
