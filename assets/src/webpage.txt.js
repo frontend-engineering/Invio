@@ -573,35 +573,6 @@ function formatPage() {
 }
 
 function printAsPNG() {
-	// Add CSS styles for print layout
-	const styles = `
-	  <style>
-		.sidebar-left, .sidebar-right {
-			display: none !important;
-		}
-		.document-container {
-			height: 100%;
-			padding-bottom: 0 !important;
-			overflow: visible;
-		}
-		.document-container .markdown-preview-view {
-			padding: unset;
-			overflow: visible;
-			height: 100%;	
-		}
-		.webpage-container {
-			overflow: scroll;
-		}
-		.markdown-preview-section {
-			position: relative !important;
-		}
-		.markdown-preview-section .site-footer {
-			position: absolute;
-			width: 100%;
-		}
-	  </style>
-	`;
-  
   // Get the HTML content of the current webpage
   const htmlContent = document.documentElement.innerHTML;
 
@@ -610,7 +581,7 @@ function printAsPNG() {
 
   // Write the HTML content and styles to the new window
   printWindow.document.open();
-  printWindow.document.write(styles + htmlContent);
+  printWindow.document.write(htmlContent);
   printWindow.document.close();
 
 //   window.toPng = htmlToImage.toPng;
@@ -620,6 +591,7 @@ function printAsPNG() {
 
   printWindow.document.addEventListener('DOMContentLoaded', function() {
 	console.log('dom loaded');
+	printWindow.document.body.classList.add('printing');
 	const contentsNode = printWindow.document.body.querySelector('.markdown-preview-section');
 	const footerNode = printWindow.document.body.querySelector('.site-footer');
 	if (!contentsNode) {

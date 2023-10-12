@@ -1,1 +1,1 @@
-import './obsidian-styles.txt.css';
+import './obsidian-styles.txt.scss';

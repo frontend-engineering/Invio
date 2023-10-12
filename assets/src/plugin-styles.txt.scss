@@ -1098,3 +1098,32 @@ hr
     color: var(--text-faint);
 }
 /*#endregion */
+
+
+// print styles
+
+.printing {
+    .sidebar-left, .sidebar-right {
+        display: none !important;
+    }
+    .document-container {
+        height: 100%;
+        padding-bottom: 0 !important;
+        overflow: visible;
+    }
+    .document-container .markdown-preview-view {
+        padding: unset;
+        overflow: visible;
+        height: 100%;	
+    }
+    .webpage-container {
+        overflow: scroll;
+    }
+    .markdown-preview-section {
+        position: relative !important;
+    }
+    .markdown-preview-section .site-footer {
+        position: absolute;
+        width: 100%;
+    }
+}

@@ -1,1 +1,1 @@
-import './plugin-styles.txt.css'
+import './plugin-styles.txt.scss'
