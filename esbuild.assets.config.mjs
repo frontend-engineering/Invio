@@ -5,8 +5,9 @@ import builtins from 'builtin-modules'
 import cssModulesPlugin from "esbuild-css-modules-plugin"
 import {sassPlugin} from 'esbuild-sass-plugin'
 import fse from 'fs-extra';
+import chalk from 'chalk';
 
-console.log('bundling js...');
+console.log(chalk.blue('bundling js...'));
 
 // JS assets
 esbuild
@@ -31,8 +32,15 @@ esbuild
     keepNames: true, // 保留函数和变量的原始名称
     globalName: 'UtilsGlobal' // 设置全局变量的名称
   })
+  .then((result) => {
+    if (result.errors?.length > 0) {
+      console.log(chalk.red('bundle js failed: ', result.errors));
+    } else {
+      console.log(chalk.green('bundle js success'));
+    }
+  })
 
-console.log('bundling styles...');
+console.log(chalk.blue('bundling styles...'));
 // Style assets
 esbuild
   .build({
@@ -59,4 +67,9 @@ esbuild
   .then(result => {
     fse.rmSync('./assets/obsidian-styles.txt.js')
     fse.rmSync('./assets/plugin-styles.txt.js')
+    if (result.errors?.length > 0) {
+      console.log(chalk.red('bundle style failed: ', result.errors));
+    } else {
+      console.log(chalk.green('bundle style success'));
+    }
   })
