@@ -456,32 +456,32 @@ export class InvioSettingTab extends PluginSettingTab {
 
     // =============== Hosting Settings ======================
 
-    const useHostDiv = containerEl.createEl("div");
-    useHostDiv.createEl("h2", { text: t('settings_host') });
-    new Setting(useHostDiv)
-      .setName(t('settings_host_switch_title'))
-      .setDesc(t('settings_host_switch_desc'))
-      .addToggle(tog => {
-        tog.setValue(this.plugin.settings.useHost)
-        .onChange(async (val) => {
-          this.plugin.settings.useHost = val;
-          await this.plugin.saveSettings();
-          if (this.plugin.settings.useHost) {
-            await this.plugin.enableHostService()
-              .catch(err => {
-                new Notice(t('settings_host_enable_error')); 
-              })
-              .finally(() => {
-                this.hide();
-                this.display();
-              })
-          } else {
-            await this.plugin.disableHostService();
-            this.hide();
-            this.display();
-          }
-        })
-      })
+    // const useHostDiv = containerEl.createEl("div");
+    // useHostDiv.createEl("h2", { text: t('settings_host') });
+    // new Setting(useHostDiv)
+    //   .setName(t('settings_host_switch_title'))
+    //   .setDesc(t('settings_host_switch_desc'))
+    //   .addToggle(tog => {
+    //     tog.setValue(this.plugin.settings.useHost)
+    //     .onChange(async (val) => {
+    //       this.plugin.settings.useHost = val;
+    //       await this.plugin.saveSettings();
+    //       if (this.plugin.settings.useHost) {
+    //         await this.plugin.enableHostService()
+    //           .catch(err => {
+    //             new Notice(t('settings_host_enable_error')); 
+    //           })
+    //           .finally(() => {
+    //             this.hide();
+    //             this.display();
+    //           })
+    //       } else {
+    //         await this.plugin.disableHostService();
+    //         this.hide();
+    //         this.display();
+    //       }
+    //     })
+    //   })
 
     if (this.plugin.settings.useHost) {
       const hostingDiv = containerEl.createEl("div", { cls: 'settings-config-section' });
