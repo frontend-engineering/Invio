@@ -8,7 +8,7 @@ import { AssetHandler } from "./asset-handler";
 import { RenderLog } from "./render-log";
 import { StatsView } from "src/statsView";
 import type InvioPlugin from "../main"; // unavoidable
-
+import { Path, parseOSFromUA } from "src/utils/path.js";
 export namespace MarkdownRenderer
 {
 	export let problemLog = "";
@@ -16,7 +16,7 @@ export namespace MarkdownRenderer
     export let errorInBatch = false;
 	export let cancelled = false;
 
-    export async function renderMarkdown(file: ExportFile, view?: StatsView): Promise<string>
+    export async function renderMarkdown(file: ExportFile, view: StatsView, rootPath?: Path): Promise<string>
 	{
 		if (!renderLeaf)
 		{
@@ -116,7 +116,7 @@ export namespace MarkdownRenderer
 		{
 			postProcessHTML(file, container);
 
-			await AssetHandler.loadMathjaxStyles();
+			await AssetHandler.loadMathjaxStyles(rootPath);
 
 			return container.innerHTML;
 		}
@@ -193,13 +193,16 @@ export namespace MarkdownRenderer
 		// @ts-ignore
 		// renderLeaf.view.containerEl.win.resizeTo(1, 1);
 		// @ts-ignore
-		// renderLeaf.view.containerEl.win.moveTo(window.screen.width + 450, window.screen.height + 450);
+		renderLeaf.view.containerEl.win.moveTo(window.screen.width + 450, window.screen.height + 450);
 
 		// @ts-ignore
 		const renderBrowserWindow = window.electron.remote.BrowserWindow.getFocusedWindow();
 		if (renderBrowserWindow) {
-			renderBrowserWindow.hide();
-			// renderBrowserWindow.setAlwaysOnTop(false, "floating", 1);
+			if (parseOSFromUA(navigator.userAgent) !== 'win32') {
+				console.log('is windows platform');
+				renderBrowserWindow.hide();
+				renderBrowserWindow.setAlwaysOnTop(false, "floating", 1);
+			}
 			renderBrowserWindow.webContents.setFrameRate(120);
 			renderBrowserWindow.on("close", () =>
 			{

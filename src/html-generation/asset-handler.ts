@@ -7,6 +7,8 @@ import graphWASM from "assets/graph_wasm.wasm";
 
 import tinyColorJS from "assets/tinycolor.txt.js";
 // @ts-ignore
+import webWorkerJS from 'assets/webworker.txt.js';
+// @ts-ignore
 import keyJS from 'assets/key.txt.js';
 // @ts-ignore
 import webpageUtilJS from 'assets/webpage.util.txt.js';
@@ -28,10 +30,11 @@ export class AssetHandler
 	private static vaultPluginsPath: Path;
 	private static thisPluginPath: Path;
 
+	
 	// this path is used to generate the relative path to the images folder, likewise for the other paths
-	public static readonly mediaFolderName: Path = new Path("lib/media");
-	public static readonly jsFolderName: Path = new Path("lib/scripts");
-	public static readonly cssFolderName: Path = new Path("lib/styles");
+	public static readonly mediaFolderName: Path = Path.getAssetsPath('media');
+	public static readonly jsFolderName: Path = Path.getAssetsPath('scripts');
+	public static readonly cssFolderName: Path = Path.getAssetsPath('styles');
 
 	public static appStyles: string = "";
 	public static mathStyles: string = "";
@@ -54,6 +57,7 @@ export class AssetHandler
 	public static graphWASM: Buffer;
 	public static renderWorkerJS: string = "";
 	public static tinyColorJS: string = "";
+	public static webWorkerJS: string = '';
 
 	public static async initialize(pluginID: string)
 	{
@@ -68,23 +72,34 @@ export class AssetHandler
 		this.renderWorkerJS = renderWorkerJS;
 		// @ts-ignore
 		this.tinyColorJS = tinyColorJS;
+		// @ts-ignore
+		this.webWorkerJS = webWorkerJS;
 		this.graphWASM = Buffer.from(graphWASM);
 
 		this.updateAssetCache();
 	}
 
-	public static async getDownloads() : Promise<Downloadable[]>
+	public static async reparseAppStyles(rootPath: Path, remotePath: string, remoteDomain?: string) {
+		this.appInternalAssets = [];
+		this.appStyles = "";
+		await this.loadAppStyles(rootPath, remotePath, remoteDomain);
+	}
+
+	public static async getDownloads(parentPath?: Path) : Promise<Downloadable[]>
 	{
+		const cssFolderName = parentPath ? parentPath.join(this.cssFolderName) : this.cssFolderName;
+		const jsFolderName = parentPath ? parentPath.join(this.jsFolderName) : this.jsFolderName;
+
 		let toDownload: Downloadable[] = [...this.appInternalAssets];
 		if (!InvioSettingTab.settings.inlineCSS)
 		{
 			let pluginCSS = this.webpageStyles;
 			let thirdPartyPluginCSS = await this.getPluginStyles();
 			pluginCSS += "\n" + thirdPartyPluginCSS + "\n";
-			let appcssDownload = new Downloadable("obsidian-styles.css", this.appStyles, this.cssFolderName);
-			let plugincssDownload = new Downloadable("plugin-styles.css", pluginCSS, this.cssFolderName);
-			let themecssDownload = new Downloadable("theme.css", this.themeStyles, this.cssFolderName);
-			let snippetsDownload = new Downloadable("snippets.css", this.snippetStyles, this.cssFolderName);
+			let appcssDownload = new Downloadable("obsidian-styles.css", this.appStyles, cssFolderName);
+			let plugincssDownload = new Downloadable("plugin-styles.css", pluginCSS, cssFolderName);
+			let themecssDownload = new Downloadable("theme.css", this.themeStyles, cssFolderName);
+			let snippetsDownload = new Downloadable("snippets.css", this.snippetStyles, cssFolderName);
 			toDownload.push(appcssDownload);
 			toDownload.push(plugincssDownload);
 			toDownload.push(themecssDownload);
@@ -92,22 +107,24 @@ export class AssetHandler
 		}
 		if (!InvioSettingTab.settings.inlineJS)
 		{
-			let webpagejsDownload = new Downloadable("webpage.js", this.webpageJS, this.jsFolderName);
+			let webpagejsDownload = new Downloadable("webpage.js", this.webpageJS, jsFolderName);
 			toDownload.push(webpagejsDownload);
 		}
 		if(InvioSettingTab.settings.includeGraphView)
 		{
-			let graphWASMDownload = new Downloadable("graph_wasm.wasm", this.graphWASM, this.jsFolderName); // MIGHT NEED TO SPECIFY ENCODING
-			let renderWorkerJSDownload = new Downloadable("graph-render-worker.js", this.renderWorkerJS, this.jsFolderName);
-			let graphWASMJSDownload = new Downloadable("graph_wasm.js", this.graphWASMJS, this.jsFolderName);
-			let graphViewJSDownload = new Downloadable("graph_view.js", this.graphViewJS, this.jsFolderName);
-			let tinyColorJS = new Downloadable("tinycolor.js", this.tinyColorJS, this.jsFolderName);
+			let graphWASMDownload = new Downloadable("graph_wasm.wasm", this.graphWASM, jsFolderName); // MIGHT NEED TO SPECIFY ENCODING
+			let renderWorkerJSDownload = new Downloadable("graph-render-worker.js", this.renderWorkerJS, jsFolderName);
+			let graphWASMJSDownload = new Downloadable("graph_wasm.js", this.graphWASMJS, jsFolderName);
+			let graphViewJSDownload = new Downloadable("graph_view.js", this.graphViewJS, jsFolderName);
+			let tinyColorJS = new Downloadable("tinycolor.js", this.tinyColorJS, jsFolderName);
+			let webworkerJS = new Downloadable("webWorker.js", this.webWorkerJS, jsFolderName);
 			
 			toDownload.push(renderWorkerJSDownload);
 			toDownload.push(graphWASMDownload);
 			toDownload.push(graphWASMJSDownload);
 			toDownload.push(graphViewJSDownload);
 			toDownload.push(tinyColorJS);
+			toDownload.push(webworkerJS);
 		}
 		return toDownload;
 	}
@@ -136,7 +153,7 @@ export class AssetHandler
 		this.lastMathjaxChanged = -1;
 	}
 
-	public static async loadMathjaxStyles()
+	public static async loadMathjaxStyles(rootPath?: Path)
 	{
 		// @ts-ignore
 		if (this.mathjaxStylesheet == undefined) this.mathjaxStylesheet = Array.from(document.styleSheets).find((sheet) => sheet.ownerNode.id == ("MJX-CHTML-styles"));
@@ -159,7 +176,14 @@ export class AssetHandler
 				const assetContent = await this.getAppAssetsContent(asset);
 				const assetPathInfo = asset.split('/');
 				const fileName = assetPathInfo.splice(-1)[0];
-				this.appInternalAssets.push(new Downloadable(fileName, assetContent, new Path(assetPathInfo.join('/'))))
+
+				const curFolderPath = new Path(assetPathInfo.join('/'));
+				const folderPath = rootPath ? rootPath.join(curFolderPath) : curFolderPath;
+
+				this.appInternalAssets.push(new Downloadable(fileName, assetContent, folderPath));
+				if (rootPath) {
+					AssetHandler.mathStyles = AssetHandler.mathStyles.replaceAll(asset, `${folderPath.asString}/${fileName}`);
+				}
 			}
 		}
 		else
@@ -180,7 +204,7 @@ export class AssetHandler
 		return new Path(pathString).directory.absolute();
 	}
 
-	private static async loadAppStyles()
+	private static async loadAppStyles(rootPath?: Path, remotePath?: string, remoteDomain?: string)
 	{
 		let appSheet = document.styleSheets[1];
 		let stylesheets = document.styleSheets;
@@ -214,7 +238,19 @@ export class AssetHandler
 					const assetContent = await this.getAppAssetsContent(asset);
 					const assetPathInfo = asset.split('/');
 					const fileName = assetPathInfo.splice(-1)[0];
-					this.appInternalAssets.push(new Downloadable(fileName, assetContent, new Path(assetPathInfo.join('/'))))
+					const curFolderPath = new Path(assetPathInfo.join('/'));
+					const folderPath = rootPath ? rootPath.join(curFolderPath) : curFolderPath;
+
+					this.appInternalAssets.push(new Downloadable(fileName, assetContent, folderPath));
+
+					if (remotePath) {
+						let remoteLink = `${remotePath}/${curFolderPath.asString}/${fileName}`;
+						if (remoteDomain) {
+							remoteLink = remoteDomain + (remoteDomain.endsWith('/') ? '' : '/') + remoteLink;
+						}
+						log.info('remote link: ', remoteLink);
+						cssText = cssText.replaceAll(asset, remoteLink);
+					}
 				}
 				this.appStyles += cssText;
 			}

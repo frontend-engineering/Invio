@@ -8,7 +8,7 @@ import { StatsView } from 'src/statsView';
 
 /* @ts-ignore */
 const dialog: Electron.Dialog = require('electron').remote.dialog;
-
+export type NodeJSPlatform = 'aix' | 'darwin' | 'freebsd' | 'linux' | 'openbsd' | 'sunos' | 'win32';
 export class Utils
 {
 	static padStringBeggining(str: string, length: number, char: string)

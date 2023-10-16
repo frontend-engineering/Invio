@@ -9,17 +9,17 @@ import {
   FileSystemAdapter,
   TAbstractFile,
   TFolder,
+  SettingTab,
 } from "obsidian";
 import cloneDeep from "lodash/cloneDeep";
 import type {
   FileOrFolderMixedState,
   InvioPluginSettings,
   SyncTriggerSourceType,
+  THostConfig,
 } from "./baseTypes";
 import {
   COMMAND_CALLBACK,
-  COMMAND_CALLBACK_ONEDRIVE,
-  COMMAND_CALLBACK_DROPBOX,
   COMMAND_URI,
 } from "./baseTypes";
 import { importQrCodeUri } from "./importExport";
@@ -34,9 +34,8 @@ import {
   clearExpiredLoggerOutputRecords,
   clearExpiredSyncPlanRecords,
 } from "./localdb";
-import { RemoteClient } from "./remote";
-import { DEFAULT_S3_CONFIG } from "./remoteForS3";
-import { InvioSettingTab } from "./settings";
+import { RemoteClient, ServerDomain } from "./remote";
+import { InvioSettingTab, DEFAULT_SETTINGS } from "./settings";
 import { fetchMetadataFile, parseRemoteItems, SyncStatusType, RemoteSrcPrefix } from "./sync";
 import { doActualSync, getSyncPlan, isPasswordOk } from "./sync";
 import { messyConfigToNormal, normalConfigToMessy } from "./configPersist";
@@ -51,10 +50,10 @@ import { LoadingModal } from './loadingModal';
 
 import { applyLogWriterInplace, log } from "./moreOnLog";
 import AggregateError from "aggregate-error";
-import {
-  exportVaultLoggerOutputToFiles,
-  exportVaultSyncPlansToFiles,
-} from "./debugMode";
+// import {
+//   exportVaultLoggerOutputToFiles,
+//   exportVaultSyncPlansToFiles,
+// } from "./debugMode";
 import { SizesConflictModal } from "./syncSizesConflictNotice";
 import { publishFiles, unpublishFile } from './exporter'
 import { AssetHandler } from './html-generation/asset-handler';
@@ -62,28 +61,13 @@ import { Path } from './utils/path';
 import { HTMLGenerator } from './html-generation/html-generator';
 import icon, { UsingIconNames, getIconSvg, addIconForconflictFile } from './utils/icon';
 import { StatsView, VIEW_TYPE_STATS, LogType } from "./statsView";
+import { syncWithRemoteProject, switchProject } from './hosting';
+import Utils from './utils';
+import { Analytics4, loadGA } from './ga';
 
 const { iconNameSyncWait, iconNameSyncPending, iconNameSyncRunning, iconNameLogs, iconNameSyncLogo } = UsingIconNames;
 const Menu_Tab = `    `;
 
-const DEFAULT_SETTINGS: InvioPluginSettings = {
-  s3: DEFAULT_S3_CONFIG,
-  password: "",
-  remoteDomain: '',
-  serviceType: "s3",
-  currLogLevel: "info",
-  // vaultRandomID: "", // deprecated
-  autoRunEveryMilliseconds: -1,
-  initRunAfterMilliseconds: -1,
-  agreeToUploadExtraMetadata: false,
-  concurrency: 5,
-  syncConfigDir: false,
-  localWatchDir: "PublishDocs",
-  syncUnderscoreItems: true,
-  lang: "auto",
-  logToDB: false,
-  skipSizeLargerThan: -1,
-};
 
 interface OAuth2Info {
   verifier?: string;
@@ -96,6 +80,7 @@ interface OAuth2Info {
 
 export default class InvioPlugin extends Plugin {
   settings: InvioPluginSettings;
+  settingTab?: InvioSettingTab;
   db: InternalDBs;
   syncStatus: SyncStatusType;
   oauth2Info: OAuth2Info;
@@ -106,6 +91,7 @@ export default class InvioPlugin extends Plugin {
   i18n: I18n;
   vaultRandomID: string;
   recentSyncedFiles: any;
+  ga: Analytics4;
 
   isUnderWatch(file: TAbstractFile) {
     const rootDir = this.settings.localWatchDir;
@@ -140,21 +126,6 @@ export default class InvioPlugin extends Plugin {
     log.info('file snapshot: ', this.recentSyncedFiles);
   }
 
-  // async checkDomain() {
-  //   // Domain check
-  //   return new Promise((resolve) => {
-  //     if (this.settings?.remoteDomain) {
-  //       resolve(this.settings.remoteDomain);
-  //     }
-  //     if (!this.settings?.remoteDomain) {
-  //       // Show modal to get
-  //       new DomaindModal(this.app, this, this.settings?.remoteDomain, (newDomain) => {
-  //         resolve(newDomain);
-  //       }).open()
-  //     }
-  //   })
-  // }
-
   async syncRun(triggerSource: SyncTriggerSourceType = "manual", fileList?: string[]) {
     const t = (x: TransItemType, vars?: any) => {
       return this.i18n.t(x, vars);
@@ -184,6 +155,15 @@ export default class InvioPlugin extends Plugin {
       }
       return;
     }
+
+    this.ga.trace('sync_run', {
+      trigger: triggerSource,
+      dirname: this.settings.localWatchDir,
+      useHost: this.settings.useHost,
+      fileNum: fileList?.length
+    });
+
+    await this.checkIfRemoteProjectSync();
 
     let originLabel = `${this.manifest.name}`;
     if (this.syncRibbon !== undefined) {
@@ -240,20 +220,19 @@ export default class InvioPlugin extends Plugin {
         })
       );
 
-
-
       this.syncStatus = "getting_remote_files_list";
       const self = this;
       const client = new RemoteClient(
         this.settings.serviceType,
         this.settings.s3,
+        this.settings.hostConfig,
+        this.settings.useHost,
+        this.settings.localWatchDir,
         this.app.vault.getName(),
         () => self.saveSettings()
       );
-      // const Prefix = 'op-remote-source-raw/';
-      const remoteRsp = await client.listFromRemote(RemoteSrcPrefix + this.settings.localWatchDir);
-      log.info('remote: ', remoteRsp);
-      const remoteContents = remoteRsp.Contents.filter(item => item.key !== RemoteSrcPrefix);
+      const remoteContents = await client.listFromRemote(this.settings.localWatchDir, RemoteSrcPrefix);
+      log.info('remote: ', remoteContents);
 
       getNotice(
         loadingModal,
@@ -304,7 +283,8 @@ export default class InvioPlugin extends Plugin {
       // this.app.vault.getAllLoadedFiles
       // TODO: List only concerned files, only source of truth
       // *.conflict.md files is for data backup when conflicts happened
-      const local = this.app.vault.getMarkdownFiles().filter(file => file.path.startsWith(this.settings.localWatchDir) && !file.path.endsWith('.conflict.md'))
+      // const local = this.app.vault.getMarkdownFiles().filter(file => file.path.startsWith(this.settings.localWatchDir + '/') && !file.path.endsWith('.conflict.md'))
+      const local = this.app.vault.getMarkdownFiles().filter(file => new Path(file.path).isInsideDir(this.settings.localWatchDir) && !file.path.endsWith('.conflict.md'))
       log.info('local file path list: ', local);
       // const local = this.app.vault.getAllLoadedFiles();
       const localHistory = await loadFileHistoryTableByVault(
@@ -399,9 +379,8 @@ export default class InvioPlugin extends Plugin {
         //   })
         // );
         let allFiles = this.app.vault.getMarkdownFiles();
-        const basePath = new Path(this.settings.localWatchDir);
         // if we are at the root path export all files, otherwise only export files in the folder we are exporting
-        allFiles = allFiles.filter((file: TFile) => new Path(file.path).directory.asString.startsWith(basePath.asString) && (file.extension === "md") && (!file.name.endsWith('.conflict.md')));
+        allFiles = allFiles.filter((file: TFile) => new Path(file.path).isInsideDir(this.settings.localWatchDir) && (file.extension === "md") && (!file.name.endsWith('.conflict.md')));
         // Make functions of StatsView static
         view = await HTMLGenerator.beginBatch(this, allFiles);
         log.info('init stats view: ', view);
@@ -497,7 +476,11 @@ export default class InvioPlugin extends Plugin {
               }
             }
             // TODO: Get remote link, but need remote domain first
-            view?.update(pathName, { syncStatus: 'sync-done', remoteLink: '' });
+            let remoteLink  = this.getRemoteDomain();
+            const publishedKey = client.getUseHostSlugPath(pathName).replace(/\.md$/, '.html');
+            remoteLink += `/${publishedKey}`;
+
+            view?.update(pathName, { syncStatus: 'sync-done', remoteLink });
             view?.info(`${i}/${totalCount} - file ${pathName} sync done`);
           },
           (key: string) => {
@@ -558,7 +541,8 @@ export default class InvioPlugin extends Plugin {
             view?.update(pathName, { syncStatus: 'publishing' })
           } else if (status === 'DONE') {
             log.info('set file DONE publishing', pathName);
-            view?.update(pathName, { syncStatus: 'done', remoteLink: meta })
+            const domain = this.getRemoteDomain();
+            view?.update(pathName, { syncStatus: 'done', remoteLink: `${domain}/${meta}` })
           } else if (status === 'FAIL') {
             view?.update(pathName, { syncStatus: 'fail' })
           }
@@ -613,6 +597,12 @@ export default class InvioPlugin extends Plugin {
         }-${Date.now()}: finish sync, triggerSource=${triggerSource}`
       );
 
+      this.ga.trace('sync_run_done', {
+        trigger: triggerSource,
+        dirname: this.settings.localWatchDir,
+        useHost: this.settings.useHost,
+        fileNum: fileList?.length
+      }) 
       // TODO: Show stats model
       return toRemoteFiles;
     } catch (error) {
@@ -622,9 +612,18 @@ export default class InvioPlugin extends Plugin {
         triggerSource: triggerSource,
         syncStatus: this.syncStatus,
       });
+      HTMLGenerator.endBatch();
       loadingModal?.close();
       log.error(msg);
       log.error(error);
+      this.ga.trace('sync_run_err', {
+        trigger: triggerSource,
+        msg,
+        raw: error?.message,
+        dirname: this.settings.localWatchDir,
+        useHost: this.settings.useHost,
+        fileNum: fileList?.length
+      })
       getNotice(null, msg, 10 * 1000);
       if (error instanceof AggregateError) {
         for (const e of error.errors) {
@@ -650,7 +649,7 @@ export default class InvioPlugin extends Plugin {
 
   async onload() {
     log.info(`loading plugin ${this.manifest.id}`);
-  
+    this.ga = loadGA();
 		// init html generator
 		AssetHandler.initialize(this.manifest.id);
 
@@ -721,7 +720,16 @@ export default class InvioPlugin extends Plugin {
       log.debug('layout ready...');
       // Add custom icon for root dir
       setTimeout(() => {
-        icon.createIconNode(this, this.settings.localWatchDir, iconSvgSyncWait);
+        if (this.settings.localWatchDir) {
+          this.ga.trace('boot_project', {
+            dirname: this.settings.localWatchDir
+          });
+          this.switchWorkingDir(this.settings.localWatchDir);
+        } else {
+          new Notice(
+            t("syncrun_no_watchdir_err")
+          );
+        }
       }, 300);
       // TODO: Change file icons to show sync status, like sync done, sync failed, pending to sync, etc.
     })
@@ -737,7 +745,7 @@ export default class InvioPlugin extends Plugin {
           menu.addSeparator()
           .addItem((item) => {
             item
-            .setTitle(`Invio Action`)
+            .setTitle(t('menu_invio_action'))
             .setDisabled(true)
             .setIcon("document")
           })
@@ -745,16 +753,17 @@ export default class InvioPlugin extends Plugin {
           if ((file.path !== this.settings.localWatchDir) && (file.path.indexOf('/') < 0) ) {
             menu.addItem((item) => {
               item
-                .setTitle(`${Menu_Tab}Set as working folder`)
+                .setTitle(`${Menu_Tab}${t('menu_set_folder')}`)
                 .setIcon("document")
                 .onClick(async () => {
+                  this.ga.trace('switch_project', { dirname: file.path });
                   await this.switchWorkingDir(file.path);
                 });
             })
           } else {
             menu.addItem((item) => {
               item
-                .setTitle(`${Menu_Tab}Folder Publish`)
+                .setTitle(`${Menu_Tab}${t('menu_sync_folder')}`)
                 .setIcon("document")
                 .onClick(async () => {
                   this.syncRun("manual")
@@ -762,10 +771,11 @@ export default class InvioPlugin extends Plugin {
             })
             menu.addItem((item) => {
               item
-                .setTitle(`${Menu_Tab}Share This Folder`)
+                .setTitle(`${Menu_Tab}${t('menu_share_folder')}`)
                 .setIcon("document")
                 .onClick(async () => {
                   await InvioSettingTab.exportSettings(this)
+                  this.ga.trace('share_settings')
                 });
             })
           }
@@ -778,13 +788,13 @@ export default class InvioPlugin extends Plugin {
           menu.addSeparator()
             .addItem((item) => {
               item
-              .setTitle(`Invio Action`)
+              .setTitle(t('menu_invio_action'))
               .setDisabled(true)
               .setIcon("document")
             })
             .addItem((item) => {
               item
-                .setTitle(`${Menu_Tab}File Publish`)
+                .setTitle(`${Menu_Tab}${t('menu_sync_file')}`)
                 .setIcon("document")
                 .onClick(async () => {
                   await this.syncRun('manual', [file.path])
@@ -870,6 +880,36 @@ export default class InvioPlugin extends Plugin {
     this.registerObsidianProtocolHandler(
       COMMAND_CALLBACK,
       async (inputParams) => {
+        log.info('protocol: ', COMMAND_CALLBACK, inputParams)
+        const { action, token, user } = inputParams;
+        if (action === 'invio-auth-cb') {
+          if (!this.settings.useHost) {
+            return;
+          }
+          this.ga.trace('use_host_auth', {
+            action,
+            user
+          });
+          if (!this.settings.hostConfig) {
+            this.settings.hostConfig = {} as THostConfig;
+          }
+          if (token && user) {
+            this.settings.hostConfig.token = token;
+            try {
+              this.settings.hostConfig.user = JSON.parse(user);
+            } catch (error) {
+              log.error('parse user info failed: ', error);
+              this.settings.hostConfig.token = '';
+              this.settings.hostConfig.user = null;
+            }
+            if (this.settings.localWatchDir) {
+              await syncWithRemoteProject(this.settings.localWatchDir, this);
+            }
+            this.settingTab?.hide();
+            this.settingTab?.display();
+          }
+          return;
+        }
         new Notice(
           t("protocol_callbacknotsupported", {
             params: JSON.stringify(inputParams),
@@ -947,7 +987,8 @@ export default class InvioPlugin extends Plugin {
       }
     })
 
-    this.addSettingTab(new InvioSettingTab(this.app, this));
+    this.settingTab = new InvioSettingTab(this.app, this);
+    this.addSettingTab(this.settingTab);
 
     // this.registerDomEvent(document, "click", (evt: MouseEvent) => {
     //   log.info("click", evt);
@@ -998,12 +1039,73 @@ export default class InvioPlugin extends Plugin {
     await this.saveData(normalConfigToMessy(this.settings));
   }
 
+  t(x: TransItemType, vars?: any) {
+    return this.i18n?.t(x, vars);
+  }
+
+  getRemoteDomain() {
+    let domain = this.settings.remoteDomain;
+    if (!domain) {
+      if (this.settings.useHost && this.settings.hostConfig?.hostPair?.slug) {
+        const slug = this.settings.hostConfig?.hostPair.slug;
+        domain = `https://${slug}.${ServerDomain}`;
+      } else {
+        domain = `https://${this.settings.s3.s3BucketName}.${this.settings.s3.s3Endpoint}`;
+      }
+    }
+    return domain;
+  }
+
+  async enableHostService() {
+    if (!this.settings.localWatchDir) {
+      new Notice(this.t('syncrun_no_watchdir_err'));
+      return;
+    }
+    await syncWithRemoteProject(this.settings.localWatchDir, this);
+  }
+
+  async disableHostService() {
+    // Clean settings
+    Object.assign(this.settings.s3, {
+      s3Endpoint: '',
+      s3Region: '',
+      s3BucketName: '',
+      s3AccessKeyID: '',
+      s3SecretAccessKey: ''
+    });
+    this.settings.remoteDomain = '';
+    await this.saveSettings();
+  }
+
   async switchWorkingDir(value: string) {
-    this.settings.localWatchDir = value.trim();
+    const dirname = value.trim();
+    const name = await switchProject(dirname, this);
+    if (!name) return;
+    this.settings.localWatchDir = name;
     icon.removeIconInNode(document.body);
     const { iconSvgSyncWait } = getIconSvg();
     icon.createIconNode(this, this.settings.localWatchDir, iconSvgSyncWait);
-    await this.saveSettings(); 
+    await this.saveSettings();
+  }
+
+  async checkIfRemoteProjectSync() {
+    if (!this.settings.localWatchDir) {
+      new Notice(
+        this.t("syncrun_no_watchdir_err")
+      );
+      return;
+    }
+    if (this.settings.useHost) {
+      log.info('using host service');
+      if (!this.settings.hostConfig) {
+        log.info('need auth');
+        return Utils.gotoAuth();
+      }
+      if (!this.settings.hostConfig.hostPair?.dir || (this.settings.hostConfig.hostPair?.dir !== this.settings.localWatchDir)) {
+        log.info('sync with remote project');
+        await syncWithRemoteProject(this.settings.localWatchDir, this);
+      }
+    }
   }
 
   async checkIfOauthExpires() {}

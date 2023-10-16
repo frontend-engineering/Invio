@@ -5,6 +5,8 @@ import { machineId } from 'node-machine-id';
 import os from 'os';
 import { createHash } from 'crypto';
 import { v4 } from 'uuid';
+import { AppHostServerUrl } from './remoteForS3';
+import { loadGA } from './ga';
 
 const logger = console;
 logger.info = console.log;
@@ -67,7 +69,16 @@ const showNotification = async (opt: MessageBoxOptions) => {
 //     return traceInstance;
 // }
 
+const gotoAuth = (url?: string) => {
+    (window as any).electron.remote.shell.openExternal(url || `${AppHostServerUrl}/exporter`);
+    const ga = loadGA();
+    ga?.trace('use_host_login');
+}
 
+const gotoMainSite = () => {
+    (window as any).electron.remote.shell.openExternal(AppHostServerUrl);
+}
+  
 const Utils = {
     md5Hash,
     getAppPath,
@@ -76,6 +87,8 @@ const Utils = {
     getMachineId,
     getUserId,
     showNotification,
+    gotoAuth,
+    gotoMainSite,
     // getTracert
 };
 

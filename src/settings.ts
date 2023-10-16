@@ -11,6 +11,7 @@ import {
 import type { TextComponent } from "obsidian";
 import { createElement, Eye, EyeOff } from "lucide";
 import {
+  InvioPluginSettings,
   API_VER_REQURL,
   DEFAULT_DEBUG_FOLDER,
   SUPPORTED_SERVICES_TYPE,
@@ -37,17 +38,45 @@ import { RemoteClient } from "./remote";
 import { messyConfigToNormal } from "./configPersist";
 import type { TransItemType } from "./i18n";
 import { checkHasSpecialCharForDir, mkdirpInVault } from "./misc";
-import { ExportSettingsData, DEFAULT_SETTINGS } from './export-settings';
+import { ExportSettingsData, DEFAULT_EXP_SETTINGS } from './export-settings';
 import icon, { getIconSvg } from './utils/icon';
 import { Utils } from "./utils/utils";
+import Utils2 from './utils';
 import {
   applyLogWriterInplace,
   log,
   restoreLogWritterInplace,
 } from "./moreOnLog";
+import { DEFAULT_S3_CONFIG } from "./remoteForS3";
 
 const settingsPrefix = `Invio-Settings>`;
 const settingsSuffix = `<&`
+
+export const DEFAULT_SETTINGS: InvioPluginSettings = {
+  s3: DEFAULT_S3_CONFIG,
+  useHost: false,
+  hostConfig: {
+    hostPair: null,
+    token: '',
+    user: null,
+  },
+  password: "",
+  remoteDomain: '',
+  serviceType: "s3",
+  currLogLevel: "info",
+  // vaultRandomID: "", // deprecated
+  autoRunEveryMilliseconds: -1,
+  initRunAfterMilliseconds: -1,
+  agreeToUploadExtraMetadata: false,
+  concurrency: 5,
+  syncConfigDir: false,
+  localWatchDir: "PublishDocs",
+  syncUnderscoreItems: true,
+  lang: "auto",
+  logToDB: false,
+  skipSizeLargerThan: -1,
+};
+
 class PasswordModal extends Modal {
   plugin: InvioPlugin;
   newPassword: string;
@@ -345,7 +374,7 @@ const wrapTextWithPasswordHide = (text: TextComponent) => {
 
 export class InvioSettingTab extends PluginSettingTab {
   readonly plugin: InvioPlugin;
-	static settings: ExportSettingsData = DEFAULT_SETTINGS;
+	static settings: ExportSettingsData = DEFAULT_EXP_SETTINGS;
 
   constructor(app: App, plugin: InvioPlugin) {
     super(app, plugin);
@@ -425,12 +454,83 @@ export class InvioSettingTab extends PluginSettingTab {
           })
       });
 
-    // ===============Exporter Settings ======================
+    // =============== Hosting Settings ======================
 
-		containerEl.createEl('h2', { text: 'Publish Settings', cls: 'settings-pub-header' });
+    // const useHostDiv = containerEl.createEl("div");
+    // useHostDiv.createEl("h2", { text: t('settings_host') });
+    // new Setting(useHostDiv)
+    //   .setName(t('settings_host_switch_title'))
+    //   .setDesc(t('settings_host_switch_desc'))
+    //   .addToggle(tog => {
+    //     tog.setValue(this.plugin.settings.useHost)
+    //     .onChange(async (val) => {
+    //       this.plugin.settings.useHost = val;
+    //       await this.plugin.saveSettings();
+    //       if (this.plugin.settings.useHost) {
+    //         await this.plugin.enableHostService()
+    //           .catch(err => {
+    //             new Notice(t('settings_host_enable_error')); 
+    //           })
+    //           .finally(() => {
+    //             this.hide();
+    //             this.display();
+    //           })
+    //       } else {
+    //         await this.plugin.disableHostService();
+    //         this.hide();
+    //         this.display();
+    //       }
+    //     })
+    //   })
 
-    // ===============Exporter Settings End===================
-    
+    if (this.plugin.settings.useHost) {
+      const hostingDiv = containerEl.createEl("div", { cls: 'settings-config-section' });
+      hostingDiv.createEl('h2', { text: t('settings_host_auto_settings'), cls: 'settings-pub-header' });
+      // const accountDiv = hostingDiv.createDiv('account');
+      // accountDiv.innerText = 'goto account';
+      const accountDiv = new Setting(hostingDiv)
+        .setName(t('settings_host_auto_name'))
+        .setDesc(t('settings_host_auto_desc'));
+
+      accountDiv.addButton(async (button) => {
+        button.setButtonText(t('settings_host_auto_account'));
+        button.onClick(async () => {
+          log.info('goto account page...');
+          await Utils2.gotoMainSite();
+          // await (window as any).electron.remote.shell.openPath('https://app.turbosite.cloud');
+        });
+      })
+      const hostingEl = new Setting(hostingDiv)
+        .setName(t('settings_host_auto_auth'))
+        .setDesc(t('settings_host_auto_auth_desc'));
+
+      if (this.plugin.settings.hostConfig?.token) {
+        hostingEl.addText((text) => {
+          text
+            .setPlaceholder("")
+            .setValue(this.plugin.settings.hostConfig?.user?.name)
+        })
+        .addButton(async (button) => {
+          button.setButtonText(t('settings_host_auto_logout'));
+          button.onClick(async () => {
+            log.info('Log out... ', this.plugin.settings.hostConfig?.token);
+            this.plugin.settings.hostConfig.token = null;
+            await this.plugin.saveSettings();
+            this.hide();
+            this.display();
+          });
+        })
+      } else {
+        hostingEl.addButton(async (button) => {
+          button.setButtonText(t('settings_host_auto_login'));
+          button.onClick(async () => {
+            log.info('start authing: ');
+            Utils2.gotoAuth();
+          });
+        });
+      }  
+    }
+		
     
     //////////////////////////////////////////////////
     // below for service chooser (part 1/2)
@@ -444,7 +544,11 @@ export class InvioSettingTab extends PluginSettingTab {
     // below for s3
     //////////////////////////////////////////////////
 
-    const s3Div = containerEl.createEl("div");
+    if (!this.plugin.settings.useHost) {
+
+    const s3Div = containerEl.createEl("div", { cls: 'settings-config-section' });
+    s3Div.createEl('h2', { text: t('settings_host_self_settings'), cls: 'settings-pub-header' });
+
     // const s3Div = containerEl.createEl("div", { cls: "s3-hide" });
     // s3Div.toggleClass("s3-hide", this.plugin.settings.serviceType !== "s3");
     // s3Div.createEl("h2", { text: t("settings_s3") });
@@ -645,7 +749,7 @@ export class InvioSettingTab extends PluginSettingTab {
           }
         });
       });
-
+    }
     //////////////////////////////////////////////////
     // below for general chooser (part 2/2)
     //////////////////////////////////////////////////
@@ -684,12 +788,15 @@ export class InvioSettingTab extends PluginSettingTab {
     //       });
     //   });
 
+    // ===============Hosting Settings End===================
+
+
     //////////////////////////////////////////////////
     // below for basic settings
     //////////////////////////////////////////////////
+    containerEl.createEl("h2", { text: t("settings_basic") });
 
-    const basicDiv = containerEl.createEl("div");
-    basicDiv.createEl("h2", { text: t("settings_basic") });
+    const basicDiv = containerEl.createEl("div", { cls: 'settings-config-section' });
 
     // let newPassword = `${this.plugin.settings.password}`;
     // new Setting(basicDiv)
@@ -874,43 +981,44 @@ export class InvioSettingTab extends PluginSettingTab {
     //////////////////////////////////////////////////
 
     // import and export
-    const importExportDiv = containerEl.createEl("div");
-    importExportDiv.createEl("h2", {
-      text: t("settings_importexport"),
-    });
-
-
-    new Setting(importExportDiv)
-      .setName(t("settings_export"))
-      .setDesc(t("settings_export_desc"))
-      .addButton(async (button) => {
-        button.setButtonText(t("settings_export_desc_button"));
-        button.onClick(async () => {
-          // new ExportSettingsQrCodeModal(this.app, this.plugin).open();
-          InvioSettingTab.exportSettings(this.plugin);
-        });
+    if (!this.plugin.settings.useHost) {
+      containerEl.createEl("h2", {
+        text: t("settings_importexport"),
       });
-
-    let restoredStr = '';
-    new Setting(importExportDiv)
-      .setName(t("settings_import"))
-      .setDesc(t("settings_import_desc"))
-      .addText((text) =>
-        text
-          .setPlaceholder("Encrypted config string")
-          .setValue("")
-          .onChange((val) => {
-            restoredStr = val.trim();
-          })
-      )
-      .addButton(async (button) => {
-        button.setButtonText(t("settings_import_desc_button"));
-        button.onClick(async () => {
-          await InvioSettingTab.importSettings(this.plugin, restoredStr);
-          this.hide();
-          this.display();
+      const importExportDiv = containerEl.createEl("div", { cls: 'settings-config-section' });
+  
+      new Setting(importExportDiv)
+        .setName(t("settings_export"))
+        .setDesc(t("settings_export_desc"))
+        .addButton(async (button) => {
+          button.setButtonText(t("settings_export_desc_button"));
+          button.onClick(async () => {
+            // new ExportSettingsQrCodeModal(this.app, this.plugin).open();
+            InvioSettingTab.exportSettings(this.plugin);
+          });
         });
-      });
+  
+      let restoredStr = '';
+      new Setting(importExportDiv)
+        .setName(t("settings_import"))
+        .setDesc(t("settings_import_desc"))
+        .addText((text) =>
+          text
+            .setPlaceholder("Encrypted config string")
+            .setValue("")
+            .onChange((val) => {
+              restoredStr = val.trim();
+            })
+        )
+        .addButton(async (button) => {
+          button.setButtonText(t("settings_import_desc_button"));
+          button.onClick(async () => {
+            await InvioSettingTab.importSettings(this.plugin, restoredStr);
+            this.hide();
+          });
+        });
+    }
+    
 
     //////////////////////////////////////////////////
     // below for debug
@@ -930,7 +1038,7 @@ export class InvioSettingTab extends PluginSettingTab {
         });
       });
 
-    const bonusDiv = containerEl.createEl('div');
+    const bonusDiv = containerEl.createEl('div', { cls: 'settings-config-section' });
     bonusDiv.createEl('h2', { text: 'Stay up to date' });
 
     const twitterContainer = bonusDiv.createEl('p')

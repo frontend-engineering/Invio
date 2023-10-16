@@ -56,8 +56,13 @@ export class HTMLGenerator {
 	}
 
 	// rootPath is used for collecting context nodes
-	public static async generateWebpage(file: ExportFile, rootPath: Path, view: StatsView): Promise<ExportFile> {
-		await this.getDocumentHTML(file, false, view);
+	public static async generateWebpage(
+		file: ExportFile,
+		rootPath: Path,
+		view: StatsView,
+		remoteDomain?: string, // website assets file's host domain
+	): Promise<ExportFile> {
+		await this.getDocumentHTML(file, rootPath, false, view, remoteDomain);
 		let usingDocument = file.document;
 
 		let sidebars = this.generateSideBars(file.contentElement, file);
@@ -105,18 +110,28 @@ export class HTMLGenerator {
 		// inject file tree
 		if (InvioSettingTab.settings.includeFileTree) {
 			let tree = GlobalDataGenerator.getFileTree();
-			if (InvioSettingTab.settings.makeNamesWebStyle) tree.makeLinksWebStyle();
+			const rootDir = file.exportPath.getRootDirFromString(); 
+			console.log('file.exportPath: ', file.exportPath, file.exportPath.asString, rootDir);
+
+			if (rootDir !== rootPath) {
+				const remoteRoot = rootPath.asString;
+				const prefix = remoteRoot.startsWith('/') ? '' : '/';
+				tree.makeLinksRemote(rootDir.asString, prefix + remoteRoot);
+			}
 
 			let fileTree: HTMLDivElement = this.generateHTMLTree(tree, usingDocument, pageTitle, "file-tree", true, 1, 1, false);
 			// leftSidebar.appendChild(fileTree);
-			const dataNode = this.generateRootDirNode(file, usingDocument);
+			let prefix = rootPath.asString;
+			if (remoteDomain) {
+				prefix = remoteDomain + (remoteDomain.endsWith('/') ? '' : '/') + prefix;
+			}
+			const dataNode = this.generateRootDirNode(file, prefix, usingDocument);
 			leftSidebar.appendChild(dataNode);
-			const rootDir = new Path(file.exportPath.asString.split('/')[0])
 			file.downloads.push(new Downloadable('_common-left-tree.html', fileTree.outerHTML, rootDir));
 		}
 
 		await this.appendFooter(file);
-		await this.fillInHead(file, rootPath);
+		await this.fillInHead(file, rootPath, remoteDomain);
 
 		file.downloads.unshift(file.getSelfDownloadable());
 
@@ -136,7 +151,7 @@ export class HTMLGenerator {
 		pageContainerEl.appendChild(footerBar);
 	}
 
-	public static async getDocumentHTML(file: ExportFile, addSelfToDownloads: boolean = false, view?: StatsView): Promise<ExportFile> {
+	public static async getDocumentHTML(file: ExportFile, rootPath: Path, addSelfToDownloads: boolean = false, view?: StatsView, remoteDomain?: string): Promise<ExportFile> {
 		// set custom line width on body
 		let body = file.document.body;
 
@@ -163,7 +178,7 @@ export class HTMLGenerator {
 
 		// create obsidian document containers
 		let markdownViewEl = file.document.body.createDiv();
-		let content = await MarkdownRenderer.renderMarkdown(file, view);
+		let content = await MarkdownRenderer.renderMarkdown(file, view, rootPath);
 		if (MarkdownRenderer.cancelled) throw new Error("Markdown rendering cancelled");
 		markdownViewEl.outerHTML = content;
 
@@ -229,7 +244,11 @@ export class HTMLGenerator {
 
 		if (addSelfToDownloads) file.downloads.push(file.getSelfDownloadable());
 		file.downloads.push(...outlinedImages);
-		file.downloads.push(...await AssetHandler.getDownloads());
+
+		const downloadDir = file.exportPath.getRootDirFromString();
+		await AssetHandler.reparseAppStyles(downloadDir, rootPath.asString, remoteDomain);
+		log.info('assets download root path and dir: ', rootPath, downloadDir)
+		file.downloads.push(...await AssetHandler.getDownloads(downloadDir));
 
 		if (InvioSettingTab.settings.makeNamesWebStyle) {
 			file.downloads.forEach((file) => {
@@ -343,11 +362,11 @@ export class HTMLGenerator {
 		return {leftBtn, rightBtn, mobileSideBarBtns};
 	}
 
-	private static getRelativePaths(file: ExportFile): { mediaPath: Path, jsPath: Path, cssPath: Path, rootPath: Path } {
+	private static getRelativePaths(file: ExportFile, root?: Path): { mediaPath: Path, jsPath: Path, cssPath: Path, rootPath: Path } {
 		let rootPath = file.pathToRoot;
-		let imagePath = AssetHandler.mediaFolderName.makeUnixStyle();
-		let jsPath = AssetHandler.jsFolderName.makeUnixStyle();
-		let cssPath = AssetHandler.cssFolderName.makeUnixStyle();
+		let imagePath = (root? root.join(AssetHandler.mediaFolderName) : AssetHandler.mediaFolderName).makeUnixStyle();
+		let jsPath = (root? root.join(AssetHandler.jsFolderName) : AssetHandler.jsFolderName).makeUnixStyle();
+		let cssPath = (root? root.join(AssetHandler.cssFolderName) : AssetHandler.cssFolderName).makeUnixStyle();
 
 		if (InvioSettingTab.settings.makeNamesWebStyle) {
 			imagePath = imagePath.makeWebStyle();
@@ -359,16 +378,16 @@ export class HTMLGenerator {
 		return { mediaPath: imagePath, jsPath: jsPath, cssPath: cssPath, rootPath: rootPath };
 	}
 
-	private static async fillInHead(file: ExportFile, rootPath: Path) {
+	private static async fillInHead(file: ExportFile, rootPath: Path, remoteDomain: string = '') {
 		// const pageConfig = app.metadataCache.getFileCache(file.markdownFile).frontmatter;
 		const pageConfig = this.getMeta(file);
-		log.info('get file metadata: ', pageConfig);
-
+		log.info('get file metadata: ', pageConfig, remoteDomain);
+		log.info('head with remote domain: ', remoteDomain);
 		let pageTitle = file.markdownFile.basename;
 		if (pageConfig?.title) {
 			pageTitle = pageConfig.title;
 		}
-		let relativePaths = this.getRelativePaths(file);
+		let relativePaths = this.getRelativePaths(file, rootPath);
 
 		let meta = `
 			<title>${pageTitle}</title>
@@ -425,9 +444,8 @@ export class HTMLGenerator {
 			</script>
 			`;
 
-			scripts += `\n<script type='module' src='${relativePaths.jsPath}/graph_view.js'></script>\n`;
-			scripts += `\n<script src='${relativePaths.jsPath}/graph_wasm.js'></script>\n`;
-			scripts += `\n<script src="${relativePaths.jsPath}/tinycolor.js"></script>\n`;
+			scripts += `\n<script type='module' src='${remoteDomain}${relativePaths.jsPath}/graph_view.js'></script>\n`;
+			scripts += `\n<script src='${remoteDomain}${relativePaths.jsPath}/graph_wasm.js'></script>\n`;
 			scripts += `\n<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.2.4/pixi.min.js" integrity="sha512-Ch/O6kL8BqUwAfCF7Ie5SX1Hin+BJgYH4pNjRqXdTEqMsis1TUYg+j6nnI9uduPjGaj7DN4UKCZgpvoExt6dkw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>\n`;
 		}
 
@@ -435,7 +453,7 @@ export class HTMLGenerator {
 			scripts += `\n<script>\n${AssetHandler.webpageJS}\n</script>\n`;
 		}
 		else {
-			scripts += `\n<script src='${relativePaths.jsPath}/webpage.js'></script>\n`;
+			scripts += `\n<script src='${remoteDomain}${remoteDomain}${relativePaths.jsPath}/webpage.js'></script>\n`;
 		}
 
 
@@ -472,10 +490,10 @@ export class HTMLGenerator {
 				`
 			${meta}
 
-			<link rel="stylesheet" href="${relativePaths.cssPath}/obsidian-styles.css">
-			<link rel="stylesheet" href="${relativePaths.cssPath}/theme.css">
-			<link rel="stylesheet" href="${relativePaths.cssPath}/plugin-styles.css">
-			<link rel="stylesheet" href="${relativePaths.cssPath}/snippets.css">
+			<link rel="stylesheet" href="${remoteDomain}${relativePaths.cssPath}/obsidian-styles.css">
+			<link rel="stylesheet" href="${remoteDomain}${relativePaths.cssPath}/theme.css">
+			<link rel="stylesheet" href="${remoteDomain}${relativePaths.cssPath}/plugin-styles.css">
+			<link rel="stylesheet" href="${remoteDomain}${relativePaths.cssPath}/snippets.css">
 			<style> ${cssSettings} </style>
 
 			${scripts}
@@ -673,6 +691,7 @@ export class HTMLGenerator {
 	public static generateDarkmodeToggle(inline: boolean = true, usingDocument: Document = document): HTMLElement {
 		// programatically generates the above html snippet
 		let toggle = usingDocument.createElement("div");
+		toggle.style.display = 'flex';
 		let label = usingDocument.createElement("label");
 		label.classList.add(inline ? "theme-toggle-container-inline" : "theme-toggle-container");
 		label.setAttribute("for", "theme_toggle");
@@ -684,9 +703,24 @@ export class HTMLGenerator {
 		div.classList.add("toggle-background");
 		label.appendChild(input);
 		label.appendChild(div);
+
 		toggle.appendChild(label);
 
+		const btn = this.generatePrintBtn(usingDocument);
+		toggle.appendChild(btn);
 		return toggle;
+	}
+
+	public static generatePrintBtn(usingDocument: Document = document) {
+		let btn = usingDocument.createElement("div");
+		btn.classList.add('print-btn');
+		btn.setAttribute('id', 'print_btn');
+
+		const icon = usingDocument.createElement('span')
+		icon.classList.add('print-btn-icon');
+		icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-printer"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>`
+		btn.appendChild(icon);
+		return btn;
 	}
 
 	public static generateSearchBar(usingDocument: Document = document): HTMLElement {
@@ -848,9 +882,9 @@ export class HTMLGenerator {
 		return container;
 	}
 
-	private static generateRootDirNode(file: ExportFile, usingDocument: Document) {
-		const rootDir = file.exportPath.directory.asString?.split('/')[0];
-		const container = document.createElement('div');
+	private static generateRootDirNode(file: ExportFile, rootPath: string, usingDocument: Document) {
+		const rootDir = rootPath || file.exportPath.directory.getRootDirFromString().asString;
+		const container = usingDocument.createElement('div');
 		container.id = 'invio-hidden-data-node'
 		container.style.display = 'none';
 		container.setAttribute('data-root', rootDir);

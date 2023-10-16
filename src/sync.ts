@@ -1153,7 +1153,7 @@ export const getSyncPlan = async (
 };
 
 const uploadExtraMeta = async (
-  slug: string,
+  dir: string,
   client: RemoteClient,
   metadataFile: FileOrFolderMixedState | undefined,
   origMetadata: MetadataOnRemote | undefined,
@@ -1194,7 +1194,7 @@ const uploadExtraMeta = async (
   const resultText = serializeMetadataOnRemote(newMetadata);
 
   await client.uploadToRemote(
-    metadataFile?.key || `${slug}/${key}`,
+    metadataFile?.key || `${dir}/${key}`,
     RemoteSrcPrefix,
     undefined,
     false,
@@ -1490,7 +1490,7 @@ export const doActualSync = async (
     return;
   }
 
-  log.debug(`start syncing extra data firstly`);
+  log.debug(`start syncing extra data firstly ${slug} - ${JSON.stringify(metadataFile)}`);
   await uploadExtraMeta(
     slug,
     client,

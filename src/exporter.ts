@@ -11,10 +11,18 @@ import { AssetHandler } from './html-generation/asset-handler';
 import { RenderLog } from './html-generation/render-log';
 import { Downloadable } from './utils/downloadable';
 import { log } from "./moreOnLog";
-import { RemoteClient } from "./remote";
+import { RemoteClient, ServerDomain } from "./remote";
 import { StatsView } from './statsView';
+import { InvioPluginSettings } from './baseTypes';
 
-export const exportFile = async (file: TFile, exportFromPath: Path, exportToPath: Path | undefined = undefined, rootPath: Path | undefined, view: StatsView) : Promise<ExportFile | undefined> => {
+export const exportFile = async (
+    file: TFile,
+    exportFromPath: Path,
+    exportToPath: Path | undefined = undefined,
+    rootPath: Path | undefined,
+    view: StatsView,
+    remoteClient?: RemoteClient
+) : Promise<ExportFile | undefined> => {
     if(file.extension != "md")
     {
         new Notice(`❗ Unfortunately exporting ${file.extension.replace(/\./igm, "")} files is not supported yet.`, 7000);
@@ -34,7 +42,13 @@ export const exportFile = async (file: TFile, exportFromPath: Path, exportToPath
     try
     {
         exportedFile = new ExportFile(file, exportToPath.directory.absolute(), exportFromPath.directory, true, exportToPath.fullName, false);
-        await HTMLGenerator.generateWebpage(exportedFile, rootPath, view);
+        let remoteCOSDomain;
+        if (remoteClient?.useHost) {
+            // 默认已经verify过COS数据了
+            const { s3BucketName: bucket, s3Endpoint: endpoint } = remoteClient.s3Config;
+            remoteCOSDomain = `https://${bucket}.${endpoint}/`;
+        }
+        await HTMLGenerator.generateWebpage(exportedFile, rootPath, view, remoteCOSDomain);
     }
     catch (e)
     {
@@ -62,7 +76,7 @@ export const publishFiles = async (
     pathList: string[],
     allFiles: TFile[],
     password: string = "",
-    settings: any,
+    settings: InvioPluginSettings,
     triggerSource: string,
     view?: StatsView,
     cb?: (key: string, status: 'START' | 'DONE' | 'FAIL', meta?: any) => any,
@@ -100,7 +114,7 @@ export const publishFiles = async (
         // RenderLog.progress(i++, path.length, "Exporting Docs", "Exporting: " + file.path, "var(--color-accent)");
         view?.info("Exporting: " + file.path);
 
-        const exportedFile = await exportFile(file, new Path(path), htmlFilePath, new Path(settings.localWatchDir), view);
+        const exportedFile = await exportFile(file, new Path(path), htmlFilePath, new Path(client.getUseHostSlug()), view, client);
         if (exportedFile) {
             externalFiles.push(...exportedFile.downloads.map((d: Downloadable) => {
                 const afterPath = exportedFile.exportToFolder.join(d.relativeDownloadPath);
@@ -117,6 +131,7 @@ export const publishFiles = async (
             log.info('download list: ', externalFiles);
         }
     }
+    // Or useHost
     if (settings.remoteDomain) {
         const sitemapDomStr = HTMLGenerator.generateSitemap(allFiles, settings.remoteDomain);
         const sitemapDownload = new Downloadable('sitemap.xml', sitemapDomStr, htmlPath.joinString(settings.localWatchDir));
@@ -141,7 +156,12 @@ export const publishFiles = async (
     log.info('generating meta...');
     externalFiles.push(metaDownload);
     
-    externalFiles = externalFiles.filter((file, index) => externalFiles.findIndex((f) => f.relativeDownloadPath == file.relativeDownloadPath && f.filename === file.filename) == index);
+    externalFiles = externalFiles.filter((file, index) => {
+        const idx = externalFiles.findIndex((f) => {
+            return (f.relativeDownloadPath?.asString == file.relativeDownloadPath?.asString) && (f.filename === file.filename)
+        });
+        return idx === index;
+    });
     await Utils.downloadFiles(externalFiles, htmlPath, view);
     log.info('download files to: ', htmlPath, externalFiles);
 
@@ -171,11 +191,9 @@ export const publishFiles = async (
                 upload.key
             ).then((resp) => {
                 if (!resp) return;
-                // RenderLog.progress(i++, toUploads.length, "Uploading Docs", "Upload success: " + upload.key, "var(--color-accent)");
                 view?.info(`Upload success: ${upload.key}`);
                 if (cb && upload.md) {
-                    const domain = settings.remoteDomain || `https://${settings.s3.s3BucketName}.${settings.s3.s3Endpoint}`;
-                    cb(upload.md, 'DONE', `${domain}/${resp?.key}`);
+                    cb(upload.md, 'DONE', resp?.key);
                 }
                 return resp;
             }).catch(err => {

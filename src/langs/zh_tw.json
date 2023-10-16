@@ -7,6 +7,7 @@
   "sometext": "這裡有一段文字。",
 
   "syncrun_alreadyrunning": "{{pluginName}} 正處於此階段：{{syncStatus}}!",
+  "syncrun_no_watchdir_err": "Invio: 请先配置本地同步文件夹",
   "syncrun_syncingribbon": "{{pluginName}}：正在由 {{triggerSource}} 觸發執行",
   "syncrun_syncingribbon_err": "{{pluginName}}: 文件同步失败",
   "syncrun_step0": "0/{{maxSteps}} Invio 在空跑（dry run）模式，不會發生實際的檔案交換。",
@@ -54,6 +55,12 @@
   "modal_password_secondconfirm": "再次確認儲存新密碼",
   "modal_password_notice": "新密碼已儲存！",
 
+  "menu_invio_action": "Invio 子菜单",
+  "menu_set_folder": "设置为工作目录",
+  "menu_sync_folder": "文件夹同步",
+  "menu_share_folder": "分享文件夹",
+  "menu_sync_file": "文件同步",
+
   "modal_remotebasedir_title": "您正在修改遠端基資料夾設定",
   "modal_remotebasedir_shortdesc": "1. 本外掛並不會自動在遠端把內容從舊資料夾移動到新資料夾。所有內容都會重新同步。\n2. 如果你使得文字輸入框為空，那麼本設定會被重設回庫的資料夾名（預設設定）。\n3. 即使您設定了端對端加密的密碼，遠端資料夾名稱本身也不會被加密。\n4. 某些特殊字元，如“?”、“/”、“\\”是不允許的。文字前後的空格也會被自動刪去。",
   "modal_remotebasedir_invaliddirhint": "您所輸入的內容含有某些特殊字元，如“?”、“/”、“\\”，它們是不允許的。",
@@ -95,6 +102,10 @@
   "modal_sizesconflict_desc": "您設定了跳過同步大於 {{thresholdMB}} MB（{{thresholdBytes}} bytes）的檔案。\n但是以下檔案的大小，在一端大於閾值，在另一端則小於閾值。\n為了避免意外的覆蓋或刪除，外掛停止了運作，您需要手動處理至少一端的檔案。",
   "modal_sizesconflict_copybutton": "點選以複製以下所有檔案大小衝突資訊",
   "modal_sizesconflict_copynotice": "所有的檔案大小衝突資訊，已被複制到剪貼簿！",
+
+  "modal_project_empty_err": "Slug和Name不能为空",
+  "modal_project_slug_err": "slug只能包含字母和数字，长度6～12位",
+  "modal_project_slug_case_err": "Invio project slug 大小写不敏感，不允许包含大写字母",
 
   "settings_basic": "基本設定",
   "settings_domain": "域名",
@@ -155,6 +166,22 @@
   "settings_s3_urlstyle_desc": "是否對 S3 物件強制使用 path style URL（例如使用 https://s3.amazonaws.com/*/ 而不是 https://*.s3.amazonaws.com/）。",
   "settings_s3_connect_succ": "很好！可以訪問到對應儲存桶。",
   "settings_s3_connect_fail": "無法訪問到對應儲存桶。",
+
+  "settings_host": "托管服务配置",
+  "settings_host_switch_title": "是否使用Invio自动托管",
+  "settings_host_switch_desc": "为降低配置成本，Invio 提供免费托管服务，包括S3存储空间和免费子域名",
+  "settings_host_enable_error": "Invio 服务连接失败，请稍后重试",
+  "settings_host_auto_settings": "Invio 自动托管配置",
+  "settings_host_auto_name": "Invio 自动托管",
+  "settings_host_auto_desc": "无需配置，登录即可直接使用",
+  "settings_host_auto_account": "管理后台",
+  "settings_host_auto_auth": "账户信息",
+  "settings_host_auto_auth_desc": "登录后即可免费使用，无需手动配置",
+  "settings_host_auto_login": "登录",
+  "settings_host_auto_logout": "退出",
+  "settings_host_dirname_case_conflict": "Invio 默认大小写不敏感，请检查目录名字，否则会在项目同步时导致未知后果",
+
+  "settings_host_self_settings": "自托管配置",
 
   "settings_dropbox": "Dropbox 設定",
   "settings_dropbox_disclaimer1": "宣告：此外掛不是 Dropbox 官方產品。",
@@ -228,11 +255,11 @@
 
   "settings_importexport": "匯入匯出部分設定",
   "settings_export": "匯出",
-  "settings_export_desc": "将本地配置信息导出为加密字符串，该密钥包含所有配置信息，请谨慎保存",
+  "settings_export_desc": "将本地配置信息导出为加密字符串，可分享给其他用户，对方即可获得等同于您的线上文件读写权限，请谨慎保存",
   "settings_export_desc_button": "导出",
   "settings_export_msg": "配置文件字符串已经复制到剪贴板!",
   "settings_import": "匯入",
-  "settings_import_desc": "通过密钥字符一键导入本地配置",
+  "settings_import_desc": "通过密钥字符一键导入本地配置，如配置中包含文件夹，会自动同步文件到本地",
   "settings_import_desc_button": "导入",
   "settings_import_err": "请输入有效字符",
 

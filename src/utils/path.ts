@@ -1,9 +1,42 @@
 const pathTools = require('upath');
 import {  existsSync } from 'fs';
 import { FileSystemAdapter, Notice } from 'obsidian';
-import { Utils } from './utils';
+import { Utils, NodeJSPlatform } from './utils';
 import { promises as fs } from 'fs';
 import internal from 'stream';
+
+export function parseOSFromUA(userAgent: string): NodeJSPlatform | undefined {
+	const osRegex = /(Windows NT|Mac OS X|Linux|Android|iOS|CrOS)[/ ]([\d._]+)/;
+	const match = userAgent.match(osRegex);
+
+	if (match && match.length >= 3) {
+	  const osName = match[1].toLowerCase();
+	  switch (osName) {
+		case 'windows nt':
+		  return 'win32';
+		case 'mac os x':
+		  return 'darwin';
+		case 'linux':
+		  return 'linux';
+		case 'android':
+		  return 'linux';
+		case 'ios':
+		  return 'darwin';
+		case 'cros':
+		  return 'linux';
+		default:
+		  return undefined;
+	  }
+	}
+  
+	return undefined;
+}
+
+const isWindows: boolean = (typeof process.platform === 'string' ?
+	process.platform :
+	parseOSFromUA(navigator.userAgent)) === "win32";
+
+const PATH_SPLITER = isWindows ? '\\' : '/';
 
 export class Path
 {
@@ -30,8 +63,9 @@ export class Path
 	private _isFile: boolean = false;
 	private _exists: boolean | undefined = undefined;
 	private _workingDirectory: string;
+	private _spliter: string = PATH_SPLITER;
 
-	private _isWindows: boolean = process.platform === "win32";
+	private _isWindows: boolean = isWindows;
 
 	constructor(path: string, workingDirectory: string = Path.vaultPath.asString)
 	{
@@ -40,6 +74,12 @@ export class Path
 		this.reparse(path);
 
 		if (this.isAbsolute) this._workingDirectory = "";
+	}
+
+	// @params
+	// type - media | scripts | styles
+	static getAssetsPath(type: string) {
+		return new Path(['lib', type].join(PATH_SPLITER));
 	}
 
 	reparse(path: string): Path
@@ -189,6 +229,15 @@ export class Path
 		return new Path("/", "");
 	}
 	
+	getRootDirFromString() {
+		return new Path(this.asString.split(this._spliter)[0]);
+	}
+
+	isInsideDir(dirname: string) {
+		const withSpliter = dirname?.endsWith(this._spliter);
+		return this.asString.startsWith(dirname + (withSpliter ? '' : this._spliter));
+	}
+
 	static toWebStyle(path: string): string
 	{
 		return path.replaceAll(" ", "-").replaceAll(/-{2,}/g, "-").replace(".-", "-").toLowerCase();

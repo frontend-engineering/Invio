@@ -7,6 +7,7 @@
   "sometext": "Here are some texts.",
 
   "syncrun_alreadyrunning": "{{pluginName}} already running in stage {{syncStatus}}!",
+  "syncrun_no_watchdir_err": "Invio: Please choose a local folder to get started!",
   "syncrun_syncingribbon": "{{pluginName}}: syncing from {{triggerSource}}",
   "syncrun_syncingribbon_err": "{{pluginName}}: file syncing failed",
   "syncrun_step0": "0/{{maxSteps}} Invio running in dry mode, not actual file changes would happen.",
@@ -43,6 +44,12 @@
   "command_exportsyncplans_json": "export sync plans in json format",
   "command_exportsyncplans_table": "export sync plans in table format",
   "command_exportlogsindb": "export logs saved in db",
+
+  "menu_invio_action": "Invio Action",
+  "menu_set_folder": "Set as working folder",
+  "menu_sync_folder": "Folder Publish",
+  "menu_share_folder": "Share This Folder",
+  "menu_sync_file": "File Publish",
 
   "modal_password_title": "Hold on and PLEASE READ ON...",
   "modal_password_shortdesc": "If the field is not empty, files would be encrypted locally before being uploaded.\nIf the field is empty, then files would be uploaded without encryption.",
@@ -95,6 +102,11 @@
   "modal_sizesconflict_desc": "You've set skipping files larger than {{thresholdMB}} MB ({{thresholdBytes}} bytes).\nBut the following files have sizes larger than the threshold on one side, and sizes smaller than the threshold on the other side.\nTo avoid unexpected overwriting or deleting, the plugin stops, and you have to manually deal with at least one side of the files.",
   "modal_sizesconflict_copybutton": "Click to copy all the below sizes conflicts info",
   "modal_sizesconflict_copynotice": "All the sizes conflicts info have been copied to the clipboard!",
+
+
+  "modal_project_empty_err": "Slug or Name cannot be empty",
+  "modal_project_slug_err": "The slug can only contain letters and numbers, with a length of 6 to 12 characters.",
+  "modal_project_slug_case_err": "Invio project slug is case-insensitive, it can only contain lower case characters.",
 
   "settings_basic": "Basic Settings",
   "settings_domain": "Domain",
@@ -156,6 +168,22 @@
   "settings_s3_urlstyle_desc": "Whether to force path-style URLs for S3 objects (e.g., https://s3.amazonaws.com/*/ instead of https://*.s3.amazonaws.com/).",
   "settings_s3_connect_succ": "Great! The bucket can be accessed.",
   "settings_s3_connect_fail": "The S3 bucket cannot be reached.",
+
+  "settings_host": "Hosting Service Config",
+  "settings_host_switch_title": "Fast startup: use Invio Hosting Service Or Self Hosting",
+  "settings_host_switch_desc": "Invio Hosting Service allows you to quickly experience the Invio service without complex initial configurations.",
+  "settings_host_enable_error": "Invio Host Service is not reachable, please try again later",
+  "settings_host_auto_settings": "Auto Hosting Settings",
+  "settings_host_auto_name": "Auto Hosting",
+  "settings_host_auto_desc": "Skip S3 and domain config",
+  "settings_host_auto_account": "Admin Panel",
+  "settings_host_auto_auth": "Account Info",
+  "settings_host_auto_auth_desc": "Login and start for free",
+  "settings_host_auto_login": "Login",
+  "settings_host_auto_logout": "Logout",
+  "settings_host_dirname_case_conflict": "Invio detected a potential issue with folder name casing that may cause errors during syncing.",
+
+  "settings_host_self_settings": "Self Hosting Settings",
 
   "settings_dropbox": "Remote For Dropbox",
   "settings_dropbox_disclaimer1": "Disclaimer: This app is NOT an official Dropbox product.",
@@ -229,11 +257,11 @@
 
   "settings_importexport": "Import and Export Partial Settings",
   "settings_export": "Export",
-  "settings_export_desc": "Export configuration as an encrypted string, which includes all the configuration information. Please be cautious and keep it safe.",
+  "settings_export_desc": "Export your configuration as an encrypted string. This can be shared with teammates who will have the same access permissions to online files as your account. Please handle it securely.",
   "settings_export_desc_button": "Export",
   "settings_export_msg": "The config string is copied to the clipboard!",
   "settings_import": "Import",
-  "settings_import_desc": "Import local configuration with a single click using an encrypted key string.",
+  "settings_import_desc": "Import local configuration with a single click using an encrypted key string. Would auto sync files if folder config existed",
   "settings_import_desc_button": "Import",
   "settings_import_err": "Invalid Input",
 

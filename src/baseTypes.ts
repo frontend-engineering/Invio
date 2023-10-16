@@ -69,7 +69,30 @@ export interface OnedriveConfig {
   remoteBaseDir?: string;
 }
 
+export type THostPair = {
+  dir: string;
+  slug: string;
+  password?: string;
+}
+
+export type TS3Credential = {
+  accessKeyId: string;
+  secretAccessKey: string;
+  sessionToken: string;
+  expiration: Date;
+}
+export type THostConfig = {
+  token: string;
+  user?: any;
+  hostPair?: THostPair,
+  credential?: TS3Credential
+}
 export interface InvioPluginSettings {
+  useHost: boolean;
+  // token: string;
+  // user: any;
+  // hostPair?: THostPair;
+  hostConfig?: THostConfig;
   s3: S3Config;
   password: string;
   remoteDomain: string;
@@ -101,7 +124,7 @@ export interface RemoteItem {
 }
 
 export const COMMAND_URI = "invio";
-export const COMMAND_CALLBACK = "invio-cb";
+export const COMMAND_CALLBACK = "invio-auth-cb";
 export const COMMAND_CALLBACK_ONEDRIVE = "invio-cb-onedrive";
 export const COMMAND_CALLBACK_DROPBOX = "invio-cb-dropbox";
 

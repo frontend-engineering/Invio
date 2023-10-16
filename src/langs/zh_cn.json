@@ -7,6 +7,7 @@
   "sometext": "这里有一段文字。",
 
   "syncrun_alreadyrunning": "{{pluginName}} 正处于此阶段：{{syncStatus}}!",
+  "syncrun_no_watchdir_err": "Invio: 请先配置本地同步文件夹",
   "syncrun_syncingribbon": "{{pluginName}}：正在由 {{triggerSource}} 触发运行",
   "syncrun_syncingribbon_err": "{{pluginName}}: 文件同步失败",
   "syncrun_step0": "0/{{maxSteps}} Invio 在空跑（dry run）模式，不会发生实际的文件交换。",
@@ -43,6 +44,12 @@
   "command_exportsyncplans_json": "导出同步计划为 json 格式（export sync plans in json format）",
   "command_exportsyncplans_table": "导出同步计划为表格格式（export sync plans in table format）",
   "command_exportlogsindb": "从数据库导出终端日志（export logs saved in db）",
+
+  "menu_invio_action": "Invio 子菜单",
+  "menu_set_folder": "设置为工作目录",
+  "menu_sync_folder": "文件夹同步",
+  "menu_share_folder": "分享文件夹",
+  "menu_sync_file": "文件同步",
 
   "modal_password_title": "稍等一下，请阅读下文：",
   "modal_password_shortdesc": "如果密码不是空的，那么文件会在上传之前，在本地先用此密码加密。\n如果密码是空的，那么文件会被非加密地上传。",
@@ -95,6 +102,10 @@
   "modal_sizesconflict_desc": "您设置了跳过同步大于 {{thresholdMB}} MB（{{thresholdBytes}} bytes）的文件。\n但是以下文件的大小，在一端大于阈值，在另一端则小于阈值。\n为了避免意外的覆盖或删除，插件停止了运作，您需要手动处理至少一端的文件。",
   "modal_sizesconflict_copybutton": "点击以复制以下所有文件大小冲突信息",
   "modal_sizesconflict_copynotice": "所有的文件大小冲突信息，已被复制到剪贴板！",
+
+  "modal_project_empty_err": "Slug和Name不能为空",
+  "modal_project_slug_err": "slug只能包含字母和数字，长度6～12位",
+  "modal_project_slug_case_err": "Invio project slug 大小写不敏感，不允许包含大写字母",
 
   "settings_basic": "基本设置",
   "settings_domain": "域名",
@@ -155,6 +166,22 @@
   "settings_s3_urlstyle_desc": "是否对 S3 对象强制使用 path style URL（例如使用 https://s3.amazonaws.com/*/ 而不是 https://*.s3.amazonaws.com/）。",
   "settings_s3_connect_succ": "很好！可以访问到对应存储桶。",
   "settings_s3_connect_fail": "无法访问到对应存储桶。",
+
+  "settings_host": "托管服务配置",
+  "settings_host_switch_title": "是否使用Invio自动托管",
+  "settings_host_switch_desc": "为降低配置成本，Invio 提供免费托管服务，包括S3存储空间和免费子域名",
+  "settings_host_enable_error": "Invio 服务连接失败，请稍后重试",
+  "settings_host_auto_settings": "Invio 自动托管配置",
+  "settings_host_auto_name": "Invio 自动托管服务",
+  "settings_host_auto_desc": "无需配置，登录即可直接使用",
+  "settings_host_auto_account": "管理后台",
+  "settings_host_auto_auth": "账户信息",
+  "settings_host_auto_auth_desc": "登录后即可免费使用，无需手动配置",
+  "settings_host_auto_login": "登录",
+  "settings_host_auto_logout": "退出",
+  "settings_host_dirname_case_conflict": "Invio 默认大小写不敏感，请检查目录名字，否则会在项目同步时导致未知后果",
+
+  "settings_host_self_settings": "自托管配置",
 
   "settings_dropbox": "Dropbox 设置",
   "settings_dropbox_disclaimer1": "声明：此插件不是 Dropbox 官方产品。",
@@ -228,11 +255,11 @@
 
   "settings_importexport": "导入导出部分设置",
   "settings_export": "导出",
-  "settings_export_desc": "将本地配置信息导出为加密字符串，该密钥包含所有配置信息，请谨慎保存",
+  "settings_export_desc": "将本地配置信息导出为加密字符串，可分享给其他用户，对方即可获得等同于您的线上文件读写权限，请谨慎保存",
   "settings_export_desc_button": "导出",
   "settings_export_msg": "配置文件字符串已经复制到剪贴板!",
   "settings_import": "导入",
-  "settings_import_desc": "通过密钥字符一键导入本地配置",
+  "settings_import_desc": "通过密钥字符一键导入本地配置，如配置中包含文件夹，会自动同步文件到本地",
   "settings_import_desc_button": "导入",
   "settings_import_err": "请输入有效字符",
 
