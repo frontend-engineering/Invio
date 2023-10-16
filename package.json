@@ -1,6 +1,6 @@
 {
   "name": "obsidian-invio",
-  "version": "0.6.5",
+  "version": "0.7.0",
   "description": "Publish your obsidian docs online.",
   "scripts": {
     "dev": "node esbuild.config.mjs",
