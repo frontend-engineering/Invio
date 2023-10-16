@@ -110,7 +110,9 @@ export class HTMLGenerator {
 		// inject file tree
 		if (InvioSettingTab.settings.includeFileTree) {
 			let tree = GlobalDataGenerator.getFileTree();
-			const rootDir = new Path(file.exportPath.asString.split('/')[0])
+			const rootDir = file.exportPath.getRootDirFromString(); 
+			console.log('file.exportPath: ', file.exportPath, file.exportPath.asString, rootDir);
+
 			if (rootDir !== rootPath) {
 				const remoteRoot = rootPath.asString;
 				const prefix = remoteRoot.startsWith('/') ? '' : '/';
@@ -243,9 +245,9 @@ export class HTMLGenerator {
 		if (addSelfToDownloads) file.downloads.push(file.getSelfDownloadable());
 		file.downloads.push(...outlinedImages);
 
-		const downloadDir = new Path(file.exportPath.asString.split('/')[0]);
+		const downloadDir = file.exportPath.getRootDirFromString();
 		await AssetHandler.reparseAppStyles(downloadDir, rootPath.asString, remoteDomain);
-		log.info('assets download root path: ', rootPath, downloadDir)
+		log.info('assets download root path and dir: ', rootPath, downloadDir)
 		file.downloads.push(...await AssetHandler.getDownloads(downloadDir));
 
 		if (InvioSettingTab.settings.makeNamesWebStyle) {
@@ -881,7 +883,7 @@ export class HTMLGenerator {
 	}
 
 	private static generateRootDirNode(file: ExportFile, rootPath: string, usingDocument: Document) {
-		const rootDir = rootPath || file.exportPath.directory.asString?.split('/')[0];
+		const rootDir = rootPath || file.exportPath.directory.getRootDirFromString().asString;
 		const container = usingDocument.createElement('div');
 		container.id = 'invio-hidden-data-node'
 		container.style.display = 'none';

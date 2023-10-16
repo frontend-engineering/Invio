@@ -283,7 +283,8 @@ export default class InvioPlugin extends Plugin {
       // this.app.vault.getAllLoadedFiles
       // TODO: List only concerned files, only source of truth
       // *.conflict.md files is for data backup when conflicts happened
-      const local = this.app.vault.getMarkdownFiles().filter(file => file.path.startsWith(this.settings.localWatchDir) && !file.path.endsWith('.conflict.md'))
+      // const local = this.app.vault.getMarkdownFiles().filter(file => file.path.startsWith(this.settings.localWatchDir + '/') && !file.path.endsWith('.conflict.md'))
+      const local = this.app.vault.getMarkdownFiles().filter(file => new Path(file.path).isInsideDir(this.settings.localWatchDir) && !file.path.endsWith('.conflict.md'))
       log.info('local file path list: ', local);
       // const local = this.app.vault.getAllLoadedFiles();
       const localHistory = await loadFileHistoryTableByVault(
@@ -378,9 +379,8 @@ export default class InvioPlugin extends Plugin {
         //   })
         // );
         let allFiles = this.app.vault.getMarkdownFiles();
-        const basePath = new Path(this.settings.localWatchDir);
         // if we are at the root path export all files, otherwise only export files in the folder we are exporting
-        allFiles = allFiles.filter((file: TFile) => new Path(file.path).directory.asString.startsWith(basePath.asString) && (file.extension === "md") && (!file.name.endsWith('.conflict.md')));
+        allFiles = allFiles.filter((file: TFile) => new Path(file.path).isInsideDir(this.settings.localWatchDir) && (file.extension === "md") && (!file.name.endsWith('.conflict.md')));
         // Make functions of StatsView static
         view = await HTMLGenerator.beginBatch(this, allFiles);
         log.info('init stats view: ', view);

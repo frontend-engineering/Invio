@@ -30,10 +30,11 @@ export class AssetHandler
 	private static vaultPluginsPath: Path;
 	private static thisPluginPath: Path;
 
+	
 	// this path is used to generate the relative path to the images folder, likewise for the other paths
-	public static readonly mediaFolderName: Path = new Path("lib/media");
-	public static readonly jsFolderName: Path = new Path("lib/scripts");
-	public static readonly cssFolderName: Path = new Path("lib/styles");
+	public static readonly mediaFolderName: Path = Path.getAssetsPath('media');
+	public static readonly jsFolderName: Path = Path.getAssetsPath('scripts');
+	public static readonly cssFolderName: Path = Path.getAssetsPath('styles');
 
 	public static appStyles: string = "";
 	public static mathStyles: string = "";

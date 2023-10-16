@@ -420,7 +420,7 @@ export const listFromRemote = async (
     Bucket: s3Config.s3BucketName,
   } as ListObjectsV2CommandInput;
   if (prefix !== undefined) {
-    confCmd.Prefix = prefix;
+    confCmd.Prefix = prefix + (prefix.endsWith('/') ? '' : '/');
   }
 
   const contents = [] as _Object[];
