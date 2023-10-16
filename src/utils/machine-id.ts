@@ -90,6 +90,11 @@ export function machineIdSync(original: boolean): string {
     if (!platform) {
         return 'fakeid' + nanoid();
     }
-    let id: string = expose(execSync(guid[platform]).toString());
-    return original ? id : hash(id);
+    try {
+      let id: string = expose(execSync(guid[platform]).toString());
+      return original ? id : hash(id);
+    } catch (error) {
+      console.error('get machine id failed: ', error);
+      return 'fakeid' + nanoid();
+    }
 }
