@@ -7,6 +7,7 @@
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
     "assets-bundle": "node esbuild.assets.config.mjs",
     "format": "npx prettier --write .",
+    "release-patch": "pnpm version patch --tag-version-prefix ''",
     "version": "node bump.mjs",
     "clean": "npx rimraf main.js",
     "test": "cross-env TS_NODE_COMPILER_OPTIONS={\\\"module\\\":\\\"commonjs\\\"} mocha -r ts-node/register 'tests/**/*.ts'"
