@@ -8,7 +8,7 @@
     "assets-bundle": "node esbuild.assets.config.mjs",
     "format": "npx prettier --write .",
     "release-patch": "pnpm version patch --tag-version-prefix ''",
-    "version": "node bump.mjs",
+    "version": "node bump.mjs && git add manifest.json versions.json && git commit -m 'Version update'",
     "clean": "npx rimraf main.js",
     "test": "cross-env TS_NODE_COMPILER_OPTIONS={\\\"module\\\":\\\"commonjs\\\"} mocha -r ts-node/register 'tests/**/*.ts'"
   },
