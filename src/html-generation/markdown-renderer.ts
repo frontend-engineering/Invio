@@ -33,7 +33,7 @@ export namespace MarkdownRenderer
 			// RenderLog.warning("Cannot render file: ", message);
 			view?.warn(`Cannot render file: ${message}`);
 			view?.update(file.markdownFile.path, { syncStatus: 'fail' })
-			return generateFailDocument();
+			return generateFailDocument(`Render Failed: ${message}`);
 		}
 
 		if (cancelled) throw new Error("Markdown rendering cancelled");
@@ -44,7 +44,7 @@ export namespace MarkdownRenderer
 			// RenderLog.warning("Cannot render file: ", message);
 			view?.warn(`Cannot render file: ${message}`);
 			view?.update(file.markdownFile.path, { syncStatus: 'fail' })
-			return generateFailDocument();
+			return generateFailDocument(`Render Failed: ${message}`);
 		}
 
 		// @ts-ignore
@@ -58,7 +58,7 @@ export namespace MarkdownRenderer
 			// RenderLog.warning("Cannot render file: ", message);
 			view?.warn(`Cannot render file: ${message}`);
 			view?.update(file.markdownFile.path, { syncStatus: 'fail' })
-			return generateFailDocument();
+			return generateFailDocument(`Render Failed: ${message}`);
 		}
 
 		const preview = renderLeaf.view.previewMode;
@@ -91,11 +91,10 @@ export namespace MarkdownRenderer
 
 		if (!renderfinished)
 		{
-			const message = "Failed to render file within 30 seconds! File: " + file.markdownFile.path;
-			// RenderLog.warning("Cannot render file: ", message);
-			view?.warn(`Cannot render file: ${message}`);
+			const message = "Network Error: Failed to render file within 30 seconds! File " + file.markdownFile.path;
+			view?.warn(message);
 			view?.update(file.markdownFile.path, { syncStatus: 'fail' })
-			return generateFailDocument();
+			return generateFailDocument(message);
 		}
 	
 		// wait for dataview blocks to render
@@ -124,7 +123,7 @@ export namespace MarkdownRenderer
 		const message = "Could not find container with rendered content! File: " + file.markdownFile.path;
 		// RenderLog.warning("Cannot render file: ", message);
 		view?.warn(`Cannot render file: ${message}`);
-		return generateFailDocument();
+		return generateFailDocument(message);
 	}
 
 	function postProcessHTML(file: ExportFile, html: HTMLElement)
