@@ -48,9 +48,10 @@ import {
   restoreLogWritterInplace,
 } from "./moreOnLog";
 import { DEFAULT_S3_CONFIG } from "./remoteForS3";
+import { ProjectImportModal } from './components/ProjectImportModal';
 
-const settingsPrefix = `Invio-Settings>`;
-const settingsSuffix = `<&`
+export const settingsPrefix = `Invio-Settings>`;
+export const settingsSuffix = `<&`
 
 export const DEFAULT_SETTINGS: InvioPluginSettings = {
   s3: DEFAULT_S3_CONFIG,
@@ -452,7 +453,15 @@ export class InvioSettingTab extends PluginSettingTab {
           .onChange(async (value: string) => {
             await this.plugin.switchWorkingDir(value);
           })
-      });
+      })
+      .addButton(async (button) => {
+        button.setButtonText('Import');
+        button.onClick(async () => {
+          log.info('importing...');
+          const modal = new ProjectImportModal(this.app, this.plugin);
+          modal.open();
+        });
+      })
 
     // =============== Hosting Settings ======================
 
@@ -997,7 +1006,7 @@ export class InvioSettingTab extends PluginSettingTab {
             InvioSettingTab.exportSettings(this.plugin);
           });
         });
-  
+
       let restoredStr = '';
       new Setting(importExportDiv)
         .setName(t("settings_import"))
