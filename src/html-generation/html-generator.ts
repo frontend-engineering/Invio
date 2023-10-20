@@ -627,7 +627,7 @@ export class HTMLGenerator {
 	}
 
 	private static async inlineMedia(file: ExportFile) {
-		let elements = Array.from(file.document.querySelectorAll("img, audio, video"))
+		let elements = Array.from(file.document.querySelectorAll("img, audio, video, div.internal-embed"))
 		for (let mediaEl of elements) {
 			let rawSrc = mediaEl.getAttribute("src") ?? "";
 			if (!rawSrc.startsWith("app:")) continue;
