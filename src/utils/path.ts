@@ -36,7 +36,8 @@ const isWindows: boolean = (typeof process.platform === 'string' ?
 	process.platform :
 	parseOSFromUA(navigator.userAgent)) === "win32";
 
-const PATH_SPLITER = isWindows ? '\\' : '/';
+export const PATH_SPLITER = isWindows ? '\\' : '/';
+export const WEB_PATH_SPLITER = '/';
 
 export class Path
 {
@@ -241,6 +242,27 @@ export class Path
 	static toWebStyle(path: string): string
 	{
 		return path.replaceAll(" ", "-").replaceAll(/-{2,}/g, "-").replace(".-", "-").toLowerCase();
+	}
+
+	static localToWebPath(path: string): string {
+		return path.replaceAll(PATH_SPLITER, '/')
+	}
+
+	static webToLocalPath(path: string): string {
+		if (isWindows) {
+			return path.replaceAll('/', PATH_SPLITER);
+		}
+		return path;
+	}
+	static splitString(path: string): string[] {
+		if (!path) return [];
+		return path.split(PATH_SPLITER);
+	}
+	static joinString(paths: string[]): string {
+		return paths.join(PATH_SPLITER);
+	}
+	static isFolderOrDir(path: string): boolean {
+		return path.endsWith(PATH_SPLITER) || path.endsWith(WEB_PATH_SPLITER);
 	}
 
 	joinString(...paths: string[]): Path

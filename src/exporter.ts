@@ -118,7 +118,7 @@ export const publishFiles = async (
         if (exportedFile) {
             externalFiles.push(...exportedFile.downloads.map((d: Downloadable) => {
                 const afterPath = exportedFile.exportToFolder.join(d.relativeDownloadPath);
-                const fileKey = (d.relativeDownloadPath.asString + '/' + d.filename).replace(/^\.\//, '');
+                const fileKey = Path.localToWebPath((d.relativeDownloadPath.asString + '/' + d.filename).replace(/^\.\//, ''));
     
                 const mdName = (file.path.endsWith('.md') && (fileKey?.replace(/\.html$/ig, '') === file.path.replace(/\.md$/igm, ''))) ? file.path : undefined
                 Object.assign(d, {

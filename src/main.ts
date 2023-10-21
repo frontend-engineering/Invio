@@ -525,13 +525,16 @@ export default class InvioPlugin extends Plugin {
         // Force Mode - Publish all docs
         if (triggerSource === 'force') {
           pubPathList.push(...allFiles.map(file => file.path));
-          pubPathList = pubPathList.filter((p, idx) => pubPathList.indexOf(p) === idx);
+          pubPathList = pubPathList
+            .filter((p, idx) => pubPathList.indexOf(p) === idx)
         }
         if (pubPathList?.length === 0) {
           if (unPubList?.length > 0) {
             // Need to update left tree links for unpublish means link deduction
-            const indexFile = allFiles.find(file => file.name === 'index.md') || allFiles[0];
-            pubPathList.push(indexFile.path);
+            const indexFile = allFiles.find(file => file.name === 'index.md') || allFiles.filter(file => !file.name.endsWith('.conflict.md'))[0];
+            if (indexFile) {
+              pubPathList.push(indexFile.path);
+            }
           }
         }
         await publishFiles(client, this.app, pubPathList, allFiles, '', this.settings, triggerSource, view, (pathName: string, status: string, meta?: any) => {
