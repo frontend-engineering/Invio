@@ -476,7 +476,9 @@ export default class InvioPlugin extends Plugin {
                 if (meta?.embeds) {
                   // @ts-ignore
                   const attachmentFolderPath = app.vault.getConfig('attachmentFolderPath');
-                  const attachmentList = await this.app.vault.adapter.list(attachmentFolderPath);
+                  const attachmentFolderPrefix = attachmentFolderPath?.replace(/\/$/, '');
+                  const attachmentList = await this.app.vault.adapter.list(attachmentFolderPrefix + '/');
+
                   const localAttachmentFiles: string[] = attachmentList.files;
                   log.info('local dir list: ', localAttachmentFiles);
 
@@ -487,16 +489,19 @@ export default class InvioPlugin extends Plugin {
 
                   log.info('embed list: ', embedImages);
 
+                  const getLinkWithPrefix = (link: string) => `${attachmentFolderPrefix}/${link}`.replace(/^\//, '')
                   // TODO: Remove deleted attachment files
                   if (decision === 'uploadLocalToRemote') {
                     const diff = embedImages.filter(link => {
-                      const exist = localAttachmentFiles.find(f => f === `${attachmentFolderPath}/${link}`);
+                      const exist = localAttachmentFiles.find(f => f === getLinkWithPrefix(link));
                       return exist;
                     })
-                    await Promise.all(diff.map(link => {
+                    await Promise.all(diff.map(async link => {
                       log.info('uploading attachment: ', link);
+                      view?.info(`uploading attachment: ${link}`);
+
                       return client.uploadToRemote(
-                        `${attachmentFolderPath}/${link}`,
+                        getLinkWithPrefix(link),
                         RemoteAttPrefix,
                         this.app.vault,
                         false,
@@ -510,11 +515,12 @@ export default class InvioPlugin extends Plugin {
                     }))
                   } else {
                     const diff: string[] = embedImages.map(link => {
-                      const exist = localAttachmentFiles.find(f => f === `${attachmentFolderPath}/${link}`);
+                      const exist = localAttachmentFiles.find(f => f === getLinkWithPrefix(link));
                       return exist ? null : link;
                     })
                     .filter(l => !!l);
-                    await Promise.all(diff.map(link => {
+                    await Promise.all(diff.map(async link => {
+                      view?.info(`downloading attachment: ${link}`);
                       log.info('downloading attachment: ', link);
                       return client.downloadFromRemote(
                         link,
@@ -524,7 +530,7 @@ export default class InvioPlugin extends Plugin {
                         '',
                         '',
                         false,
-                        `${attachmentFolderPath}/${link}`
+                        getLinkWithPrefix(link)
                       )
                       .catch(err => {
                         log.error('sync attachment failed: ', err);
