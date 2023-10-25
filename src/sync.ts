@@ -57,6 +57,7 @@ import { Utils } from './utils/utils';
 import { log } from "./moreOnLog";
 
 export const RemoteSrcPrefix = 'op-remote-source-raw/'
+export const RemoteAttPrefix = 'op-remote-attach-p/'
 // 影响到pub产物变动的decision
 const RemoteFileTouchedDecisions = ['uploadLocalDelHistToRemote', 'uploadLocalToRemote'];
 const LocalFileTouchedDecisions = ['downloadRemoteToLocal', 'keepRemoteDelHist'];

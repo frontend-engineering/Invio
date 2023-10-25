@@ -36,7 +36,7 @@ import {
 } from "./localdb";
 import { RemoteClient, ServerDomain } from "./remote";
 import { InvioSettingTab, DEFAULT_SETTINGS } from "./settings";
-import { fetchMetadataFile, parseRemoteItems, SyncStatusType, RemoteSrcPrefix } from "./sync";
+import { fetchMetadataFile, parseRemoteItems, SyncStatusType, RemoteSrcPrefix, RemoteAttPrefix } from "./sync";
 import { doActualSync, getSyncPlan, isPasswordOk } from "./sync";
 import { messyConfigToNormal, normalConfigToMessy } from "./configPersist";
 import { ObsConfigDirFileType, listFilesInObsFolder } from "./obsFolderLister";
@@ -123,6 +123,7 @@ export default class InvioPlugin extends Plugin {
       contents,
       ...file.stat
     }
+    // TODO: Set max memory limit
     log.info('file snapshot: ', this.recentSyncedFiles);
   }
 
@@ -264,14 +265,12 @@ export default class InvioPlugin extends Plugin {
         client.serviceType,
         this.settings.password
       );
-      console.log('parseRemoteItems result: ', remoteStates, metadataFile);
       const origMetadataOnRemote = await fetchMetadataFile(
         metadataFile,
         client,
         this.app.vault,
         this.settings.password
       );
-      console.log('fetchMetadataFile result: ', origMetadataOnRemote);
 
       getNotice(
         loadingModal,
@@ -473,6 +472,66 @@ export default class InvioPlugin extends Plugin {
               const syncedFile = this.app.vault.getAbstractFileByPath(pathName);
               if (syncedFile instanceof TFile) {
                 this.addRecentSyncedFile(syncedFile);
+                const meta = this.app.metadataCache.getFileCache(syncedFile);
+                if (meta?.embeds) {
+                  // @ts-ignore
+                  const attachmentFolderPath = app.vault.getConfig('attachmentFolderPath');
+                  const attachmentList = await this.app.vault.adapter.list(attachmentFolderPath);
+                  const localAttachmentFiles: string[] = attachmentList.files;
+                  log.info('local dir list: ', localAttachmentFiles);
+
+                  // TODO: For all embeding formats.
+                  const embedImages = meta.embeds
+                    .filter((em: any) => em.link?.startsWith('Pasted image '))
+                    .map(em => em.link);
+
+                  log.info('embed list: ', embedImages);
+
+                  // TODO: Remove deleted attachment files
+                  if (decision === 'uploadLocalToRemote') {
+                    const diff = embedImages.filter(link => {
+                      const exist = localAttachmentFiles.find(f => f === `${attachmentFolderPath}/${link}`);
+                      return exist;
+                    })
+                    await Promise.all(diff.map(link => {
+                      log.info('uploading attachment: ', link);
+                      return client.uploadToRemote(
+                        `${attachmentFolderPath}/${link}`,
+                        RemoteAttPrefix,
+                        this.app.vault,
+                        false,
+                        '',
+                        '',
+                        null,
+                        false,
+                        null,
+                        `${RemoteAttPrefix}/${link}`
+                      )
+                    }))
+                  } else {
+                    const diff: string[] = embedImages.map(link => {
+                      const exist = localAttachmentFiles.find(f => f === `${attachmentFolderPath}/${link}`);
+                      return exist ? null : link;
+                    })
+                    .filter(l => !!l);
+                    await Promise.all(diff.map(link => {
+                      log.info('downloading attachment: ', link);
+                      return client.downloadFromRemote(
+                        link,
+                        RemoteAttPrefix,
+                        this.app.vault,
+                        0,
+                        '',
+                        '',
+                        false,
+                        `${attachmentFolderPath}/${link}`
+                      )
+                      .catch(err => {
+                        log.error('sync attachment failed: ', err);
+                      })
+                    }))
+                  }
+                }
               }
             }
             // TODO: Get remote link, but need remote domain first
