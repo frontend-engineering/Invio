@@ -5,7 +5,7 @@ import type {
   THostConfig,
 } from "./baseTypes";
 import * as s3 from "./remoteForS3";
-
+import { Path, WEB_PATH_SPLITER } from './utils/path';
 import { log } from "./moreOnLog";
 import { RemoteSrcPrefix } from "./sync";
 
@@ -74,57 +74,63 @@ export class RemoteClient {
   }
 
   getUseHostSlugPath(key: string) {
+    let localPath = ''
     if (!this.useHost) {
-      return key;
-    }
-    const hasPrefix = key?.startsWith(RemoteSrcPrefix);
-    const paths = key?.split('/');
-    if (paths?.length > 0) {
-      let dir = hasPrefix ? paths[1] : paths[0];
-      if (dir === 'p') {
-        paths.splice(0, 1);
-        dir = hasPrefix ? paths[1] : paths[0];
+      localPath = key;
+    } else {
+      const hasPrefix = key?.startsWith(RemoteSrcPrefix);
+      const paths = Path.splitString(key);
+      if (paths?.length > 0) {
+        let dir = hasPrefix ? paths[1] : paths[0];
+        if (dir === 'p') {
+          paths.splice(0, 1);
+          dir = hasPrefix ? paths[1] : paths[0];
+        }
+  
+        if (dir !== this.localWatchDir) {
+          throw new Error('NeedSwitchProject');
+        }
+        if (hasPrefix) {
+          paths[1] = this.getUseHostSlug();
+        } else {
+          paths[0] = this.getUseHostSlug();
+        }
+        localPath = Path.joinString(paths);
       }
+    }
 
-      if (dir !== this.localWatchDir) {
-        throw new Error('NeedSwitchProject');
-      }
-      if (hasPrefix) {
-        paths[1] = this.getUseHostSlug();
-      } else {
-        paths[0] = this.getUseHostSlug();
-      }
-      return paths.join('/');
-    }
-    return '';
+    return Path.localToWebPath(localPath);
   }
 
   getUseHostLocalPath(slug: string) {
+    let webPath = ''
     if (!this.useHost) {
-      return slug;
+      webPath = slug
+    } else {
+      const hasPrefix = slug?.startsWith(RemoteSrcPrefix);
+      const paths = slug?.split(WEB_PATH_SPLITER);
+      let encrypted = false;
+      if (paths?.length > 0) {
+        let dir = hasPrefix ? paths[1] : paths[0];
+        if (dir === 'p') {
+          encrypted = true;
+          dir = hasPrefix ? paths[2] : paths[1];
+        }
+        const getSlug = this.getUseHostSlug();
+        if (dir !== getSlug?.replace(/^p\//, '')) {
+          throw new Error('NeedSwitchProject');
+        }
+        if (hasPrefix) {
+          paths[encrypted ? 2 : 1] = this.getUseHostDirname();
+        } else {
+          paths[encrypted ? 1 : 0] = this.getUseHostDirname();
+        }
+        webPath = Path.joinString(paths);
+        log.info('get local path: ', webPath)
+      }
     }
-    const hasPrefix = slug?.startsWith(RemoteSrcPrefix);
-    const paths = slug?.split('/');
-    let encrypted = false;
-    if (paths?.length > 0) {
-      let dir = hasPrefix ? paths[1] : paths[0];
-      if (dir === 'p') {
-        encrypted = true;
-        dir = hasPrefix ? paths[2] : paths[1];
-      }
-      const getSlug = this.getUseHostSlug();
-      if (dir !== getSlug?.replace(/^p\//, '')) {
-        throw new Error('NeedSwitchProject');
-      }
-      if (hasPrefix) {
-        paths[encrypted ? 2 : 1] = this.getUseHostDirname();
-      } else {
-        paths[encrypted ? 1 : 0] = this.getUseHostDirname();
-      }
-      log.info('get local path: ', paths.join('/'));
-      return paths.join('/');
-    }
-    return ''; 
+
+    return Path.webToLocalPath(webPath)
   }
 
   uploadToRemote = async (

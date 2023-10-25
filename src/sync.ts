@@ -57,6 +57,7 @@ import { Utils } from './utils/utils';
 import { log } from "./moreOnLog";
 
 export const RemoteSrcPrefix = 'op-remote-source-raw/'
+export const RemoteAttPrefix = 'op-remote-attach-p/'
 // 影响到pub产物变动的decision
 const RemoteFileTouchedDecisions = ['uploadLocalDelHistToRemote', 'uploadLocalToRemote'];
 const LocalFileTouchedDecisions = ['downloadRemoteToLocal', 'keepRemoteDelHist'];
@@ -1292,10 +1293,13 @@ const dispatchOperationToActual = async (
     if (r.remoteUnsync && r.existLocal) {
       // TODO: Add a hook to alert users the risk of data lost on the local
       log.info('rename last changed version from local for backup: ', r.key)
-      const renamed = r.key.replace(/\.md$/ig, '.conflict.md');
+      const conflictKey = () => '.' + Math.random().toFixed(4).slice(2) + '.conflict.md'
+      let renamed = r.key.replace(/\.md$/ig, conflictKey());
 
+      if (vault.adapter.exists(renamed)) {
+        renamed = renamed.replace('.conflict.md', conflictKey())
+      }
       await vault.adapter.rename(r.key, renamed);
-
       await Utils.appendFile(vault, renamed, ConflictDescriptionTxt);
     }
 

@@ -40,6 +40,7 @@ import {
   mkdirpInVault,
 } from "./misc";
 import Utils from './utils';
+import { Path } from './utils/path';
 export { S3Client } from "@aws-sdk/client-s3";
 
 import { log } from "./moreOnLog";
@@ -339,11 +340,11 @@ export const uploadToRemote = async (
   rawContent: string | ArrayBuffer = "",
   remoteKey?: string
 ) => {
-  let uploadFile = prefix + fileOrFolderPath;
+  let uploadFileKey = Path.localToWebPath(prefix + fileOrFolderPath);
   if (password !== "") {
-    uploadFile = prefix + remoteEncryptedKey;
+    uploadFileKey = Path.localToWebPath(prefix + remoteEncryptedKey);
   }
-  const isFolder = fileOrFolderPath.endsWith("/");
+  const isFolder = Path.isFolderOrDir(fileOrFolderPath);
 
   if (isFolder && isRecursively) {
     throw Error("upload function doesn't implement recursive function yet!");
@@ -356,12 +357,12 @@ export const uploadToRemote = async (
     await s3Client.send(
       new PutObjectCommand({
         Bucket: s3Config.s3BucketName,
-        Key: uploadFile,
+        Key: uploadFileKey,
         Body: "",
         ContentType: contentType,
       })
     );
-    return await getRemoteMeta(s3Client, s3Config, uploadFile);
+    return await getRemoteMeta(s3Client, s3Config, uploadFileKey);
   } else {
     // file
     // we ignore isRecursively parameter here
@@ -397,7 +398,7 @@ export const uploadToRemote = async (
       leavePartsOnError: false,
       params: {
         Bucket: s3Config.s3BucketName,
-        Key: remoteKey || uploadFile,
+        Key: remoteKey || uploadFileKey,
         Body: body,
         ContentType: contentType,
       },
@@ -407,7 +408,7 @@ export const uploadToRemote = async (
     });
     await upload.done();
 
-    return await getRemoteMeta(s3Client, s3Config, remoteKey || uploadFile);
+    return await getRemoteMeta(s3Client, s3Config, remoteKey || uploadFileKey);
   }
 };
 
@@ -508,7 +509,7 @@ export const downloadFromRemote = async (
   skipSaving: boolean = false,
   renamedTo?: string
 ) => {
-  const isFolder = fileOrFolderPath.endsWith("/");
+  const isFolder = Path.isFolderOrDir(fileOrFolderPath);
 
   if (!skipSaving) {
     await mkdirpInVault(fileOrFolderPath, vault);
@@ -536,7 +537,7 @@ export const downloadFromRemote = async (
       localContent = await decryptArrayBuffer(remoteContent, password);
     }
     if (!skipSaving) {
-      await vault.adapter.writeBinary(renamedTo || fileOrFolderPath, localContent, {
+      await vault.adapter.writeBinary(Path.webToLocalPath(renamedTo || fileOrFolderPath), localContent, {
         mtime: mtime,
       });
     }
