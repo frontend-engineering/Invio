@@ -1653,3 +1653,85 @@ export const doActualSync = async (
     }
   }
 };
+
+export const syncAttachment = async (vault: Vault, client: RemoteClient, embeds: any[], decision: string, cb: (type: string, link: string, result: any, err?: any) => void) => {
+  // @ts-ignore
+  const attachmentFolderPath = vault.getConfig('attachmentFolderPath');
+  const attachmentFolderPrefix = attachmentFolderPath?.replace(/\/$/, '');
+  const attachmentList = await vault.adapter.list(attachmentFolderPrefix + '/'); 
+  
+  const localAttachmentFiles: string[] = attachmentList.files;
+  log.info('local dir list: ', localAttachmentFiles);
+
+  // TODO: For all embeding formats.
+  const embedImages = embeds
+    .filter((em: any) => em.link?.startsWith('Pasted image '))
+    .map(em => em.link);
+
+  log.info('embed list: ', embedImages);
+
+  const getLinkWithPrefix = (link: string) => `${attachmentFolderPrefix}/${link}`.replace(/^\//, '');
+  // TODO: Remove deleted attachment files
+  if (decision === 'uploadLocalToRemote') {
+    const diff = embedImages.filter(link => {
+      const exist = localAttachmentFiles.find(f => f === getLinkWithPrefix(link));
+      return exist;
+    })
+    await Promise.all(diff.map(async link => {
+      log.info('uploading attachment: ', link);
+      return client.uploadToRemote(
+        getLinkWithPrefix(link),
+        RemoteAttPrefix,
+        vault,
+        false,
+        '',
+        '',
+        null,
+        false,
+        null,
+        `${RemoteAttPrefix}/${link}`
+      )
+      .then(resp => {
+        cb && cb('upload', link, resp);
+      })
+      .catch(err => {
+        log.error(`upload ${link} failed: ${err}`);
+        cb && cb('upload', link, null, err);
+        return;
+      })
+    }))
+    .catch(err => {
+      log.error('unexpected err: ', err);
+    })
+  } else {
+    const diff: string[] = embedImages.map(link => {
+      const exist = localAttachmentFiles.find(f => f === getLinkWithPrefix(link));
+      return exist ? null : link;
+    })
+    .filter(l => !!l);
+
+    await Promise.all(diff.map(async link => {
+      log.info('downloading attachment: ', link);
+      return client.downloadFromRemote(
+        link,
+        RemoteAttPrefix,
+        vault,
+        0,
+        '',
+        '',
+        false,
+        getLinkWithPrefix(link)
+      )
+      .then(resp => {
+        cb && cb('download', link, resp);
+      })
+      .catch(err => {
+        log.error(`download ${link} failed: ${err}`);
+        cb && cb('download', link, null, err);
+      })
+    }))
+    .catch(err => {
+      log.error('unexpected err: ', err);
+    })
+  } 
+}

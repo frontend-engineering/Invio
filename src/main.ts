@@ -36,7 +36,7 @@ import {
 } from "./localdb";
 import { RemoteClient, ServerDomain } from "./remote";
 import { InvioSettingTab, DEFAULT_SETTINGS } from "./settings";
-import { fetchMetadataFile, parseRemoteItems, SyncStatusType, RemoteSrcPrefix, RemoteAttPrefix } from "./sync";
+import { fetchMetadataFile, parseRemoteItems, SyncStatusType, RemoteSrcPrefix, syncAttachment } from "./sync";
 import { doActualSync, getSyncPlan, isPasswordOk } from "./sync";
 import { messyConfigToNormal, normalConfigToMessy } from "./configPersist";
 import { ObsConfigDirFileType, listFilesInObsFolder } from "./obsFolderLister";
@@ -474,69 +474,19 @@ export default class InvioPlugin extends Plugin {
                 this.addRecentSyncedFile(syncedFile);
                 const meta = this.app.metadataCache.getFileCache(syncedFile);
                 if (meta?.embeds) {
-                  // @ts-ignore
-                  const attachmentFolderPath = app.vault.getConfig('attachmentFolderPath');
-                  const attachmentFolderPrefix = attachmentFolderPath?.replace(/\/$/, '');
-                  const attachmentList = await this.app.vault.adapter.list(attachmentFolderPrefix + '/');
-
-                  const localAttachmentFiles: string[] = attachmentList.files;
-                  log.info('local dir list: ', localAttachmentFiles);
-
-                  // TODO: For all embeding formats.
-                  const embedImages = meta.embeds
-                    .filter((em: any) => em.link?.startsWith('Pasted image '))
-                    .map(em => em.link);
-
-                  log.info('embed list: ', embedImages);
-
-                  const getLinkWithPrefix = (link: string) => `${attachmentFolderPrefix}/${link}`.replace(/^\//, '')
-                  // TODO: Remove deleted attachment files
-                  if (decision === 'uploadLocalToRemote') {
-                    const diff = embedImages.filter(link => {
-                      const exist = localAttachmentFiles.find(f => f === getLinkWithPrefix(link));
-                      return exist;
-                    })
-                    await Promise.all(diff.map(async link => {
-                      log.info('uploading attachment: ', link);
-                      view?.info(`uploading attachment: ${link}`);
-
-                      return client.uploadToRemote(
-                        getLinkWithPrefix(link),
-                        RemoteAttPrefix,
-                        this.app.vault,
-                        false,
-                        '',
-                        '',
-                        null,
-                        false,
-                        null,
-                        `${RemoteAttPrefix}/${link}`
-                      )
-                    }))
-                  } else {
-                    const diff: string[] = embedImages.map(link => {
-                      const exist = localAttachmentFiles.find(f => f === getLinkWithPrefix(link));
-                      return exist ? null : link;
-                    })
-                    .filter(l => !!l);
-                    await Promise.all(diff.map(async link => {
-                      view?.info(`downloading attachment: ${link}`);
-                      log.info('downloading attachment: ', link);
-                      return client.downloadFromRemote(
-                        link,
-                        RemoteAttPrefix,
-                        this.app.vault,
-                        0,
-                        '',
-                        '',
-                        false,
-                        getLinkWithPrefix(link)
-                      )
-                      .catch(err => {
-                        log.error('sync attachment failed: ', err);
-                      })
-                    }))
-                  }
+                  await syncAttachment(
+                    this.app.vault,
+                    client,
+                    meta?.embeds,
+                    decision,
+                    (type: string, link: string, result: any, err?: any) => {
+                      if (err) {
+                        view?.info(`Attachment(${link}) ${type} failed`)
+                      } else {
+                        view?.info(`Attachment(${link}) ${type} success`)
+                      }
+                    }
+                  )
                 }
               }
             }
