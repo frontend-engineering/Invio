@@ -6,7 +6,8 @@
   "submit": "提交",
   "sometext": "這裡有一段文字。",
 
-  "diff_view_title": "文件修改记录",
+  "diff_view_local_title": "本地文件修改记录",
+  "diff_view_remote_title": "线上文件修改记录",
   "diff_reset_btn": "丢弃本地所有更改",
   "view_change_btn": "diff样式",
   "diff_edit_list": "本地编辑历史",

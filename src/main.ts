@@ -65,7 +65,7 @@ import { StatsView, VIEW_TYPE_STATS, LogType } from "./statsView";
 import { syncWithRemoteProject, switchProject } from './hosting';
 import Utils from './utils';
 import { Analytics4, loadGA } from './ga';
-import { openDiffModal } from './diff/index';
+import { TDiffType, openDiffModal } from './diff/index';
 
 const { iconNameSyncWait, iconNameSyncPending, iconNameSyncRunning, iconNameLogs, iconNameSyncLogo } = UsingIconNames;
 const Menu_Tab = `    `;
@@ -105,7 +105,7 @@ export default class InvioPlugin extends Plugin {
     return false;
   }
 
-  async viewFileDiff(filePath: string) {
+  async viewFileDiff(filePath: string, diffType: TDiffType) {
     const file = this.app.vault.getAbstractFileByPath(filePath)
     if (!(file instanceof TFile)) {
       new Notice('Not valid file');
@@ -131,7 +131,7 @@ export default class InvioPlugin extends Plugin {
         data: remoteMD,
         ts: 0,
         path: filePath
-      }, (file: TFile) => {
+      }, diffType, (file: TFile) => {
         if (file) {
           log.info('diff file changed: ', file)
           resolve(file)
@@ -409,9 +409,9 @@ export default class InvioPlugin extends Plugin {
               resolve('skip');
               return;
             }
-            const touchedPlanModel = new TouchedPlanModel(this.app, this, touchedFileMap, (key: string) => {
-              log.info('view file diff: ', key);
-              this.viewFileDiff(key)
+            const touchedPlanModel = new TouchedPlanModel(this.app, this, touchedFileMap, (key: string, diffType: TDiffType) => {
+              log.info('view file diff: ', key, diffType);
+              this.viewFileDiff(key, diffType)
                 .then(file => {
                   log.info('diff file changed - ', file);
                   if (file) {

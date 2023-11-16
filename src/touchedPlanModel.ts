@@ -10,9 +10,9 @@ export class TouchedPlanModel extends Modal {
   agree: boolean;
   readonly plugin: InvioPlugin;
   files: Record<string, FileOrFolderMixedState>;
-  viewDetailFn: (path: string) => void;
+  viewDetailFn: (path: string, decision: string) => void;
   hook: (agree: boolean) => void;
-  constructor(app: App, plugin: InvioPlugin, fileMap: Record<string, FileOrFolderMixedState>, viewDetailFn: (path: string) => void, cb: (agree: boolean) => void) {
+  constructor(app: App, plugin: InvioPlugin, fileMap: Record<string, FileOrFolderMixedState>, viewDetailFn: (path: string, decision: string) => void, cb: (agree: boolean) => void) {
     super(app);
     this.plugin = plugin;
     this.agree = false;
@@ -96,15 +96,17 @@ export class TouchedPlanModel extends Modal {
           cls: 'file-item-action-name'
         });
 
-        li.addEventListener('click', (e) => {
+
+        const checkIcon = createElement(Eye);
+        checkIcon.addClass('file-item-action-prefix', 'clickable-btn');
+        li.appendChild(checkIcon);
+
+        checkIcon.addEventListener('click', (e) => {
           e.preventDefault();
           console.log('list clicked', val.key)
-          this.viewDetailFn(val.key);
-        })
 
-        const fileIcon = createElement(Eye);
-        fileIcon.addClass('file-item-action-prefix', 'clickable-btn')
-        li.appendChild(fileIcon);
+          this.viewDetailFn(val.key, `LocalToRemote`);
+        })
       });
     }
 
@@ -118,15 +120,7 @@ export class TouchedPlanModel extends Modal {
         const li = ulLocal.createEl('li', {
           cls: 'file-item-action'
         });
-        const fileIcon = createElement(FileText);
-        fileIcon.addClass('file-item-action-prefix')
-        li.appendChild(fileIcon);
 
-        li.createEl('span', {
-          text: val.key,
-          cls: 'file-item-action-name'
-        });
-       
         if (val.decision === 'downloadRemoteToLocal') {
           const iconSvgCreate = createElement(FilePlus2);
           iconSvgCreate.addClass('file-item-action-icon')
@@ -136,6 +130,18 @@ export class TouchedPlanModel extends Modal {
           iconSvgTrash.addClass('file-item-action-icon')
           li.appendChild(iconSvgTrash)
         }
+
+        li.createEl('span', {
+          text: val.key,
+          cls: 'file-item-action-name'
+        });
+        const checkIcon = createElement(Eye);
+        checkIcon.addClass('file-item-action-prefix')
+        li.appendChild(checkIcon);
+        checkIcon.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.viewDetailFn(val.key, `RemoteToLocal`);
+        })
       });
     }
 

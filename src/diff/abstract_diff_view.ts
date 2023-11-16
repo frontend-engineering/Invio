@@ -7,6 +7,7 @@ import type InvioPlugin from '../main';
 import type { LangType, LangTypeAndAuto, TransItemType } from "../i18n";
 
 type TviewOutputFormat = `side-by-side` | `line-by-line`
+export type TDiffType = `LocalToRemote` | `RemoteToLocal`
 
 export default abstract class DiffView extends Modal {
 	plugin: InvioPlugin;
@@ -59,21 +60,22 @@ export default abstract class DiffView extends Modal {
 			diffStyle: 'word',
 			matchWordsThreshold: 0.25,
 			outputFormat: this.viewOutputFormat,
+			renderNothingWhenEmpty: false,
 			rawTemplates: {
 				'line-by-line-file-diff': `<div id="{{fileHtmlId}}" class="d2h-file-wrapper" data-lang="{{file.language}}">
 					<div class="d2h-file-header">
-					{{{filePath}}}
-					</div>
-					<div class="d2h-file-diff">
-						<div class="d2h-code-wrapper">
-							<table class="d2h-diff-table">
-								<tbody class="d2h-diff-tbody">
-								{{{diffs}}}
-								</tbody>
-							</table>
+						{{{filePath}}}
 						</div>
-					</div>
-				</div>`,
+						<div class="d2h-file-diff">
+							<div class="d2h-code-wrapper">
+								<table class="d2h-diff-table">
+									<tbody class="d2h-diff-tbody">
+									{{{diffs}}}
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>`,
 				'side-by-side-file-diff': `<div id="{{fileHtmlId}}" class="d2h-file-wrapper" data-lang="{{file.language}}">
 				<div class="d2h-file-header">
 				  {{{filePath}}}
@@ -100,7 +102,14 @@ export default abstract class DiffView extends Modal {
 						</div>
 					</div>
 				</div>
-			</div>`
+			</div>`,
+			'generic-empty-diff': `<tr>
+				<td class="{{CSSLineClass.INFO}}">
+					<div class="{{contentClass}}">
+						File without changes2
+					</div>
+				</td>
+			</tr>`
 			}
 		};
 		this.containerEl.addClass('diff');
@@ -108,42 +117,6 @@ export default abstract class DiffView extends Modal {
 		const contentParent = this.contentEl.createDiv({
 			cls: ['sync-history-content-container-parent'],
 		});
-
-		const topAction = contentParent.createDiv({
-			cls: 'sync-history-content-container-top'
-		});
-
-		const viewChangeBtn = topAction.createDiv({
-			cls: ['view-action', 'btn'],
-			text: this.t('view_change_btn')
-		})
-
-		const diffResetBtn = topAction.createDiv({
-			cls: ['view-action', 'btn'],
-			text: this.t('diff_reset_btn')
-		})
-		setTooltip(diffResetBtn, 'Click to replace the file with online version', {
-			placement: 'top',
-		});
-		diffResetBtn.addEventListener('click', e => {
-			e.preventDefault();
-			this.changeFileAndCloseModal(this.leftContent);
-
-			new Notice(
-				`The ${this.file.basename} file has been overwritten with the online remote version.`
-			);
-		})
-		setTooltip(viewChangeBtn, 'Click to change diff view', {
-			placement: 'top',
-		});
-		viewChangeBtn.addEventListener('click', e => {
-			e.preventDefault();
-			this.viewOutputFormat = ('line-by-line' === this.viewOutputFormat) ? 'side-by-side' : 'line-by-line';
-			console.log('diff styles changed to ', this.viewOutputFormat)
-			this.reload({
-				outputFormat: this.viewOutputFormat
-			});
-		})
 
 		this.syncHistoryContentContainer = contentParent.createDiv({
 			cls: ['sync-history-content-container', 'diff'],
@@ -160,9 +133,6 @@ export default abstract class DiffView extends Modal {
 		this.syncHistoryContentContainer.innerHTML =
 			this.getDiff(config) as string;
 	}
-	abstract getInitialVersions(): Promise<void | boolean>;
-
-	abstract appendVersions(): void;
 
 	public getDiff(config?: Diff2HtmlConfig): string {
 		// the second type is needed for the Git view, it reimplements getDiff
@@ -191,7 +161,7 @@ export default abstract class DiffView extends Modal {
 		return this.plugin.i18n.t(x, vars);
 	}
 
-	private async changeFileAndCloseModal(contents: string) {
+	public async changeFileAndCloseModal(contents: string) {
 		await this.app.vault.modify(this.file, contents);
 		this.fileChangedHook && this.fileChangedHook(this.file);
 		this.silentClose = true
@@ -234,16 +204,18 @@ export default abstract class DiffView extends Modal {
 		return [syncHistoryListContainer, syncHistoryList];
 	}
 
-	public basicHtml(diff: string, diffType: string): void {
+	public basicHtml(diff: string, diffType: TDiffType): void {
 		// set title
-		this.titleEl.setText(diffType);
+		this.titleEl.setText(diffType === `LocalToRemote` ? this.t('diff_view_local_title') : this.t('diff_view_remote_title'));
 		// add diff to container
 		this.syncHistoryContentContainer.innerHTML = diff;
 
 		// add history lists and diff to DOM
 		// this.contentEl.appendChild(this.leftHistory[0]);
 		this.contentEl.appendChild(this.syncHistoryContentContainer?.parentNode);
-		this.contentEl.appendChild(this.rightHistory[0]);
+		if (diffType === `LocalToRemote`) {
+			this.contentEl.appendChild(this.rightHistory[0]);
+		}
 	}
 
 

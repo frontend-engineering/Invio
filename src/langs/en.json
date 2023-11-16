@@ -6,7 +6,8 @@
   "submit": "Submit",
   "sometext": "Here are some texts.",
 
-  "diff_view_title": "File Contents Edit Diff",
+  "diff_view_local_title": "Local File Contents Edit Diff",
+  "diff_view_remote_title": "Remote File Contents Edit Diff",
   "diff_reset_btn": "Discard Local Changes",
   "view_change_btn": "ViewStyle",
   "diff_edit_list": "Local Edit Version List",

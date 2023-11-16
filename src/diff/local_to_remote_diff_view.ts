@@ -1,8 +1,15 @@
-import { Plugin, App, TFile, Notice } from 'obsidian';
+import {
+	Plugin,
+	App,
+	TFile,
+	Notice,
+	// @ts-ignore
+	setTooltip
+} from 'obsidian';
 import type InvioPlugin from '../main';
 import type { recResult, vRecoveryItem } from './interfaces';
 import { FILE_REC_WARNING } from './constants';
-import DiffView from './abstract_diff_view';
+import DiffView, { TDiffType } from './abstract_diff_view';
 export interface IRemoteFile {
     data: string;
     ts: number;
@@ -73,9 +80,60 @@ export default class LocalToRemoteDiffView extends DiffView {
 		await this.getInitialVersions();
 		const diff = this.getDiff();
 		this.makeHistoryLists(FILE_REC_WARNING);
-		this.basicHtml(diff as string, this.t('diff_view_title'));
+		this.basicHtml(diff as string);
 		this.appendVersions();
 		this.makeMoreGeneralHtml();
+	}
+
+	public basicHtml(diff: string): void {
+		// set title
+		this.titleEl.setText(this.t('diff_view_local_title'));
+		// set top action bar
+
+		const contentParent = this.syncHistoryContentContainer.parentElement;
+		const topAction = contentParent.createDiv({
+			cls: 'sync-history-content-container-top'
+		});
+
+		const viewChangeBtn = topAction.createDiv({
+			cls: ['view-action', 'btn'],
+			text: this.t('view_change_btn')
+		})
+
+		const diffResetBtn = topAction.createDiv({
+			cls: ['view-action', 'btn'],
+			text: this.t('diff_reset_btn')
+		})
+		setTooltip(diffResetBtn, 'Click to replace the file with online version', {
+			placement: 'top',
+		});
+		diffResetBtn.addEventListener('click', e => {
+			e.preventDefault();
+			this.changeFileAndCloseModal(this.leftContent);
+
+			new Notice(
+				`The ${this.file.basename} file has been overwritten with the online remote version.`
+			);
+		})
+		setTooltip(viewChangeBtn, 'Click to change diff view', {
+			placement: 'top',
+		});
+		viewChangeBtn.addEventListener('click', e => {
+			e.preventDefault();
+			this.viewOutputFormat = ('line-by-line' === this.viewOutputFormat) ? 'side-by-side' : 'line-by-line';
+			console.log('diff styles changed to ', this.viewOutputFormat)
+			this.reload({
+				outputFormat: this.viewOutputFormat
+			});
+		})
+
+		// add diff to container
+		this.syncHistoryContentContainer.innerHTML = diff;
+
+		// add history lists and diff to DOM
+		// this.contentEl.appendChild(this.leftHistory[0]);
+		this.contentEl.appendChild(this.syncHistoryContentContainer?.parentNode);
+		this.contentEl.appendChild(this.rightHistory[0]);
 	}
 
 	async getInitialVersions() {
