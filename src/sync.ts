@@ -57,6 +57,7 @@ import { Utils } from './utils/utils';
 import { Path } from './utils/path';
 import { log } from "./moreOnLog";
 import { settings } from "assets/webworker.txt";
+import { getRemoteFileDiff } from './diff/index';
 
 export const RemoteSrcPrefix = 'op-remote-source-raw/'
 export const RemoteAttPrefix = 'op-remote-attach-p/'
@@ -326,6 +327,35 @@ export const fetchMetadataFile = async (
   return metadata;
 };
 
+
+export const fetchRemoteFileMD = async (
+  remoteFilePath: string,
+  client: RemoteClient,
+  vault: Vault,
+  password: string = ""
+) => {
+  if (remoteFilePath === undefined) {
+    log.debug("no metadata file, so no fetch");
+    return ''
+  }
+
+  log.info('fetch remote file path: ', remoteFilePath);
+  const buf = await client.downloadFromRemote(
+    remoteFilePath,
+    RemoteSrcPrefix,
+    vault,
+    null,
+    password,
+    '',
+    true
+  );
+  if (typeof buf === "string") {
+    return buf;
+  } else {
+    return new TextDecoder().decode(buf);
+  }
+};
+
 const dataInconsistanceCheck = (r: FileOrFolderMixedState) => {
   if (!r) return;
   // find abnormal
@@ -390,6 +420,30 @@ const isSkipItem = (
     key === DEFAULT_FILE_NAME_FOR_METADATAONREMOTE2
   );
 };
+
+export const pruneTouchedFiles = async (vault: Vault, client: RemoteClient, list: Record<string, FileOrFolderMixedState>) => {
+  const promises = [ ...Object.keys(list) ].map(async attr => {
+    const item = list[attr];
+    if (item.decision === 'uploadLocalToRemote') {
+      const remoteMD = await fetchRemoteFileMD(
+        item.key,
+        client,
+        vault,
+      );
+      log.info('remote md: ', remoteMD);
+      const diff = await getRemoteFileDiff(vault, item.key, remoteMD);
+      if (!diff) {
+        log.info('file contents diff nothing', attr, item)
+        list[attr] = null;
+        delete list[attr];
+        return attr;
+      }
+      return;
+    }
+  })
+  const result = await Promise.all(promises);
+  log.info('list result: ', result);
+}
 
 const ensembleMixedStates = async (
   remoteStates: FileOrFolderMixedState[],

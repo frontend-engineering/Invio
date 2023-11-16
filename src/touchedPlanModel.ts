@@ -1,7 +1,7 @@
 import { App, Modal, Notice, PluginSettingTab, Setting } from "obsidian";
 import type InvioPlugin from "./main"; // unavoidable
 import type { TransItemType } from "./i18n";
-import { createElement, FilePlus2, Trash, ArrowDownToLine, ArrowUpToLine, FileText } from "lucide";
+import { createElement, FilePlus2, Trash, ArrowDownToLine, ArrowUpToLine, FileText, Eye } from "lucide";
 
 import { log } from "./moreOnLog";
 import { FileOrFolderMixedState } from "./baseTypes";
@@ -9,13 +9,15 @@ import { FileOrFolderMixedState } from "./baseTypes";
 export class TouchedPlanModel extends Modal {
   agree: boolean;
   readonly plugin: InvioPlugin;
-  readonly files: Record<string, FileOrFolderMixedState>;
+  files: Record<string, FileOrFolderMixedState>;
+  viewDetailFn: (path: string) => void;
   hook: (agree: boolean) => void;
-  constructor(app: App, plugin: InvioPlugin, fileMap: Record<string, FileOrFolderMixedState>, cb: (agree: boolean) => void) {
+  constructor(app: App, plugin: InvioPlugin, fileMap: Record<string, FileOrFolderMixedState>, viewDetailFn: (path: string) => void, cb: (agree: boolean) => void) {
     super(app);
     this.plugin = plugin;
     this.agree = false;
     this.files = fileMap;
+    this.viewDetailFn = viewDetailFn;
     this.hook = cb;
   }
 
@@ -54,7 +56,7 @@ export class TouchedPlanModel extends Modal {
     }
   }
 
-  onOpen() {
+  render() {
     let { contentEl } = this;
     const t = (x: TransItemType, vars?: any) => {
       return this.plugin.i18n.t(x, vars);
@@ -78,15 +80,7 @@ export class TouchedPlanModel extends Modal {
         const li = ulRemote.createEl('li', {
           cls: 'file-item-action'
         });
-        const fileIcon = createElement(FileText);
-        fileIcon.addClass('file-item-action-prefix')
-        li.appendChild(fileIcon);
-
-        li.createEl('span', {
-          text: val.key,
-          cls: 'file-item-action-name'
-        });
-       
+    
         if (val.decision === 'uploadLocalToRemote') {
           const iconSvgCreate = createElement(FilePlus2);
           iconSvgCreate.addClass('file-item-action-icon')
@@ -96,6 +90,21 @@ export class TouchedPlanModel extends Modal {
           iconSvgTrash.addClass('file-item-action-icon')
           li.appendChild(iconSvgTrash)
         }
+
+        li.createEl('span', {
+          text: val.key,
+          cls: 'file-item-action-name'
+        });
+
+        li.addEventListener('click', (e) => {
+          e.preventDefault();
+          console.log('list clicked', val.key)
+          this.viewDetailFn(val.key);
+        })
+
+        const fileIcon = createElement(Eye);
+        fileIcon.addClass('file-item-action-prefix', 'clickable-btn')
+        li.appendChild(fileIcon);
       });
     }
 
@@ -163,13 +172,15 @@ export class TouchedPlanModel extends Modal {
       })
     }
 
+
+    let emptyList = false;
     if (toRemoteFiles.length === 0 && toLocalFiles.length === 0 && conflictFiles.length === 0) {
       contentEl.createEl("p", {
         text: 'All synced with remote, everything is cool!'
       });
+      emptyList = true;
     }
-
-    new Setting(contentEl)
+    const settingBtn = new Setting(contentEl)
       .addButton((button) => {
         button.setButtonText('Confirm');
         button.onClick(async () => {
@@ -177,12 +188,26 @@ export class TouchedPlanModel extends Modal {
           this.close();
         });
       })
-      .addButton((button) => {
-        button.setButtonText('Cancel');
-        button.onClick(() => {
-          this.close();
+
+      if (!emptyList) {
+        settingBtn.addButton((button) => {
+          button.setButtonText('Cancel');
+          button.onClick(() => {
+            this.close();
+          });
         });
-      });
+      }
+  }
+
+  onOpen() {
+    this.render()
+  }
+
+  reload(files: Record<string, FileOrFolderMixedState>) {
+    this.files = files;
+    let { contentEl } = this;
+    contentEl.empty();
+    this.render();
   }
 
   onClose() {
