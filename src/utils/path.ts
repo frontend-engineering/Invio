@@ -36,7 +36,7 @@ const isWindows: boolean = (typeof process.platform === 'string' ?
 	process.platform :
 	parseOSFromUA(navigator.userAgent)) === "win32";
 
-export const PATH_SPLITER = isWindows ? '\\' : '/';
+export const PATH_SPLITER = '/';
 export const WEB_PATH_SPLITER = '/';
 
 export class Path
@@ -244,16 +244,6 @@ export class Path
 		return path.replaceAll(" ", "-").replaceAll(/-{2,}/g, "-").replace(".-", "-").toLowerCase();
 	}
 
-	static localToWebPath(path: string): string {
-		return path.replaceAll(PATH_SPLITER, '/')
-	}
-
-	static webToLocalPath(path: string): string {
-		if (isWindows) {
-			return path.replaceAll('/', PATH_SPLITER);
-		}
-		return path;
-	}
 	static splitString(path: string): string[] {
 		if (!path) return [];
 		return path.split(PATH_SPLITER);
@@ -263,6 +253,19 @@ export class Path
 	}
 	static isFolderOrDir(path: string): boolean {
 		return path.endsWith(PATH_SPLITER) || path.endsWith(WEB_PATH_SPLITER);
+	}
+
+	static getPathSpliter() {
+		return PATH_SPLITER;
+	}
+	static removePathDelimiters(filePath: string) {
+		return filePath.replace(/^[/\\]+|[/\\]+$/g, '');
+	}
+	static insertSubPath(path: string, subPath: string): string {
+		if (!path || !subPath) return path;
+		const pList = path.split(PATH_SPLITER);
+		pList.splice(1, 0, Path.removePathDelimiters(subPath));
+		return pList.filter(p => !!p).join('/');
 	}
 
 	joinString(...paths: string[]): Path

@@ -36,7 +36,7 @@ import {
 } from "./localdb";
 import { RemoteClient, ServerDomain } from "./remote";
 import { InvioSettingTab, DEFAULT_SETTINGS } from "./settings";
-import { fetchMetadataFile, parseRemoteItems, SyncStatusType, RemoteSrcPrefix, syncAttachment } from "./sync";
+import { fetchMetadataFile, parseRemoteItems, SyncStatusType, RemoteSrcPrefix, syncAttachment, LocalConflictPrefix, RemoteConflictPrefix } from "./sync";
 import { doActualSync, getSyncPlan, isPasswordOk } from "./sync";
 import { messyConfigToNormal, normalConfigToMessy } from "./configPersist";
 import { ObsConfigDirFileType, listFilesInObsFolder } from "./obsFolderLister";
@@ -282,8 +282,13 @@ export default class InvioPlugin extends Plugin {
       // this.app.vault.getAllLoadedFiles
       // TODO: List only concerned files, only source of truth
       // *.conflict.md files is for data backup when conflicts happened
-      // const local = this.app.vault.getMarkdownFiles().filter(file => file.path.startsWith(this.settings.localWatchDir + '/') && !file.path.endsWith('.conflict.md'))
-      const local = this.app.vault.getMarkdownFiles().filter(file => new Path(file.path).isInsideDir(this.settings.localWatchDir) && !file.path.endsWith('.conflict.md'))
+      const local = this.app.vault.getMarkdownFiles().filter(file => {
+        const p = new Path(file.path);
+        return p.isInsideDir(this.settings.localWatchDir) &&
+          !p.isInsideDir(RemoteConflictPrefix) &&
+          !p.isInsideDir(LocalConflictPrefix) &&
+          !file.path.endsWith('.conflict.md')
+      });
       log.info('local file path list: ', local);
       // const local = this.app.vault.getAllLoadedFiles();
       const localHistory = await loadFileHistoryTableByVault(
@@ -372,11 +377,6 @@ export default class InvioPlugin extends Plugin {
       await insertSyncPlanRecordByVault(this.db, plan, this.vaultRandomID);
       let view: StatsView;
       if (triggerSource !== "dry") {
-        // getNotice(
-        //   t("syncrun_step7", {
-        //     maxSteps: `${MAX_STEPS}`,
-        //   })
-        // );
         let allFiles = this.app.vault.getMarkdownFiles();
         // if we are at the root path export all files, otherwise only export files in the folder we are exporting
         allFiles = allFiles.filter((file: TFile) => new Path(file.path).isInsideDir(this.settings.localWatchDir) && (file.extension === "md") && (!file.name.endsWith('.conflict.md')));

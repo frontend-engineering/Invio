@@ -99,7 +99,7 @@ export class RemoteClient {
       }
     }
 
-    return Path.localToWebPath(localPath);
+    return localPath;
   }
 
   getUseHostLocalPath(slug: string) {
@@ -130,7 +130,7 @@ export class RemoteClient {
       }
     }
 
-    return Path.webToLocalPath(webPath)
+    return webPath
   }
 
   uploadToRemote = async (

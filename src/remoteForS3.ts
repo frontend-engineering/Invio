@@ -340,9 +340,9 @@ export const uploadToRemote = async (
   rawContent: string | ArrayBuffer = "",
   remoteKey?: string
 ) => {
-  let uploadFileKey = Path.localToWebPath(prefix + fileOrFolderPath);
+  let uploadFileKey = prefix + fileOrFolderPath;
   if (password !== "") {
-    uploadFileKey = Path.localToWebPath(prefix + remoteEncryptedKey);
+    uploadFileKey = prefix + remoteEncryptedKey;
   }
   const isFolder = Path.isFolderOrDir(fileOrFolderPath);
 
@@ -537,9 +537,9 @@ export const downloadFromRemote = async (
       localContent = await decryptArrayBuffer(remoteContent, password);
     }
     if (!skipSaving) {
-      await vault.adapter.writeBinary(Path.webToLocalPath(renamedTo || fileOrFolderPath), localContent, {
-        mtime: mtime,
-      });
+      log.info('creating file: ', renamedTo || fileOrFolderPath);
+      const option = mtime ? { mtime } : null;
+      await vault.adapter.writeBinary(renamedTo || fileOrFolderPath, localContent, option);
     }
     return localContent;
   }

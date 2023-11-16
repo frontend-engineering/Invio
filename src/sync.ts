@@ -54,10 +54,14 @@ import {
 } from "./metadataOnRemote";
 import { isInsideObsFolder, ObsConfigDirFileType } from "./obsFolderLister";
 import { Utils } from './utils/utils';
+import { Path } from './utils/path';
 import { log } from "./moreOnLog";
+import { settings } from "assets/webworker.txt";
 
 export const RemoteSrcPrefix = 'op-remote-source-raw/'
 export const RemoteAttPrefix = 'op-remote-attach-p/'
+export const LocalConflictPrefix = 'local.conflict'
+export const RemoteConflictPrefix = 'remote.conflict'
 // 影响到pub产物变动的decision
 const RemoteFileTouchedDecisions = ['uploadLocalDelHistToRemote', 'uploadLocalToRemote'];
 const LocalFileTouchedDecisions = ['downloadRemoteToLocal', 'keepRemoteDelHist'];
@@ -1254,7 +1258,10 @@ const dispatchOperationToActual = async (
     if (r.remoteUnsync) {
       // TODO: Add a hook to alert users the risk of data lost on the remote
       log.info('download last changed version from remote for backup: ', r.key)
-      const renamed = r.key.replace(/\.md$/ig, '.conflict.md');
+      const conflictKey = () => '.' + Math.random().toFixed(4).slice(2) + '.conflict.md'
+      let renamed = r.key.replace(/\.md$/ig, conflictKey());
+      renamed = Path.insertSubPath(renamed, RemoteConflictPrefix)
+      await mkdirpInVault(renamed, vault);
       await client.downloadFromRemote(
         r.key,
         RemoteSrcPrefix,
@@ -1295,10 +1302,8 @@ const dispatchOperationToActual = async (
       log.info('rename last changed version from local for backup: ', r.key)
       const conflictKey = () => '.' + Math.random().toFixed(4).slice(2) + '.conflict.md'
       let renamed = r.key.replace(/\.md$/ig, conflictKey());
-
-      if (vault.adapter.exists(renamed)) {
-        renamed = renamed.replace('.conflict.md', conflictKey())
-      }
+      renamed = Path.insertSubPath(renamed, LocalConflictPrefix)
+      await mkdirpInVault(renamed, vault);
       await vault.adapter.rename(r.key, renamed);
       await Utils.appendFile(vault, renamed, ConflictDescriptionTxt);
     }
@@ -1716,7 +1721,7 @@ export const syncAttachment = async (vault: Vault, client: RemoteClient, embeds:
         link,
         RemoteAttPrefix,
         vault,
-        0,
+        Date.now(),
         '',
         '',
         false,
