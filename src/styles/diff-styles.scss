@@ -473,6 +473,9 @@ mode from @SlRvb, which fall under the same license (MIT license, @kometenstaub 
 				color: var(--text-on-accent);
 				padding: var(--size-4-2) var(--size-4-3);
 				margin-left: 8px;
+				box-shadow: var(--input-shadow);
+				height: var(--input-height);
+				font-size: var(--font-ui-small);
 			}
 		}
 	}
@@ -532,7 +535,7 @@ mode from @SlRvb, which fall under the same license (MIT license, @kometenstaub 
 	.modal-content {
 		display: flex;
 		flex-direction: row;
-		height: 76vh;
+		height: 76vh !important;
 	}
 }
 

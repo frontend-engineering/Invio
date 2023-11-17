@@ -106,7 +106,7 @@ export default abstract class DiffView extends Modal {
 			'generic-empty-diff': `<tr>
 				<td class="{{CSSLineClass.INFO}}">
 					<div class="{{contentClass}}">
-						File without changes2
+						File without changes
 					</div>
 				</td>
 			</tr>`
