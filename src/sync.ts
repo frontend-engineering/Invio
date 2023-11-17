@@ -336,7 +336,7 @@ export const fetchRemoteFileMD = async (
 ) => {
   if (remoteFilePath === undefined) {
     log.debug("no metadata file, so no fetch");
-    return ''
+    return null
   }
 
   log.info('fetch remote file path: ', remoteFilePath);
@@ -349,10 +349,17 @@ export const fetchRemoteFileMD = async (
     '',
     true
   );
+  const resp: RemoteItem = await client.getRemoteMeta(RemoteSrcPrefix + remoteFilePath)
+
+  let data;
   if (typeof buf === "string") {
-    return buf;
+    data = buf;
   } else {
-    return new TextDecoder().decode(buf);
+    data = new TextDecoder().decode(buf);
+  }
+  return {
+    ...resp,
+    data
   }
 };
 
@@ -431,7 +438,10 @@ export const pruneTouchedFiles = async (vault: Vault, client: RemoteClient, list
         vault,
       );
       log.info('remote md: ', remoteMD);
-      const diff = await getRemoteFileDiff(vault, item.key, remoteMD);
+      if (!remoteMD) {
+        return;
+      }
+      const diff = await getRemoteFileDiff(vault, item.key, remoteMD.data);
       if (!diff) {
         log.info('file contents diff nothing', attr, item)
         list[attr] = null;

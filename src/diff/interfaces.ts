@@ -70,6 +70,7 @@ export interface recResult {
 	path: string;
 	ts: number;
 	data: string;
+	isRemote?: boolean;
 }
 
 export interface vItem {

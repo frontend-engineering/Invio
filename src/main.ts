@@ -128,8 +128,8 @@ export default class InvioPlugin extends Plugin {
     log.info('remote md: ', remoteMD);
     return new Promise((resolve, reject) => {
       openDiffModal(this.app, this, file, {
-        data: remoteMD,
-        ts: 0,
+        data: remoteMD.data,
+        ts: remoteMD?.lastModified,
         path: filePath
       }, diffType, (file: TFile) => {
         if (file) {

@@ -136,7 +136,7 @@ export class TouchedPlanModel extends Modal {
           cls: 'file-item-action-name'
         });
         const checkIcon = createElement(Eye);
-        checkIcon.addClass('file-item-action-prefix')
+         checkIcon.addClass('file-item-action-prefix', 'clickable-btn');
         li.appendChild(checkIcon);
         checkIcon.addEventListener('click', (e) => {
           e.preventDefault();
@@ -154,15 +154,6 @@ export class TouchedPlanModel extends Modal {
         const li = ulConflict.createEl('li', {
           cls: 'file-item-action'
         });
-        const fileIcon = createElement(FileText);
-        fileIcon.addClass('file-item-action-prefix')
-        li.appendChild(fileIcon);
-
-        li.createEl('span', {
-          text: val.key,
-          cls: 'file-item-action-name'
-        });
-       
         if (val.decision === 'downloadRemoteToLocal') {
           const iconSvgSyncDown = createElement(ArrowDownToLine);
           iconSvgSyncDown.addClass('file-item-action-icon')
@@ -172,6 +163,19 @@ export class TouchedPlanModel extends Modal {
           iconSvgUp.addClass('file-item-action-icon')
           li.appendChild(iconSvgUp)
         }
+
+        li.createEl('span', {
+          text: val.key,
+          cls: 'file-item-action-name'
+        });
+
+        const checkIcon = createElement(Eye);
+        checkIcon.addClass('file-item-action-prefix', 'clickable-btn');
+        li.appendChild(checkIcon);
+        checkIcon.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.viewDetailFn(val.key, `Conflict`);
+        })
       });
       contentEl.createEl('p', {
         text: 'Warnning: Don\'t worry, to prevent data loss, conflicting files will generate a .conflict.md backup file with the overwritten content to your local folder.'

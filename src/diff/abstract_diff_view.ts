@@ -7,7 +7,7 @@ import type InvioPlugin from '../main';
 import type { LangType, LangTypeAndAuto, TransItemType } from "../i18n";
 
 type TviewOutputFormat = `side-by-side` | `line-by-line`
-export type TDiffType = `LocalToRemote` | `RemoteToLocal`
+export type TDiffType = `LocalToRemote` | `RemoteToLocal` | `Conflict`
 
 export default abstract class DiffView extends Modal {
 	plugin: InvioPlugin;
@@ -183,7 +183,7 @@ export default abstract class DiffView extends Modal {
 			cls: 'sync-history-list',
 		});
 		const title = syncHistoryList.createDiv({
-			cls: 'sync-history-list-item title',
+			cls: ['sync-history-list-item', 'title'],
 			text: this.t('diff_edit_list')
 		});
 
@@ -206,7 +206,7 @@ export default abstract class DiffView extends Modal {
 
 	public basicHtml(diff: string, diffType: TDiffType): void {
 		// set title
-		this.titleEl.setText(diffType === `LocalToRemote` ? this.t('diff_view_local_title') : this.t('diff_view_remote_title'));
+		this.titleEl.setText(diffType === `LocalToRemote` ? this.t('diff_view_local_title') : (diffType === `RemoteToLocal` ? this.t('diff_view_remote_title') : this.t('diff_view_conflict_title')));
 		// add diff to container
 		this.syncHistoryContentContainer.innerHTML = diff;
 

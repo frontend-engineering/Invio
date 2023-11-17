@@ -481,6 +481,7 @@ mode from @SlRvb, which fall under the same license (MIT license, @kometenstaub 
 		/*max-width: 11vw;*/
 		padding: 0.5rem;
 		border-radius: 0.25em;
+		width: auto;
 	}
 
 	.sync-history-list-container {
@@ -512,6 +513,12 @@ mode from @SlRvb, which fall under the same license (MIT license, @kometenstaub 
 			.sync-history-list-item {
 				border-radius: 0.25em;
 				cursor: pointer;
+				.disbled {
+					opacity: 0.6;
+				}
+			}
+			.sync-history-list-item-remote {
+				opacity: 0.3;
 			}
 			.title {
 				text-align: center;

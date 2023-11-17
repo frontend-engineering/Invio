@@ -187,6 +187,11 @@ export class RemoteClient {
     }
   };
 
+  getRemoteMeta = async (fileOrFolderPath: string) => {
+    const s3Client = await s3.getS3Client(this.s3Config, this.hostConfig, this.useHost, this.localWatchDir);
+    return await s3.getRemoteMeta(s3Client, this.s3Config, fileOrFolderPath);
+  }
+
   downloadFromRemote = async (
     fileOrFolderPath: string,
     prefix: string,

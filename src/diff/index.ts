@@ -2,6 +2,7 @@ import { App, TFile, Notice, Vault } from 'obsidian';
 import { diffChars } from 'diff';
 import LocalToRemoteDiffView, { IRemoteFile } from './local_to_remote_diff_view';
 import RemoteToLocalDiffView from './remote_to_local_diff_view';
+import ConflictDiffView from './conflict_diff_view';
 import { TDiffType } from './abstract_diff_view';
 import type InvioPlugin from '../main';
 
@@ -12,6 +13,9 @@ export function openDiffModal(app: App, plugin: InvioPlugin, file: TFile, remote
     new LocalToRemoteDiffView(plugin, app, file, remoteFile, hook, hook).open();
   } else if (diffType === `RemoteToLocal`) {
     new RemoteToLocalDiffView(plugin, app, file, remoteFile, hook, hook).open();
+  } else if (diffType === `Conflict`) {
+    // 计算文件更改时间，对比local和remote文件状态
+    new ConflictDiffView(plugin, app, file, remoteFile, hook, hook).open();
   } else {
     new Notice(`Not supported diff view type`);
   }
