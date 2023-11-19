@@ -10,7 +10,7 @@ import type InvioPlugin from '../main';
 import type { recResult, vRecoveryItem } from './interfaces';
 import { FILE_REC_WARNING } from './constants';
 import DiffView, { TDiffType } from './abstract_diff_view';
-
+import { Diff2HtmlConfig, html } from 'diff2html';
 export default class ConflictDiffView extends DiffView {
 	remote: recResult
 	versions: recResult[];
@@ -81,6 +81,13 @@ export default class ConflictDiffView extends DiffView {
 		this.makeMoreGeneralHtml();
 	}
 
+	reload(config?: Partial<Diff2HtmlConfig>) {
+		this.syncHistoryContentContainer.innerHTML =
+			this.getDiff(config) as string;
+
+		this.setupViewChangeBtn()
+	}
+
 	public basicHtml(diff: string): void {
 		// set title
 		this.titleEl.setText(this.t('diff_view_conflict_title'));
@@ -90,11 +97,6 @@ export default class ConflictDiffView extends DiffView {
 		const topAction = contentParent.createDiv({
 			cls: 'sync-history-content-container-top'
 		});
-
-		const viewChangeBtn = topAction.createDiv({
-			cls: ['view-action', 'btn'],
-			text: this.t('view_change_btn')
-		})
 
 		const diffResetBtn = topAction.createDiv({
 			cls: ['view-action', 'btn'],
@@ -111,9 +113,27 @@ export default class ConflictDiffView extends DiffView {
 				`The ${this.file.basename} file has been overwritten with the online remote version.`
 			);
 		})
+
+		// add diff to container
+		this.syncHistoryContentContainer.innerHTML = diff;
+
+		// add history lists and diff to DOM
+		// this.contentEl.appendChild(this.leftHistory[0]);
+		this.contentEl.appendChild(this.syncHistoryContentContainer?.parentNode);
+		this.setupViewChangeBtn()
+		this.contentEl.appendChild(this.rightHistory[0]);
+	}
+
+	setupViewChangeBtn() {
+		const target = this.containerEl.querySelector('.d2h-file-wrapper');
+		const viewChangeBtn = target.createDiv({
+			cls: ['btn', 'style-view-toggle'],
+			text: this.t('view_change_btn')
+		})
 		setTooltip(viewChangeBtn, 'Click to change diff view', {
 			placement: 'top',
 		});
+
 		viewChangeBtn.addEventListener('click', e => {
 			e.preventDefault();
 			this.viewOutputFormat = ('line-by-line' === this.viewOutputFormat) ? 'side-by-side' : 'line-by-line';
@@ -122,14 +142,6 @@ export default class ConflictDiffView extends DiffView {
 				outputFormat: this.viewOutputFormat
 			});
 		})
-
-		// add diff to container
-		this.syncHistoryContentContainer.innerHTML = diff;
-
-		// add history lists and diff to DOM
-		// this.contentEl.appendChild(this.leftHistory[0]);
-		this.contentEl.appendChild(this.syncHistoryContentContainer?.parentNode);
-		this.contentEl.appendChild(this.rightHistory[0]);
 	}
 
 	async getInitialVersions() {

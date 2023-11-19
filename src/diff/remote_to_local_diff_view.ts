@@ -1,4 +1,7 @@
-import { Plugin, App, TFile, Notice } from 'obsidian';
+import { Plugin, App, TFile, Notice,
+	// @ts-ignore
+	setTooltip } from 'obsidian';
+import { Diff2HtmlConfig, html } from 'diff2html';
 import type InvioPlugin from '../main';
 import type { recResult, vRecoveryItem } from './interfaces';
 import { FILE_REC_WARNING } from './constants';
@@ -75,6 +78,32 @@ export default class RemoteToLocalDiffView extends DiffView {
 		const diff = this.getDiff();
 		this.basicHtml(diff as string);
 	}
+	setupViewChangeBtn() {
+		const target = this.containerEl.querySelector('.d2h-file-wrapper');
+		const viewChangeBtn = target.createDiv({
+			cls: ['btn', 'style-view-toggle'],
+			text: this.t('view_change_btn')
+		})
+		setTooltip(viewChangeBtn, 'Click to change diff view', {
+			placement: 'top',
+		});
+
+		viewChangeBtn.addEventListener('click', e => {
+			e.preventDefault();
+			this.viewOutputFormat = ('line-by-line' === this.viewOutputFormat) ? 'side-by-side' : 'line-by-line';
+			console.log('diff styles changed to ', this.viewOutputFormat)
+			this.reload({
+				outputFormat: this.viewOutputFormat
+			});
+		})
+	}
+	reload(config?: Partial<Diff2HtmlConfig>) {
+		this.syncHistoryContentContainer.innerHTML =
+			this.getDiff(config) as string;
+
+		this.setupViewChangeBtn()
+	}
+
 	public basicHtml(diff: string): void {
 		// set title
 		this.titleEl.setText(this.t('diff_view_remote_title'));
@@ -84,5 +113,6 @@ export default class RemoteToLocalDiffView extends DiffView {
 		// add history lists and diff to DOM
 		// this.contentEl.appendChild(this.leftHistory[0]);
 		this.contentEl.appendChild(this.syncHistoryContentContainer?.parentNode);
+		this.setupViewChangeBtn()
 	}
 }

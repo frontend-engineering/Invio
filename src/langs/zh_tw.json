@@ -10,7 +10,7 @@
   "diff_view_remote_title": "线上文件修改记录",
   "diff_view_conflict_title": "冲突文件修改记录",
   "diff_reset_btn": "丢弃本地所有更改",
-  "view_change_btn": "diff样式",
+  "view_change_btn": "切换对比样式",
   "diff_edit_list": "本地编辑历史",
   "diff_reset_ver_btn": "将文件恢复到该版本",
   "diff_version_list_title": "最新文件状态",

@@ -6,6 +6,7 @@ import {
 	// @ts-ignore
 	setTooltip
 } from 'obsidian';
+import { Diff2HtmlConfig, html } from 'diff2html';
 import type InvioPlugin from '../main';
 import type { recResult, vRecoveryItem } from './interfaces';
 import { FILE_REC_WARNING } from './constants';
@@ -85,6 +86,32 @@ export default class LocalToRemoteDiffView extends DiffView {
 		this.makeMoreGeneralHtml();
 	}
 
+	setupViewChangeBtn() {
+		const target = this.containerEl.querySelector('.d2h-file-wrapper');
+		const viewChangeBtn = target.createDiv({
+			cls: ['btn', 'style-view-toggle'],
+			text: this.t('view_change_btn')
+		})
+		setTooltip(viewChangeBtn, 'Click to change diff view', {
+			placement: 'top',
+		});
+
+		viewChangeBtn.addEventListener('click', e => {
+			e.preventDefault();
+			this.viewOutputFormat = ('line-by-line' === this.viewOutputFormat) ? 'side-by-side' : 'line-by-line';
+			console.log('diff styles changed to ', this.viewOutputFormat)
+			this.reload({
+				outputFormat: this.viewOutputFormat
+			});
+		})
+	}
+	reload(config?: Partial<Diff2HtmlConfig>) {
+		this.syncHistoryContentContainer.innerHTML =
+			this.getDiff(config) as string;
+
+		this.setupViewChangeBtn()
+	}
+
 	public basicHtml(diff: string): void {
 		// set title
 		this.titleEl.setText(this.t('diff_view_local_title'));
@@ -94,11 +121,6 @@ export default class LocalToRemoteDiffView extends DiffView {
 		const topAction = contentParent.createDiv({
 			cls: 'sync-history-content-container-top'
 		});
-
-		const viewChangeBtn = topAction.createDiv({
-			cls: ['view-action', 'btn'],
-			text: this.t('view_change_btn')
-		})
 
 		const diffResetBtn = topAction.createDiv({
 			cls: ['view-action', 'btn'],
@@ -115,17 +137,6 @@ export default class LocalToRemoteDiffView extends DiffView {
 				`The ${this.file.basename} file has been overwritten with the online remote version.`
 			);
 		})
-		setTooltip(viewChangeBtn, 'Click to change diff view', {
-			placement: 'top',
-		});
-		viewChangeBtn.addEventListener('click', e => {
-			e.preventDefault();
-			this.viewOutputFormat = ('line-by-line' === this.viewOutputFormat) ? 'side-by-side' : 'line-by-line';
-			console.log('diff styles changed to ', this.viewOutputFormat)
-			this.reload({
-				outputFormat: this.viewOutputFormat
-			});
-		})
 
 		// add diff to container
 		this.syncHistoryContentContainer.innerHTML = diff;
@@ -133,6 +144,7 @@ export default class LocalToRemoteDiffView extends DiffView {
 		// add history lists and diff to DOM
 		// this.contentEl.appendChild(this.leftHistory[0]);
 		this.contentEl.appendChild(this.syncHistoryContentContainer?.parentNode);
+		this.setupViewChangeBtn()
 		this.contentEl.appendChild(this.rightHistory[0]);
 	}
 

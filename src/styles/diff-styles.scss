@@ -155,6 +155,12 @@ mode from @SlRvb, which fall under the same license (MIT license, @kometenstaub 
 		border-radius: 3px;
 		margin-bottom: 1em;
 		max-height: 100%;
+		position: relative;
+		.style-view-toggle {
+			position: absolute;
+			top: 0px;
+			right: 0;
+		}
 	}
 	.d2h-file-collapse {
 		-webkit-box-pack: end;
@@ -458,7 +464,7 @@ mode from @SlRvb, which fall under the same license (MIT license, @kometenstaub 
 			width: 100%;
 			min-height: 32px;
 			display: flex;
-			justify-content: flex-end;
+			justify-content: space-around;
 			background-color: var(--background-secondary);
 			border-bottom: 1px solid var(--background-modifier-border);
 			font-family: Source Sans Pro,Helvetica Neue,Helvetica,Arial,sans-serif;
@@ -487,6 +493,14 @@ mode from @SlRvb, which fall under the same license (MIT license, @kometenstaub 
 		width: auto;
 	}
 
+	.btn {
+		border-radius: 0.25em;
+		cursor: pointer;
+		background-color: var(--interactive-accent);
+		color: var(--text-on-accent);
+		padding: var(--size-4-2) var(--size-4-3);
+		margin-bottom: var(--size-4-2);
+	}
 	.sync-history-list-container {
 		flex-shrink: unset;
 		border-left: 1px solid var(--background-modifier-border);
@@ -501,14 +515,7 @@ mode from @SlRvb, which fall under the same license (MIT license, @kometenstaub 
 				margin-top: 0em;
 			}
 		}
-		.btn {
-			border-radius: 0.25em;
-			cursor: pointer;
-			background-color: var(--interactive-accent);
-			color: var(--text-on-accent);
-			padding: var(--size-4-2) var(--size-4-3);
-    		margin-bottom: var(--size-4-2);
-		}
+
 
 		.sync-history-list {
 			margin-top: 1.5em;
