@@ -54,10 +54,15 @@ import {
 } from "./metadataOnRemote";
 import { isInsideObsFolder, ObsConfigDirFileType } from "./obsFolderLister";
 import { Utils } from './utils/utils';
+import { Path } from './utils/path';
 import { log } from "./moreOnLog";
+import { settings } from "assets/webworker.txt";
+import { getRemoteFileDiff } from './diff/index';
 
 export const RemoteSrcPrefix = 'op-remote-source-raw/'
 export const RemoteAttPrefix = 'op-remote-attach-p/'
+export const LocalConflictPrefix = 'local.conflict'
+export const RemoteConflictPrefix = 'remote.conflict'
 // 影响到pub产物变动的decision
 const RemoteFileTouchedDecisions = ['uploadLocalDelHistToRemote', 'uploadLocalToRemote'];
 const LocalFileTouchedDecisions = ['downloadRemoteToLocal', 'keepRemoteDelHist'];
@@ -322,6 +327,42 @@ export const fetchMetadataFile = async (
   return metadata;
 };
 
+
+export const fetchRemoteFileMD = async (
+  remoteFilePath: string,
+  client: RemoteClient,
+  vault: Vault,
+  password: string = ""
+) => {
+  if (remoteFilePath === undefined) {
+    log.debug("no metadata file, so no fetch");
+    return null
+  }
+
+  log.info('fetch remote file path: ', remoteFilePath);
+  const buf = await client.downloadFromRemote(
+    remoteFilePath,
+    RemoteSrcPrefix,
+    vault,
+    null,
+    password,
+    '',
+    true
+  );
+  const resp: RemoteItem = await client.getRemoteMeta(RemoteSrcPrefix + remoteFilePath)
+
+  let data;
+  if (typeof buf === "string") {
+    data = buf;
+  } else {
+    data = new TextDecoder().decode(buf);
+  }
+  return {
+    ...resp,
+    data
+  }
+};
+
 const dataInconsistanceCheck = (r: FileOrFolderMixedState) => {
   if (!r) return;
   // find abnormal
@@ -386,6 +427,33 @@ const isSkipItem = (
     key === DEFAULT_FILE_NAME_FOR_METADATAONREMOTE2
   );
 };
+
+export const pruneTouchedFiles = async (vault: Vault, client: RemoteClient, list: Record<string, FileOrFolderMixedState>) => {
+  const promises = [ ...Object.keys(list) ].map(async attr => {
+    const item = list[attr];
+    if (item.decision === 'uploadLocalToRemote') {
+      const remoteMD = await fetchRemoteFileMD(
+        item.key,
+        client,
+        vault,
+      );
+      log.info('remote md: ', remoteMD);
+      if (!remoteMD) {
+        return;
+      }
+      const diff = await getRemoteFileDiff(vault, item.key, remoteMD.data);
+      if (!diff) {
+        log.info('file contents diff nothing', attr, item)
+        list[attr] = null;
+        delete list[attr];
+        return attr;
+      }
+      return;
+    }
+  })
+  const result = await Promise.all(promises);
+  log.info('list result: ', result);
+}
 
 const ensembleMixedStates = async (
   remoteStates: FileOrFolderMixedState[],
@@ -1254,7 +1322,10 @@ const dispatchOperationToActual = async (
     if (r.remoteUnsync) {
       // TODO: Add a hook to alert users the risk of data lost on the remote
       log.info('download last changed version from remote for backup: ', r.key)
-      const renamed = r.key.replace(/\.md$/ig, '.conflict.md');
+      const conflictKey = () => '.' + Math.random().toFixed(4).slice(2) + '.conflict.md'
+      let renamed = r.key.replace(/\.md$/ig, conflictKey());
+      renamed = Path.insertSubPath(renamed, RemoteConflictPrefix)
+      await mkdirpInVault(renamed, vault);
       await client.downloadFromRemote(
         r.key,
         RemoteSrcPrefix,
@@ -1295,10 +1366,8 @@ const dispatchOperationToActual = async (
       log.info('rename last changed version from local for backup: ', r.key)
       const conflictKey = () => '.' + Math.random().toFixed(4).slice(2) + '.conflict.md'
       let renamed = r.key.replace(/\.md$/ig, conflictKey());
-
-      if (vault.adapter.exists(renamed)) {
-        renamed = renamed.replace('.conflict.md', conflictKey())
-      }
+      renamed = Path.insertSubPath(renamed, LocalConflictPrefix)
+      await mkdirpInVault(renamed, vault);
       await vault.adapter.rename(r.key, renamed);
       await Utils.appendFile(vault, renamed, ConflictDescriptionTxt);
     }
@@ -1653,3 +1722,85 @@ export const doActualSync = async (
     }
   }
 };
+
+export const syncAttachment = async (vault: Vault, client: RemoteClient, embeds: any[], decision: string, cb: (type: string, link: string, result: any, err?: any) => void) => {
+  // @ts-ignore
+  const attachmentFolderPath = vault.getConfig('attachmentFolderPath');
+  const attachmentFolderPrefix = attachmentFolderPath?.replace(/\/$/, '');
+  const attachmentList = await vault.adapter.list(attachmentFolderPrefix + '/'); 
+  
+  const localAttachmentFiles: string[] = attachmentList.files;
+  log.info('local dir list: ', localAttachmentFiles);
+
+  // TODO: For all embeding formats.
+  const embedImages = embeds
+    .filter((em: any) => em.link?.startsWith('Pasted image '))
+    .map(em => em.link);
+
+  log.info('embed list: ', embedImages);
+
+  const getLinkWithPrefix = (link: string) => `${attachmentFolderPrefix}/${link}`.replace(/^\//, '');
+  // TODO: Remove deleted attachment files
+  if (decision === 'uploadLocalToRemote') {
+    const diff = embedImages.filter(link => {
+      const exist = localAttachmentFiles.find(f => f === getLinkWithPrefix(link));
+      return exist;
+    })
+    await Promise.all(diff.map(async link => {
+      log.info('uploading attachment: ', link);
+      return client.uploadToRemote(
+        getLinkWithPrefix(link),
+        RemoteAttPrefix,
+        vault,
+        false,
+        '',
+        '',
+        null,
+        false,
+        null,
+        `${RemoteAttPrefix}/${link}`
+      )
+      .then(resp => {
+        cb && cb('upload', link, resp);
+      })
+      .catch(err => {
+        log.error(`upload ${link} failed: ${err}`);
+        cb && cb('upload', link, null, err);
+        return;
+      })
+    }))
+    .catch(err => {
+      log.error('unexpected err: ', err);
+    })
+  } else {
+    const diff: string[] = embedImages.map(link => {
+      const exist = localAttachmentFiles.find(f => f === getLinkWithPrefix(link));
+      return exist ? null : link;
+    })
+    .filter(l => !!l);
+
+    await Promise.all(diff.map(async link => {
+      log.info('downloading attachment: ', link);
+      return client.downloadFromRemote(
+        link,
+        RemoteAttPrefix,
+        vault,
+        Date.now(),
+        '',
+        '',
+        false,
+        getLinkWithPrefix(link)
+      )
+      .then(resp => {
+        cb && cb('download', link, resp);
+      })
+      .catch(err => {
+        log.error(`download ${link} failed: ${err}`);
+        cb && cb('download', link, null, err);
+      })
+    }))
+    .catch(err => {
+      log.error('unexpected err: ', err);
+    })
+  } 
+}

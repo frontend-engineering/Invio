@@ -13,12 +13,18 @@ declare global {
   }
 }
 
+function removePathDelimiters(filePath: string) {
+  return filePath.replace(/^[/\\]+|[/\\]+$/g, '');
+}
+
 export const trimPrefix = (key: string, prefix: string) => {
   if (!key) return key;
-  if (key.startsWith(prefix)) {
-    return key.slice(prefix.length)
+  const prefixWithoutDel = removePathDelimiters(prefix);
+  if (key.startsWith(prefixWithoutDel + '\\') || key.startsWith(prefixWithoutDel + '/')) {
+    return key.slice(prefixWithoutDel.length + 1)
   }
-  return key;
+  const reg = new RegExp(`^${prefix}`);
+  return key.replace(reg, '');
 }
 
 /**

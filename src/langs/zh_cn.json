@@ -6,6 +6,15 @@
   "submit": "提交",
   "sometext": "这里有一段文字。",
 
+  "diff_view_local_title": "本地文件修改记录",
+  "diff_view_remote_title": "线上文件修改记录",
+  "diff_view_conflict_title": "冲突文件修改记录",
+  "diff_reset_btn": "丢弃本地所有更改",
+  "view_change_btn": "切换对比样式",
+  "diff_edit_list": "本地编辑历史",
+  "diff_reset_ver_btn": "将文件恢复到该版本",
+  "diff_version_list_title": "最新文件状态",
+
   "syncrun_alreadyrunning": "{{pluginName}} 正处于此阶段：{{syncStatus}}!",
   "syncrun_no_watchdir_err": "Invio: 请先配置本地同步文件夹",
   "syncrun_syncingribbon": "{{pluginName}}：正在由 {{triggerSource}} 触发运行",

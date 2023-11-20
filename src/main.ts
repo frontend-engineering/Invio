@@ -1,4 +1,5 @@
 import {
+  Command,
   Modal,
   Notice,
   Plugin,
@@ -36,8 +37,8 @@ import {
 } from "./localdb";
 import { RemoteClient, ServerDomain } from "./remote";
 import { InvioSettingTab, DEFAULT_SETTINGS } from "./settings";
-import { fetchMetadataFile, parseRemoteItems, SyncStatusType, RemoteSrcPrefix, RemoteAttPrefix } from "./sync";
-import { doActualSync, getSyncPlan, isPasswordOk } from "./sync";
+import { fetchMetadataFile, parseRemoteItems, SyncStatusType, RemoteSrcPrefix, syncAttachment, LocalConflictPrefix, RemoteConflictPrefix } from "./sync";
+import { doActualSync, getSyncPlan, isPasswordOk, fetchRemoteFileMD, pruneTouchedFiles } from "./sync";
 import { messyConfigToNormal, normalConfigToMessy } from "./configPersist";
 import { ObsConfigDirFileType, listFilesInObsFolder } from "./obsFolderLister";
 import { I18n } from "./i18n";
@@ -64,6 +65,7 @@ import { StatsView, VIEW_TYPE_STATS, LogType } from "./statsView";
 import { syncWithRemoteProject, switchProject } from './hosting';
 import Utils from './utils';
 import { Analytics4, loadGA } from './ga';
+import { TDiffType, openDiffModal } from './diff/index';
 
 const { iconNameSyncWait, iconNameSyncPending, iconNameSyncRunning, iconNameLogs, iconNameSyncLogo } = UsingIconNames;
 const Menu_Tab = `    `;
@@ -103,6 +105,44 @@ export default class InvioPlugin extends Plugin {
     return false;
   }
 
+  async viewFileDiff(filePath: string, diffType: TDiffType) {
+    const file = this.app.vault.getAbstractFileByPath(filePath)
+    if (!(file instanceof TFile)) {
+      new Notice('Not valid file');
+      return;
+    }
+    const client = new RemoteClient(
+      this.settings.serviceType,
+      this.settings.s3,
+      this.settings.hostConfig,
+      this.settings.useHost,
+      this.settings.localWatchDir,
+      this.app.vault.getName(),
+    );
+    const remoteMD = await fetchRemoteFileMD(
+      filePath,
+      client,
+      this.app.vault,
+      this.settings.password
+    );
+    log.info('remote md: ', remoteMD);
+    return new Promise((resolve, reject) => {
+      openDiffModal(this.app, this, file, {
+        data: remoteMD.data,
+        ts: remoteMD?.lastModified,
+        path: filePath
+      }, diffType, (file: TFile) => {
+        if (file) {
+          log.info('diff file changed: ', file)
+          resolve(file)
+        } else {
+          log.info('diff modal cancel')
+          resolve('')
+        }
+      })
+    })
+  }
+
   shouldAddToSyncFile(file: TFile): boolean {
     if (file.extension !== 'md') {
       return false;
@@ -125,6 +165,40 @@ export default class InvioPlugin extends Plugin {
     }
     // TODO: Set max memory limit
     log.info('file snapshot: ', this.recentSyncedFiles);
+  }
+
+  async getLocalFileStatus() {
+    // this.app.vault.getAllLoadedFiles
+    // TODO: List only concerned files, only source of truth
+    // *.conflict.md files is for data backup when conflicts happened
+    const local = this.app.vault.getMarkdownFiles().filter(file => {
+      const p = new Path(file.path);
+      return p.isInsideDir(this.settings.localWatchDir) &&
+        !p.isInsideDir(RemoteConflictPrefix) &&
+        !p.isInsideDir(LocalConflictPrefix) &&
+        !file.path.endsWith('.conflict.md')
+    });
+    log.info('local file path list: ', local);
+    // const local = this.app.vault.getAllLoadedFiles();
+    const localHistory = await loadFileHistoryTableByVault(
+      this.db,
+      this.vaultRandomID
+    );
+    let localConfigDirContents: ObsConfigDirFileType[] = undefined;
+    if (this.settings.syncConfigDir) {
+      localConfigDirContents = await listFilesInObsFolder(
+        this.app.vault.configDir,
+        this.app.vault,
+        this.manifest.id
+      );
+    }
+    log.info('local: ', local);
+    log.info('local history: ', localHistory);
+    return {
+      local,
+      localHistory,
+      localConfigDirContents
+    }
   }
 
   async syncRun(triggerSource: SyncTriggerSourceType = "manual", fileList?: string[]) {
@@ -279,27 +353,8 @@ export default class InvioPlugin extends Plugin {
         })
       );
       this.syncStatus = "getting_local_meta";
-      // this.app.vault.getAllLoadedFiles
-      // TODO: List only concerned files, only source of truth
-      // *.conflict.md files is for data backup when conflicts happened
-      // const local = this.app.vault.getMarkdownFiles().filter(file => file.path.startsWith(this.settings.localWatchDir + '/') && !file.path.endsWith('.conflict.md'))
-      const local = this.app.vault.getMarkdownFiles().filter(file => new Path(file.path).isInsideDir(this.settings.localWatchDir) && !file.path.endsWith('.conflict.md'))
-      log.info('local file path list: ', local);
-      // const local = this.app.vault.getAllLoadedFiles();
-      const localHistory = await loadFileHistoryTableByVault(
-        this.db,
-        this.vaultRandomID
-      );
-      let localConfigDirContents: ObsConfigDirFileType[] = undefined;
-      if (this.settings.syncConfigDir) {
-        localConfigDirContents = await listFilesInObsFolder(
-          this.app.vault.configDir,
-          this.app.vault,
-          this.manifest.id
-        );
-      }
-      log.info('local: ', local);
-      log.info('local history: ', localHistory);
+
+      const { local, localHistory, localConfigDirContents } = await this.getLocalFileStatus();
 
       getNotice(
         loadingModal,
@@ -308,27 +363,35 @@ export default class InvioPlugin extends Plugin {
         })
       );
       this.syncStatus = "generating_plan";
-      const { plan, sortedKeys, deletions, sizesGoWrong, touchedFileMap } = await getSyncPlan(
-        remoteStates,
-        local,
-        this.recentSyncedFiles,
-        fileList?.length > 0,
-        fileList,
-        localConfigDirContents,
-        origMetadataOnRemote.deletions,
-        localHistory,
-        client.serviceType,
-        triggerSource,
-        this.app.vault,
-        this.settings.syncConfigDir,
-        this.settings.localWatchDir,
-        this.app.vault.configDir,
-        this.settings.syncUnderscoreItems,
-        this.settings.skipSizeLargerThan,
-        this.settings.password
-      );
-      log.info('plan.mixedStates: ', plan.mixedStates, touchedFileMap); // for debugging
 
+      const internalCalculation = async () => {
+        let { plan, sortedKeys, deletions, sizesGoWrong, touchedFileMap } = await getSyncPlan(
+          remoteStates,
+          local as TFile[],
+          this.recentSyncedFiles,
+          fileList?.length > 0,
+          fileList,
+          localConfigDirContents,
+          origMetadataOnRemote.deletions,
+          localHistory,
+          client.serviceType,
+          triggerSource,
+          this.app.vault,
+          this.settings.syncConfigDir,
+          this.settings.localWatchDir,
+          this.app.vault.configDir,
+          this.settings.syncUnderscoreItems,
+          this.settings.skipSizeLargerThan,
+          this.settings.password
+        );
+        log.info('plan.mixedStates: ', plan.mixedStates, touchedFileMap); // for debugging
+        await pruneTouchedFiles(this.app.vault, client, touchedFileMap)
+        log.info('prunded mixedStates: ', plan.mixedStates, touchedFileMap);
+        return { plan, sortedKeys, deletions, sizesGoWrong, touchedFileMap }
+      }
+
+      // get state to local state
+      let { plan, sortedKeys, deletions, sizesGoWrong, touchedFileMap } = await internalCalculation();
       try {
         if (loadingModal) {
           loadingModal.close();
@@ -346,7 +409,33 @@ export default class InvioPlugin extends Plugin {
               resolve('skip');
               return;
             }
-            const touchedPlanModel = new TouchedPlanModel(this.app, this, touchedFileMap, (pub: boolean) => {
+            const touchedPlanModel = new TouchedPlanModel(this.app, this, touchedFileMap, (key: string, diffType: TDiffType) => {
+              log.info('view file diff: ', key, diffType);
+              this.viewFileDiff(key, diffType)
+                .then(file => {
+                  log.info('diff file changed - ', file);
+                  if (file) {
+                    return internalCalculation();
+                  }
+                })
+                .then(newResult => {
+                  if (!newResult) {
+                    log.info('empty reload');
+                    return;
+                  }
+                  // Sync updated calculation to local state
+                  plan = newResult.plan;
+                  sortedKeys = newResult.sortedKeys;
+                  deletions  = newResult.deletions;
+                  sizesGoWrong  = newResult.sizesGoWrong;
+                  touchedFileMap  = newResult.touchedFileMap;
+ 
+                  if (touchedPlanModel) {
+                    log.info('touched model reloading...', touchedFileMap)
+                    touchedPlanModel.reload(touchedFileMap)
+                  }
+                })
+            }, (pub: boolean) => {
               log.info('user confirmed: ', pub);
               pub ? resolve('ok') : reject('cancelled')
             });
@@ -366,17 +455,21 @@ export default class InvioPlugin extends Plugin {
   
       const { toRemoteFiles, toLocalFiles } = TouchedPlanModel.getTouchedFilesGroup(touchedFileMap)
 
+      // Nothing to sync, so end this process
+      if (toRemoteFiles.length === 0 && toLocalFiles.length === 0) {
+        this.syncStatus = "idle";
+        if (this.syncRibbon !== undefined) {
+          setIcon(this.syncRibbon, iconNameSyncLogo);
+          this.syncRibbon.setAttribute("aria-label", originLabel);
+        }
+        return; 
+      }
 
       // The operations above are almost read only and kind of safe.
       // The operations below begins to write or delete (!!!) something.
       await insertSyncPlanRecordByVault(this.db, plan, this.vaultRandomID);
       let view: StatsView;
       if (triggerSource !== "dry") {
-        // getNotice(
-        //   t("syncrun_step7", {
-        //     maxSteps: `${MAX_STEPS}`,
-        //   })
-        // );
         let allFiles = this.app.vault.getMarkdownFiles();
         // if we are at the root path export all files, otherwise only export files in the folder we are exporting
         allFiles = allFiles.filter((file: TFile) => new Path(file.path).isInsideDir(this.settings.localWatchDir) && (file.extension === "md") && (!file.name.endsWith('.conflict.md')));
@@ -474,69 +567,19 @@ export default class InvioPlugin extends Plugin {
                 this.addRecentSyncedFile(syncedFile);
                 const meta = this.app.metadataCache.getFileCache(syncedFile);
                 if (meta?.embeds) {
-                  // @ts-ignore
-                  const attachmentFolderPath = app.vault.getConfig('attachmentFolderPath');
-                  const attachmentFolderPrefix = attachmentFolderPath?.replace(/\/$/, '');
-                  const attachmentList = await this.app.vault.adapter.list(attachmentFolderPrefix + '/');
-
-                  const localAttachmentFiles: string[] = attachmentList.files;
-                  log.info('local dir list: ', localAttachmentFiles);
-
-                  // TODO: For all embeding formats.
-                  const embedImages = meta.embeds
-                    .filter((em: any) => em.link?.startsWith('Pasted image '))
-                    .map(em => em.link);
-
-                  log.info('embed list: ', embedImages);
-
-                  const getLinkWithPrefix = (link: string) => `${attachmentFolderPrefix}/${link}`.replace(/^\//, '')
-                  // TODO: Remove deleted attachment files
-                  if (decision === 'uploadLocalToRemote') {
-                    const diff = embedImages.filter(link => {
-                      const exist = localAttachmentFiles.find(f => f === getLinkWithPrefix(link));
-                      return exist;
-                    })
-                    await Promise.all(diff.map(async link => {
-                      log.info('uploading attachment: ', link);
-                      view?.info(`uploading attachment: ${link}`);
-
-                      return client.uploadToRemote(
-                        getLinkWithPrefix(link),
-                        RemoteAttPrefix,
-                        this.app.vault,
-                        false,
-                        '',
-                        '',
-                        null,
-                        false,
-                        null,
-                        `${RemoteAttPrefix}/${link}`
-                      )
-                    }))
-                  } else {
-                    const diff: string[] = embedImages.map(link => {
-                      const exist = localAttachmentFiles.find(f => f === getLinkWithPrefix(link));
-                      return exist ? null : link;
-                    })
-                    .filter(l => !!l);
-                    await Promise.all(diff.map(async link => {
-                      view?.info(`downloading attachment: ${link}`);
-                      log.info('downloading attachment: ', link);
-                      return client.downloadFromRemote(
-                        link,
-                        RemoteAttPrefix,
-                        this.app.vault,
-                        0,
-                        '',
-                        '',
-                        false,
-                        getLinkWithPrefix(link)
-                      )
-                      .catch(err => {
-                        log.error('sync attachment failed: ', err);
-                      })
-                    }))
-                  }
+                  await syncAttachment(
+                    this.app.vault,
+                    client,
+                    meta?.embeds,
+                    decision,
+                    (type: string, link: string, result: any, err?: any) => {
+                      if (err) {
+                        view?.info(`Attachment(${link}) ${type} failed`)
+                      } else {
+                        view?.info(`Attachment(${link}) ${type} success`)
+                      }
+                    }
+                  )
                 }
               }
             }
@@ -993,7 +1036,7 @@ export default class InvioPlugin extends Plugin {
       `${this.manifest.name}`,
       async () => this.syncRun("manual")
     );
-
+    
     this.addCommand({
       id: "start-sync-file",
       name: t("command_startsync_file"),

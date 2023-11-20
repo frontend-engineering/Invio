@@ -99,7 +99,7 @@ export class RemoteClient {
       }
     }
 
-    return Path.localToWebPath(localPath);
+    return localPath;
   }
 
   getUseHostLocalPath(slug: string) {
@@ -130,7 +130,7 @@ export class RemoteClient {
       }
     }
 
-    return Path.webToLocalPath(webPath)
+    return webPath
   }
 
   uploadToRemote = async (
@@ -186,6 +186,11 @@ export class RemoteClient {
       throw Error(`not supported service type ${this.serviceType}`);
     }
   };
+
+  getRemoteMeta = async (fileOrFolderPath: string) => {
+    const s3Client = await s3.getS3Client(this.s3Config, this.hostConfig, this.useHost, this.localWatchDir);
+    return await s3.getRemoteMeta(s3Client, this.s3Config, fileOrFolderPath);
+  }
 
   downloadFromRemote = async (
     fileOrFolderPath: string,
