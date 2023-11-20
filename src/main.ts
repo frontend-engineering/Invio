@@ -1,5 +1,4 @@
 import {
-  Command,
   Modal,
   Notice,
   Plugin,
@@ -10,7 +9,6 @@ import {
   FileSystemAdapter,
   TAbstractFile,
   TFolder,
-  SettingTab,
 } from "obsidian";
 import cloneDeep from "lodash/cloneDeep";
 import type {
