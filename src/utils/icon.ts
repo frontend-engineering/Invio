@@ -148,6 +148,22 @@ interface CreateOptions {
 const createIconNode = (plugin: InvioPlugin, path: string, svgStr: string, color: string = '#44cf6e', repeated?: boolean): void => {
   // Get the container from the provided options or try to find the node that has the
   // path from the document itself.
+  const paths = path.split('/');
+  paths?.reduce((left, cur) => {
+    let target = '';
+    if (!left) {
+      target = cur;
+    } else {
+      target = left + '/' + cur;
+    }
+    // checking target path
+    const node: any = document.querySelector(`[data-path="${target}"]`);
+    if (node) {
+      node?.click();
+      setTimeout(() => { node.click() }, 300)
+    }
+    return target;
+  }, '')
   const node = document.querySelector(`[data-path="${path}"]`);
   if (!node) {
     console.error('element with data path not found', path);
