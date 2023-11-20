@@ -97,13 +97,13 @@ export class Path
 		this._isFile = this._ext != "";
 		this._exists = undefined;
 
-		if (this._isWindows)
-		{
-			this._root = this._root.replaceAll("/", "\\");
-			this._dir = this._dir.replaceAll("/", "\\");
-			this._parent = this._parent.replaceAll("/", "\\");
-			this._fullPath = this._fullPath.replaceAll("/", "\\");
-		}
+		// if (this._isWindows)
+		// {
+		// 	this._root = this._root.replaceAll("/", "\\");
+		// 	this._dir = this._dir.replaceAll("/", "\\");
+		// 	this._parent = this._parent.replaceAll("/", "\\");
+		// 	this._fullPath = this._fullPath.replaceAll("/", "\\");
+		// }
 
 		this._exists; // force a re-evaluation of the exists property which will also throw an error if the path does not exist
 		return this;
