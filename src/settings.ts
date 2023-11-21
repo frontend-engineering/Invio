@@ -53,7 +53,8 @@ import { ProjectImportModal } from './components/ProjectImportModal';
 
 export const settingsPrefix = `Invio-Settings>`;
 export const settingsSuffix = `<&`
-
+export const DEFAULT_DIR = `InvioDocs`
+export const DEFAULT_FILE_URL = `https://docs.webinfra.cloud/op-remote-source-raw/Invio/index.md`
 const DEFAULT_SETTINGS: InvioPluginSettings = {
   s3: cloneDeep(DEFAULT_S3_CONFIG),
   useHost: false,
@@ -72,7 +73,7 @@ const DEFAULT_SETTINGS: InvioPluginSettings = {
   agreeToUploadExtraMetadata: false,
   concurrency: 5,
   syncConfigDir: false,
-  localWatchDir: "PublishDocs",
+  localWatchDir: DEFAULT_DIR,
   syncUnderscoreItems: true,
   lang: "auto",
   logToDB: false,
@@ -98,7 +99,7 @@ export const getDEFAULT_SETTINGS = (): InvioPluginSettings => {
     agreeToUploadExtraMetadata: false,
     concurrency: 5,
     syncConfigDir: false,
-    localWatchDir: "PublishDocs",
+    localWatchDir: DEFAULT_DIR,
     syncUnderscoreItems: true,
     lang: "auto",
     logToDB: false,

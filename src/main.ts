@@ -42,17 +42,12 @@ import { ObsConfigDirFileType, listFilesInObsFolder } from "./obsFolderLister";
 import { I18n } from "./i18n";
 import type { LangType, LangTypeAndAuto, TransItemType } from "./i18n";
 
-import { DeletionOnRemote, MetadataOnRemote } from "./metadataOnRemote";
 import { SyncAlgoV2Modal } from "./syncAlgoV2Notice";
 import { TouchedPlanModel } from './touchedPlanModel';
 import { LoadingModal } from './loadingModal';
 
 import { applyLogWriterInplace, log } from "./moreOnLog";
 import AggregateError from "aggregate-error";
-// import {
-//   exportVaultLoggerOutputToFiles,
-//   exportVaultSyncPlansToFiles,
-// } from "./debugMode";
 import { SizesConflictModal } from "./syncSizesConflictNotice";
 import { publishFiles, unpublishFile } from './exporter'
 import { AssetHandler } from './html-generation/asset-handler';
@@ -849,6 +844,7 @@ export default class InvioPlugin extends Plugin {
           new Notice(
             t("syncrun_no_watchdir_err")
           );
+          Utils.mockLocaleFile(this)
         }
       }, 300);
       // TODO: Change file icons to show sync status, like sync done, sync failed, pending to sync, etc.

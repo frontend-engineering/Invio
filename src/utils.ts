@@ -1,5 +1,6 @@
 // import fse from 'fs-extra';
 import path from 'path';
+import { requestUrl } from 'obsidian';
 import { app, BrowserWindow, BrowserWindowConstructorOptions, dialog, MessageBoxOptions, screen, shell } from 'electron';
 import { machineId } from 'node-machine-id';
 import os from 'os';
@@ -7,6 +8,9 @@ import { createHash } from 'crypto';
 import { v4 } from 'uuid';
 import { AppHostServerUrl } from './remoteForS3';
 import { loadGA } from './ga';
+import type InvioPlugin from './main';
+import { DEFAULT_DIR, DEFAULT_FILE_URL } from './settings';
+import { mkdirpInVault } from './misc'
 
 const logger = console;
 logger.info = console.log;
@@ -78,7 +82,41 @@ const gotoAuth = (url?: string) => {
 const gotoMainSite = () => {
     (window as any).electron.remote.shell.openExternal(AppHostServerUrl);
 }
-  
+
+const mockLocaleFile = async (plugin:InvioPlugin) => {
+    let defaultFolder = DEFAULT_DIR
+    const existed = await plugin.app.vault.adapter.exists(defaultFolder)
+    if (existed) {
+        defaultFolder += `_${Math.random().toFixed(4).slice(2)}`
+    }
+    plugin.app.vault.adapter.mkdir(defaultFolder)
+    .then(() => {
+        plugin.settings.localWatchDir = defaultFolder
+        return plugin.saveSettings()
+    })
+    .then(() => {
+        plugin.ga.trace('boot_project', {
+            dirname: plugin.settings.localWatchDir
+        });
+        plugin.switchWorkingDir(plugin.settings.localWatchDir);
+    })
+    .then(async () => {
+      // Add a new file
+      const arrayBuffer = await requestUrl({
+        url: DEFAULT_FILE_URL
+      }).then(resp => resp.arrayBuffer)
+      return plugin.app.vault.adapter.writeBinary(`${defaultFolder}/Introduction.md`, arrayBuffer)
+    })
+    .then(async () => {
+        const created = await plugin.app.vault.adapter.exists(`${defaultFolder}/Introduction.md`);
+        if (created) {
+            let parentNode: any = document.querySelector(`[data-path="${defaultFolder}"]`);
+            parentNode?.click();
+            let node: any = document.querySelector(`[data-path="${defaultFolder}/Introduction.md"]`);
+            node?.click();
+        }
+    })
+}
 const Utils = {
     md5Hash,
     getAppPath,
@@ -89,6 +127,7 @@ const Utils = {
     showNotification,
     gotoAuth,
     gotoMainSite,
+    mockLocaleFile,
     // getTracert
 };
 
