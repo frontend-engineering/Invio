@@ -9,6 +9,7 @@ import {
   requireApiVersion,
 } from "obsidian";
 import type { TextComponent } from "obsidian";
+import cloneDeep from "lodash/cloneDeep";
 import { createElement, Eye, EyeOff } from "lucide";
 import {
   InvioPluginSettings,
@@ -53,8 +54,8 @@ import { ProjectImportModal } from './components/ProjectImportModal';
 export const settingsPrefix = `Invio-Settings>`;
 export const settingsSuffix = `<&`
 
-export const DEFAULT_SETTINGS: InvioPluginSettings = {
-  s3: DEFAULT_S3_CONFIG,
+const DEFAULT_SETTINGS: InvioPluginSettings = {
+  s3: cloneDeep(DEFAULT_S3_CONFIG),
   useHost: false,
   hostConfig: {
     hostPair: null,
@@ -77,6 +78,33 @@ export const DEFAULT_SETTINGS: InvioPluginSettings = {
   logToDB: false,
   skipSizeLargerThan: -1,
 };
+
+export const getDEFAULT_SETTINGS = (): InvioPluginSettings => {
+  return cloneDeep({
+    s3: cloneDeep(DEFAULT_S3_CONFIG),
+    useHost: false,
+    hostConfig: {
+      hostPair: null,
+      token: '',
+      user: null,
+    },
+    password: "",
+    remoteDomain: '',
+    serviceType: "s3",
+    currLogLevel: "info",
+    // vaultRandomID: "", // deprecated
+    autoRunEveryMilliseconds: -1,
+    initRunAfterMilliseconds: -1,
+    agreeToUploadExtraMetadata: false,
+    concurrency: 5,
+    syncConfigDir: false,
+    localWatchDir: "PublishDocs",
+    syncUnderscoreItems: true,
+    lang: "auto",
+    logToDB: false,
+    skipSizeLargerThan: -1,
+  });
+}
 
 class PasswordModal extends Modal {
   plugin: InvioPlugin;

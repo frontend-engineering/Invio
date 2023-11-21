@@ -34,7 +34,7 @@ import {
   clearExpiredSyncPlanRecords,
 } from "./localdb";
 import { RemoteClient, ServerDomain } from "./remote";
-import { InvioSettingTab, DEFAULT_SETTINGS } from "./settings";
+import { InvioSettingTab, getDEFAULT_SETTINGS } from "./settings";
 import { fetchMetadataFile, parseRemoteItems, SyncStatusType, RemoteSrcPrefix, syncAttachment, LocalConflictPrefix, RemoteConflictPrefix } from "./sync";
 import { doActualSync, getSyncPlan, isPasswordOk, fetchRemoteFileMD, pruneTouchedFiles } from "./sync";
 import { messyConfigToNormal, normalConfigToMessy } from "./configPersist";
@@ -1133,12 +1133,9 @@ export default class InvioPlugin extends Plugin {
     }
     this.settings = Object.assign(
       {},
-      cloneDeep(DEFAULT_SETTINGS),
-      rawConf ? {} : messyConfigToNormal(rawConf)
+      getDEFAULT_SETTINGS(),
+      messyConfigToNormal(rawConf) || {}
     );
-    if (!this.settings.s3) {
-      this.settings.s3 = DEFAULT_SETTINGS.s3
-    }
     if (this.settings.s3.partsConcurrency === undefined) {
       this.settings.s3.partsConcurrency = 20;
     }
