@@ -30,7 +30,7 @@ export async function getRemoteFileDiff(vault: Vault, filePath: string, remoteMD
     }
     const localContent = await vault.adapter.readBinary(filePath).then(buf => new TextDecoder().decode(buf));
     console.log('updated local contents: ', filePath, localContent);
-    const dmp = new diff_match_patch();
+    const dmp: any = new diff_match_patch();
     const uDiff = dmp.diff_main(localContent, remoteMD);
     dmp.diff_cleanupSemantic(uDiff);
 

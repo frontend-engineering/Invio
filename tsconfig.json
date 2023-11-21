@@ -16,5 +16,5 @@
     "isolatedModules": true,
     "lib": ["dom", "es5", "scripthost", "es2021"]
   },
-  "include": ["**/*.ts", "**/*.tsx", "./declarations.d.ts"]
+  "include": ["**/*.ts", "**/*.tsx", "src/diff/*.js", "./declarations.d.ts"]
 }
