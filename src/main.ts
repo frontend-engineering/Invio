@@ -936,10 +936,6 @@ export default class InvioPlugin extends Plugin {
         if (this.isUnderWatch(fileOrFolder)) {
           this.setRibbonPendingStatus();
           log.debug('file rename: ', fileOrFolder);
-  
-          setTimeout(() => {
-            addIconForconflictFile(this, fileOrFolder)
-          }, 300)
         }
       })
     );
@@ -950,9 +946,6 @@ export default class InvioPlugin extends Plugin {
         log.debug('file modified: ', file);
         if (this.isUnderWatch(file)) {
           this.setRibbonPendingStatus();
-          setTimeout(() => {
-            addIconForconflictFile(this, file)
-          }, 300)
         }
       })
     )
@@ -961,10 +954,12 @@ export default class InvioPlugin extends Plugin {
       this.app.vault.on('create', async (file) => {
         log.debug('file created: ', file);
         if (this.isUnderWatch(file)) {
-          this.setRibbonPendingStatus(); 
-          setTimeout(() => {
-            addIconForconflictFile(this, file)
-          }, 300)
+          this.setRibbonPendingStatus();
+          if (file.name.endsWith('.conflict.md')) {
+            setTimeout(() => {
+              addIconForconflictFile(this, file)
+            }, 300)
+          }
         }
       })
     )

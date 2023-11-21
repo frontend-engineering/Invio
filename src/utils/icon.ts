@@ -149,6 +149,7 @@ const createIconNode = (plugin: InvioPlugin, path: string, svgStr: string, color
   // Get the container from the provided options or try to find the node that has the
   // path from the document itself.
   const paths = path.split('/');
+  let parentNode: any = null;
   paths?.reduce((left, cur) => {
     let target = '';
     if (!left) {
@@ -157,21 +158,33 @@ const createIconNode = (plugin: InvioPlugin, path: string, svgStr: string, color
       target = left + '/' + cur;
     }
     // checking target path
-    const node: any = document.querySelector(`[data-path="${target}"]`);
+    let node: any = document.querySelector(`[data-path="${target}"]`);
+    console.log('check node...', target, node)
     if (node) {
-      node?.click();
-      setTimeout(() => { node.click() }, 300)
+      parentNode = node;
+    } else {
+      if (parentNode) {
+        parentNode.click();
+        console.log('clicking node: ', target, parentNode);
+        node = document.querySelector(`[data-path="${target}"]`);
+        console.log('to find child node: ', node);
+        if (node) {
+          parentNode = node;
+        }
+      } else {
+        if (!repeated) {
+          setTimeout(() => {
+            createIconNode(plugin, path, svgStr, color, true);
+          }, 3000)
+        }
+      }
     }
     return target;
   }, '')
   const node = document.querySelector(`[data-path="${path}"]`);
+
   if (!node) {
     console.error('element with data path not found', path);
-    if (!repeated) {
-      setTimeout(() => {
-        createIconNode(plugin, path, svgStr, color, true);
-      }, 3000)
-    }
     return;
   }
 

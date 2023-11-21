@@ -1,10 +1,10 @@
 import { App, TFile, Notice, Vault } from 'obsidian';
-import { diffChars } from 'diff';
 import LocalToRemoteDiffView, { IRemoteFile } from './local_to_remote_diff_view';
 import RemoteToLocalDiffView from './remote_to_local_diff_view';
 import ConflictDiffView from './conflict_diff_view';
 import { TDiffType } from './abstract_diff_view';
 import type InvioPlugin from '../main';
+import { diff_match_patch } from './effective_diff.js';
 
 export * from './abstract_diff_view';
 
@@ -30,11 +30,11 @@ export async function getRemoteFileDiff(vault: Vault, filePath: string, remoteMD
     }
     const localContent = await vault.adapter.readBinary(filePath).then(buf => new TextDecoder().decode(buf));
     console.log('updated local contents: ', filePath, localContent);
-    const uDiff = diffChars(
-      localContent,
-      remoteMD
-    );
-    const diff = (uDiff?.filter((item: any) => item.added || item.removed)).length > 0
+    const dmp = new diff_match_patch();
+    const uDiff = dmp.diff_main(localContent, remoteMD);
+    dmp.diff_cleanupSemantic(uDiff);
+
+    const diff = (uDiff?.filter((item: any) => item[0] !== 0)).length > 0
     console.log('diff result: ', diff, uDiff);
     return !!diff;
   }
