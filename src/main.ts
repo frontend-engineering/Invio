@@ -105,12 +105,12 @@ export default class InvioPlugin extends Plugin {
 
   async viewFileDiff(filePath: string, diffType: TDiffType) {
     const file = this.app.vault.getAbstractFileByPath(filePath)
-    if (!this.app.vault.adapter.exists(filePath)) {
+    if (!await this.app.vault.adapter.exists(filePath)) {
       new Notice(`The file(${filePath}) does not exist locally`)
       return;
     }
     if (!(file instanceof TFile)) {
-      new Notice('Not valid file');
+      new Notice(`${filePath} is not a valid file`);
       return;
     }
     const client = new RemoteClient(
