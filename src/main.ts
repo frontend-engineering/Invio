@@ -836,10 +836,17 @@ export default class InvioPlugin extends Plugin {
       // Add custom icon for root dir
       setTimeout(() => {
         if (this.settings.localWatchDir) {
-          this.ga.trace('boot_project', {
-            dirname: this.settings.localWatchDir
-          });
-          this.switchWorkingDir(this.settings.localWatchDir);
+          this.app.vault.adapter.exists(this.settings.localWatchDir)
+          .then(dirWatching => {
+            if (dirWatching) {
+              this.ga.trace('boot_project', {
+                dirname: this.settings.localWatchDir
+              });
+              this.switchWorkingDir(this.settings.localWatchDir);
+            } else {
+              Utils.mockLocaleFile(this) 
+            }
+          })
         } else {
           new Notice(
             t("syncrun_no_watchdir_err")
