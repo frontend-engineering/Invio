@@ -435,7 +435,10 @@ export const pruneTouchedFiles = async (vault: Vault, client: RemoteClient, list
         item.key,
         client,
         vault,
-      );
+      ).catch(err => {
+        log.info('remote empty ', err);
+        return null;
+      })
       log.info('remote md: ', remoteMD);
       if (!remoteMD) {
         return;
