@@ -946,6 +946,11 @@ export default class InvioPlugin extends Plugin {
         log.debug('file modified: ', file);
         if (this.isUnderWatch(file)) {
           this.setRibbonPendingStatus();
+          if (file.name.endsWith('.conflict.md')) {
+            setTimeout(() => {
+              addIconForconflictFile(this, file)
+            }, 300)
+          }
         }
       })
     )

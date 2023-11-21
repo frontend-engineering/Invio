@@ -6,6 +6,7 @@ import { createElement, FolderSync, RefreshCcw, FileText, FolderSymlink, CopySla
 import InvioPlugin from '../main';
 import style from './style';
 import svg from './svg';
+import { LocalConflictPrefix, RemoteConflictPrefix } from '../sync'
 
 export interface Icon {
   name: string;
@@ -150,7 +151,8 @@ const createIconNode = (plugin: InvioPlugin, path: string, svgStr: string, color
   // path from the document itself.
   const paths = path.split('/');
   let parentNode: any = null;
-  paths?.reduce((left, cur) => {
+  paths?.reduce(async (leftPromise, cur) => {
+    const left = await leftPromise;
     let target = '';
     if (!left) {
       target = cur;
@@ -159,15 +161,13 @@ const createIconNode = (plugin: InvioPlugin, path: string, svgStr: string, color
     }
     // checking target path
     let node: any = document.querySelector(`[data-path="${target}"]`);
-    console.log('check node...', target, node)
     if (node) {
       parentNode = node;
     } else {
       if (parentNode) {
         parentNode.click();
-        console.log('clicking node: ', target, parentNode);
+        await sleep(300);
         node = document.querySelector(`[data-path="${target}"]`);
-        console.log('to find child node: ', node);
         if (node) {
           parentNode = node;
         }
@@ -175,12 +175,12 @@ const createIconNode = (plugin: InvioPlugin, path: string, svgStr: string, color
         if (!repeated) {
           setTimeout(() => {
             createIconNode(plugin, path, svgStr, color, true);
-          }, 3000)
+          }, 3000);
         }
       }
     }
     return target;
-  }, '')
+  }, Promise.resolve(''))
   const node = document.querySelector(`[data-path="${path}"]`);
 
   if (!node) {
@@ -218,6 +218,18 @@ export const addIconForconflictFile = (plugin: InvioPlugin, fileOrFolder: TAbstr
   if ((fileOrFolder instanceof TFile) && fileOrFolder.name.endsWith('.conflict.md')) {
     // Add alert icon for conflict file
     const { iconSvgCopySlash } = getIconSvg();
+    const fileP = fileOrFolder.path;
+
+    const idx1 = fileP.indexOf(LocalConflictPrefix);
+    if (idx1 > 0) {
+      const folderP = fileP.slice(0, idx1) + LocalConflictPrefix
+      createIconNode(plugin, folderP, iconSvgCopySlash, '#dd1b9a'); 
+    }
+    const idx2 = fileP.indexOf(RemoteConflictPrefix);
+    if (idx2 > 0) {
+      const folderP = fileP.slice(0, idx2) + RemoteConflictPrefix
+      createIconNode(plugin, folderP, iconSvgCopySlash, '#dd1b9a'); 
+    }
     createIconNode(plugin, fileOrFolder.path, iconSvgCopySlash, '#dd1b9a'); 
   }
 }

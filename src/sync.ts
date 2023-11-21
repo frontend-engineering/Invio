@@ -56,7 +56,6 @@ import { isInsideObsFolder, ObsConfigDirFileType } from "./obsFolderLister";
 import { Utils } from './utils/utils';
 import { Path } from './utils/path';
 import { log } from "./moreOnLog";
-import { settings } from "assets/webworker.txt";
 import { getRemoteFileDiff } from './diff/index';
 
 export const RemoteSrcPrefix = 'op-remote-source-raw/'
