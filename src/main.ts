@@ -1134,7 +1134,7 @@ export default class InvioPlugin extends Plugin {
     this.settings = Object.assign(
       {},
       cloneDeep(DEFAULT_SETTINGS),
-      rawConf ? messyConfigToNormal(rawConf) : {}
+      rawConf ? {} : messyConfigToNormal(rawConf)
     );
     if (!this.settings.s3) {
       this.settings.s3 = DEFAULT_SETTINGS.s3
