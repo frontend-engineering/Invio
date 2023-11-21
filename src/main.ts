@@ -1136,6 +1136,9 @@ export default class InvioPlugin extends Plugin {
       cloneDeep(DEFAULT_SETTINGS),
       messyConfigToNormal(rawConf)
     );
+    if (!this.settings.s3) {
+      this.settings.s3 = DEFAULT_SETTINGS.s3
+    }
     if (this.settings.s3.partsConcurrency === undefined) {
       this.settings.s3.partsConcurrency = 20;
     }
