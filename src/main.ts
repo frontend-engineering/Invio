@@ -105,6 +105,10 @@ export default class InvioPlugin extends Plugin {
 
   async viewFileDiff(filePath: string, diffType: TDiffType) {
     const file = this.app.vault.getAbstractFileByPath(filePath)
+    if (!this.app.vault.adapter.exists(filePath)) {
+      new Notice(`The file(${filePath}) does not exist locally`)
+      return;
+    }
     if (!(file instanceof TFile)) {
       new Notice('Not valid file');
       return;
@@ -122,8 +126,15 @@ export default class InvioPlugin extends Plugin {
       client,
       this.app.vault,
       this.settings.password
-    );
+    ).catch(err => {
+      log.error('fetch remote file failed: ', err);
+      return null
+    })
     log.info('remote md: ', remoteMD);
+    if (!remoteMD?.data) {
+      new Notice(`The file(${filePath}) does not exist remotely`)
+      return;
+    }
     return new Promise((resolve, reject) => {
       openDiffModal(this.app, this, file, {
         data: remoteMD.data,
