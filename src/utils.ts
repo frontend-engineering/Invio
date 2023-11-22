@@ -10,7 +10,7 @@ import { AppHostServerUrl } from './remoteForS3';
 import { loadGA } from './ga';
 import type InvioPlugin from './main';
 import { DEFAULT_DIR, DEFAULT_FILE_URL } from './settings';
-import { mkdirpInVault } from './misc'
+import { log } from './moreOnLog'
 
 const logger = console;
 logger.info = console.log;
@@ -84,38 +84,37 @@ const gotoMainSite = () => {
 }
 
 const mockLocaleFile = async (plugin:InvioPlugin) => {
-    let defaultFolder = DEFAULT_DIR
-    const existed = await plugin.app.vault.adapter.exists(defaultFolder)
-    if (existed) {
-        defaultFolder += `_${Math.random().toFixed(4).slice(2)}`
-    }
-    plugin.app.vault.adapter.mkdir(defaultFolder)
-    .then(() => {
+    try {
+        const defaultFolder = DEFAULT_DIR
+        const existed = await plugin.app.vault.adapter.exists(defaultFolder)
+        if (!existed) {
+            await plugin.app.vault.adapter.mkdir(defaultFolder)
+        }
         plugin.settings.localWatchDir = defaultFolder
-        return plugin.saveSettings()
-    })
-    .then(() => {
+        await plugin.saveSettings()
         plugin.ga.trace('boot_project', {
             dirname: plugin.settings.localWatchDir
         });
-        plugin.switchWorkingDir(plugin.settings.localWatchDir);
-    })
-    .then(async () => {
-      // Add a new file
-      const arrayBuffer = await requestUrl({
-        url: DEFAULT_FILE_URL
-      }).then(resp => resp.arrayBuffer)
-      return plugin.app.vault.adapter.writeBinary(`${defaultFolder}/Introduction.md`, arrayBuffer)
-    })
-    .then(async () => {
-        const created = await plugin.app.vault.adapter.exists(`${defaultFolder}/Introduction.md`);
-        if (created) {
-            let parentNode: any = document.querySelector(`[data-path="${defaultFolder}"]`);
-            parentNode?.click();
-            let node: any = document.querySelector(`[data-path="${defaultFolder}/Introduction.md"]`);
-            node?.click();
-        }
-    })
+        await plugin.switchWorkingDir(plugin.settings.localWatchDir)
+        
+        const arrayBuffer = await requestUrl({
+            url: DEFAULT_FILE_URL
+        }).then(resp => resp.arrayBuffer)
+        
+        const introFilePath = `${defaultFolder}/Introduction.md`
+        await plugin.app.vault.adapter.exists(introFilePath)
+        .then(existed => {
+            if (!existed) {
+                return plugin.app.vault.adapter.writeBinary(introFilePath, arrayBuffer)
+            }
+        })
+        let parentNode: any = document.querySelector(`[data-path="${defaultFolder}"]`);
+        parentNode?.click();
+        let node: any = document.querySelector(`[data-path="${introFilePath}"]`);
+        node?.click();
+    } catch (error) {
+        log.error('create mock folder failed: ', error);
+    }
 }
 const Utils = {
     md5Hash,

@@ -56,7 +56,7 @@ import { isInsideObsFolder, ObsConfigDirFileType } from "./obsFolderLister";
 import { Utils } from './utils/utils';
 import { Path } from './utils/path';
 import { log } from "./moreOnLog";
-import { getRemoteFileDiff } from './diff/index';
+import { isRemoteFileDiff } from './diff/index';
 
 export const RemoteSrcPrefix = 'op-remote-source-raw/'
 export const RemoteAttPrefix = 'op-remote-attach-p/'
@@ -443,14 +443,30 @@ export const pruneTouchedFiles = async (vault: Vault, client: RemoteClient, list
       if (!remoteMD) {
         return;
       }
-      const diff = await getRemoteFileDiff(vault, item.key, remoteMD.data);
+      const diff = await isRemoteFileDiff(vault, item.key, remoteMD.data);
       if (!diff) {
-        log.info('file contents diff nothing', attr, item)
+        log.info('file contents diff nothing', attr, item.key)
         list[attr] = null;
         delete list[attr];
         return attr;
       }
       return;
+    } else if (item.decision === 'downloadRemoteToLocal') {
+      const remoteMD = await fetchRemoteFileMD(
+        item.key,
+        client,
+        vault,
+      ).catch(err => {
+        log.info('remote empty ', err);
+        return null;
+      })
+      log.info('remote md: ', remoteMD);
+      if (!remoteMD || !(await isRemoteFileDiff(vault, item.key, remoteMD.data))) {
+        log.info('file contents diff nothing', attr, item.key)
+        list[attr] = null;
+        delete list[attr];
+        return attr;
+      }
     }
   })
   const result = await Promise.all(promises);

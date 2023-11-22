@@ -5,6 +5,7 @@ import ConflictDiffView from './conflict_diff_view';
 import { TDiffType } from './abstract_diff_view';
 import type InvioPlugin from '../main';
 import { diff_match_patch } from './effective_diff.js';
+import { log } from '../moreOnLog'
 
 export * from './abstract_diff_view';
 
@@ -21,20 +22,23 @@ export function openDiffModal(app: App, plugin: InvioPlugin, file: TFile, remote
   }
 }
 
-
-export async function getRemoteFileDiff(vault: Vault, filePath: string, remoteMD: string) {
+// For local files not exist or invalid, always return diff: true
+export async function isRemoteFileDiff(vault: Vault, filePath: string, remoteMD: string) {
+    const localExist = await vault.adapter.exists(filePath)
+    if (!localExist) {
+      log.info(`file ${filePath} not existed locally`)
+      return true;
+    }
     const file = vault.getAbstractFileByPath(filePath)
     if (!(file instanceof TFile)) {
-      new Notice('Not valid file');
-      return;
+      log.info(`file ${filePath} not a valid file`)
+      return true;
     }
     const localContent = await vault.adapter.readBinary(filePath).then(buf => new TextDecoder().decode(buf));
-    console.log('updated local contents: ', filePath, localContent);
     const dmp: any = new diff_match_patch();
     const uDiff = dmp.diff_main(localContent, remoteMD);
     dmp.diff_cleanupSemantic(uDiff);
 
     const diff = (uDiff?.filter((item: any) => item[0] !== 0)).length > 0
-    console.log('diff result: ', diff, uDiff);
     return !!diff;
   }
