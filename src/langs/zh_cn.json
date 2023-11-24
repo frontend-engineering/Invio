@@ -17,6 +17,9 @@
 
   "syncrun_alreadyrunning": "{{pluginName}} 正处于此阶段：{{syncStatus}}!",
   "syncrun_no_watchdir_err": "Invio: 请先配置本地同步文件夹",
+  "syncrun_no_domain_err": "请先配置自定义域名",
+  "syncrun_copy_link_msg": "链接已复制到剪贴板",
+  "syncrun_copy_link_null_msg": "线上文件未同步，请先发布",
   "syncrun_syncingribbon": "{{pluginName}}：正在由 {{triggerSource}} 触发运行",
   "syncrun_syncingribbon_err": "{{pluginName}}: 文件同步失败",
   "syncrun_step0": "0/{{maxSteps}} Invio 在空跑（dry run）模式，不会发生实际的文件交换。",
@@ -58,6 +61,7 @@
   "menu_set_folder": "设置为工作目录",
   "menu_sync_folder": "文件夹同步",
   "menu_share_folder": "分享文件夹",
+  "menu_get_link": "在线链接",
   "menu_sync_file": "文件同步",
 
   "modal_password_title": "稍等一下，请阅读下文：",

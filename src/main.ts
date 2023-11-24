@@ -923,6 +923,25 @@ export default class InvioPlugin extends Plugin {
                   await this.syncRun('manual', [file.path])
                 });
             })
+            .addItem((item) => {
+              item
+                .setTitle(`${Menu_Tab}${t('menu_get_link')}`)
+                .setIcon("document")
+                .onClick(async () => {
+                  const filePath = file.path;
+                  const link = await this.getRemoteLink(filePath);
+                  if (link) {
+                    await navigator.clipboard.writeText(link);
+                    new Notice(
+                      this.t("syncrun_copy_link_msg")
+                    );
+                  } else {
+                    new Notice(
+                      this.t("syncrun_copy_link_null_msg")
+                    ); 
+                  }
+                });
+            })
         }
       })
     );
@@ -1173,10 +1192,35 @@ export default class InvioPlugin extends Plugin {
         const slug = this.settings.hostConfig?.hostPair.slug;
         domain = `https://${slug}.${ServerDomain}`;
       } else {
+        if (!this.settings.s3.s3BucketName) return '';
         domain = `https://${this.settings.s3.s3BucketName}.${this.settings.s3.s3Endpoint}`;
       }
     }
     return domain;
+  }
+
+  async getRemoteLink(pathName: string) {
+    const domain = this.getRemoteDomain();
+    if (!domain) {
+      new Notice(
+        this.t("syncrun_no_domain_err")
+      ); 
+      return;
+    }
+    // TODO: Get remote link, but need remote domain first
+    const client = new RemoteClient(
+      this.settings.serviceType,
+      this.settings.s3,
+      this.settings.hostConfig,
+      this.settings.useHost,
+      this.settings.localWatchDir,
+      this.app.vault.getName(),
+    );
+    const publishedKey = client.getUseHostSlugPath(pathName)
+    // Check remote link
+    const remoteContents = await client.listFromRemote(publishedKey?.split('/').slice(0, -1).join('/'), RemoteSrcPrefix);
+    const existed = remoteContents.find(item => item.key === (RemoteSrcPrefix + publishedKey).replace('//', '/'))
+    return existed ? (domain + `/${publishedKey.replace(/\.md$/, '.html')}`) : null
   }
 
   async enableHostService() {

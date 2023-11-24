@@ -17,6 +17,9 @@
 
   "syncrun_alreadyrunning": "{{pluginName}} already running in stage {{syncStatus}}!",
   "syncrun_no_watchdir_err": "Invio: Please choose a local folder to get started!",
+  "syncrun_no_domain_err": "Need to config custom domain",
+  "syncrun_copy_link_msg": "Link copied to the clipboard",
+  "syncrun_copy_link_null_msg": "Remote link not found",
   "syncrun_syncingribbon": "{{pluginName}}: syncing from {{triggerSource}}",
   "syncrun_syncingribbon_err": "{{pluginName}}: file syncing failed",
   "syncrun_step0": "0/{{maxSteps}} Invio running in dry mode, not actual file changes would happen.",
@@ -58,6 +61,7 @@
   "menu_set_folder": "Set as working folder",
   "menu_sync_folder": "Folder Publish",
   "menu_share_folder": "Share This Folder",
+  "menu_get_link": "Get Online Link",
   "menu_sync_file": "File Publish",
 
   "modal_password_title": "Hold on and PLEASE READ ON...",
