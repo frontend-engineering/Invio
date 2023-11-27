@@ -21,8 +21,9 @@ export default class ConflictDiffView extends DiffView {
 		this.rightVList = [];
 		this.remote = remoteFile;
 		this.leftContent = remoteFile?.data;
-		this.leftName = 'remote version'
-		this.rightName = 'local version'
+		this.leftName = plugin.t('diff_view_remote_version'); // 'remote version'
+		this.rightName = plugin.t('diff_view_local_version'); // 'local version'
+
 		this.htmlConfig = {
 			drawFileList: true,
 			diffStyle: 'word',

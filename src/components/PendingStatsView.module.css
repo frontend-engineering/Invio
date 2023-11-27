@@ -1,0 +1,61 @@
+.header {
+    text-align: center;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.sub-header {
+    margin: 8px;
+    font-weight: bold;
+}
+
+.header > .icon {
+    margin-right: 6px;
+}
+
+.header > .settings {
+    position: absolute;
+    right: 14px;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    margin-top: 4px;
+}
+
+.empty-report {
+    display: flex;
+    flex-direction: column;
+    margin-top: 12px;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 18px;
+    opacity: 0.75;
+}
+
+.empty-report > .icon {
+    width: 32px;
+    height: 32px;
+    opacity: 0.1;
+}
+
+.empty-report > span {
+    margin-top: 22px;
+}
+
+
+.icon {
+    width: 16px;
+    height: 16px;
+}
+
+.actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 22px;
+}
+
+.actions > button {
+    color: white;
+}

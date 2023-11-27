@@ -100,6 +100,9 @@ export interface InvioPluginSettings {
   currLogLevel?: string;
   autoRunEveryMilliseconds?: number;
   initRunAfterMilliseconds?: number;
+
+  autoCheckEveryMilliseconds?: number; 
+  initCheckAfterMilliseconds?: number;
   agreeToUploadExtraMetadata?: boolean;
   concurrency?: number;
   syncConfigDir?: boolean;
@@ -217,4 +220,5 @@ export const DEFAULT_SYNC_PLANS_HISTORY_FILE_PREFIX =
   "sync_plans_hist_exported_on_";
 export const DEFAULT_LOG_HISTORY_FILE_PREFIX = "log_hist_exported_on_";
 
-export type SyncTriggerSourceType = "manual" | "auto" | "dry" | "autoOnceInit" | "force";
+// pre - only check pending files but no more actions
+export type SyncTriggerSourceType = "manual" | "auto" | "dry" | "autoOnceInit" | "force" | "pre";

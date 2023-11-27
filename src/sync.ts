@@ -63,8 +63,8 @@ export const RemoteAttPrefix = 'op-remote-attach-p/'
 export const LocalConflictPrefix = 'local.conflict'
 export const RemoteConflictPrefix = 'remote.conflict'
 // 影响到pub产物变动的decision
-const RemoteFileTouchedDecisions = ['uploadLocalDelHistToRemote', 'uploadLocalToRemote'];
-const LocalFileTouchedDecisions = ['downloadRemoteToLocal', 'keepRemoteDelHist'];
+export const RemoteFileTouchedDecisions = ['uploadLocalDelHistToRemote', 'uploadLocalToRemote'];
+export const LocalFileTouchedDecisions = ['downloadRemoteToLocal', 'keepRemoteDelHist'];
 
 export type SyncStatusType =
   | "idle"
