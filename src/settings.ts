@@ -483,10 +483,6 @@ export class InvioSettingTab extends PluginSettingTab {
             this.hide();
           }); 
         })
-      } else {
-        new Setting(updateDiv)
-        .setName('update')
-        .setDesc('latest version')
       }
     })
 
