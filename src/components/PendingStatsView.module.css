@@ -22,8 +22,13 @@
     height: 18px;
     cursor: pointer;
     margin-top: 4px;
+    transition: all;
+    transition-duration: 0.3s;
 }
-
+.header > .settings:hover {
+    transform: rotateZ(45deg);
+    
+}
 .empty-report {
     display: flex;
     flex-direction: column;
@@ -57,5 +62,6 @@
 }
 
 .actions > button {
-    color: white;
+    /* color: white; */
+    color: var(--text-normal);
 }
