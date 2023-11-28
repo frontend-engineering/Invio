@@ -52,6 +52,24 @@ export class CheckSettingsModal extends Modal {
       text: t('settings_check_modal_title')
     });
 
+
+    const updateDiv = contentEl.createEl("div");
+    this.plugin.updater.update(true).then(updateInfo => {
+      if ((typeof updateInfo !== 'boolean') && updateInfo?.updateVersion) {
+        const desc = t('settings_update_desc', updateInfo);
+        new Setting(updateDiv)
+        .setName(t('settings_update_title'))
+        .setDesc(desc)
+        .addButton((button) => {
+          button.setButtonText(t('settings_update_btn'));
+          button.onClick(() => {
+            this.plugin.updater.update()
+            this.close();
+          }); 
+        })
+      }
+    })
+  
     new Setting(contentEl)
       .setDesc(t('settings_check_modal_desc'))
 
