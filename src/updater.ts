@@ -112,10 +112,6 @@ export default class AutoUpdater {
             clearInterval(this.timer);
         }
         this.timer = setInterval(async () => {
-            if (this.updateInfo?.updateVersion) {
-                this.timer && clearInterval(this.timer)
-                return;
-            }
             const info = await this.update(true)
             if (typeof info === 'boolean') {
                 return;
@@ -128,14 +124,18 @@ export default class AutoUpdater {
         }, CheckInterval)
     }
     async update(seeIfUpdatedOnly = false, specifyVersion = "") {
+        const refresh = async () => {
+            const resp = await this.updatePlugin(this.githubPath, seeIfUpdatedOnly, specifyVersion);
+            if (resp && (typeof resp !== 'boolean')) {
+                this.updateInfo = resp;
+            }
+            return resp;
+        }
         if (seeIfUpdatedOnly && this.updateInfo?.updateVersion) {
+            refresh();
             return this.updateInfo;
         }
-        const resp = await this.updatePlugin(this.githubPath, seeIfUpdatedOnly, specifyVersion);
-        if (resp && (typeof resp !== 'boolean')) {
-            this.updateInfo = resp;
-        }
-        return resp;
+        return refresh();
     }
     /**
      * Primary function for adding a new beta plugin to Obsidian. 
