@@ -21,23 +21,13 @@ export const PendingStatsViewComponent = (props: { plugin: InvioPlugin }) => {
 
     const toRemoteTouched = getToRemoteFileList();
     console.log('toRemoteTouched - ', toRemoteTouched)
-    const selectedKeys = [];
-    if (!(toLocalTouched.length > 0) && !(toRemoteTouched.length > 0)) {
-        return <>
-            <h4 className={styles['header']}><Logo className={styles['icon']} />Changed Files</h4>
-            <div className={styles['emptyReport']}>
-                <ScrollText className={styles['icon']} />
-                <span>No file changed</span>
-            </div>
-        </>
-    }
 
-    const treeToLocalData: DataNode[] = toLocalTouched.map((item: any) => {
+    const treeToLocalData: DataNode[] = toLocalTouched?.map((item: any) => {
         item.title = item.key
         item.key = item.key
         return item;
     })
-    const treeToRemoteData: DataNode[] = toRemoteTouched.map((item: any) => {
+    const treeToRemoteData: DataNode[] = toRemoteTouched?.map((item: any) => {
         item.title = item.key
         item.key = item.key
         return item;
@@ -49,7 +39,7 @@ export const PendingStatsViewComponent = (props: { plugin: InvioPlugin }) => {
         props.plugin.viewFileDiff(key, type === 'ToLocal' ? 'RemoteToLocal' : 'LocalToRemote')
         setTimeout(() => {
             selectedKeys = []
-        }, 3000)
+        }, 300)
     };
 
     const onToLocalSelect: TreeProps['onSelect'] = (selectedKeys: any, info: any) => {
@@ -80,7 +70,20 @@ export const PendingStatsViewComponent = (props: { plugin: InvioPlugin }) => {
         const modal = new CheckSettingsModal(props.plugin.app, props.plugin);
         modal.open();
     }
-
+    if (!(toLocalTouched.length > 0) && !(toRemoteTouched.length > 0)) {
+        return <>
+            <h4 className={styles['header']}>
+                <Logo className={styles['icon']} />
+                Touched Files Status
+                <Cog className={styles['settings']} onClick={openSettings} />
+            </h4>
+            
+            <div className={styles['emptyReport']}>
+                <ScrollText className={styles['icon']} />
+                <span>No file changed</span>
+            </div>
+        </>
+    }
     return (
         <>
             <h4 className={styles['header']}>

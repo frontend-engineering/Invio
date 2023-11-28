@@ -123,6 +123,9 @@
   "modal_project_slug_err": "slug只能包含字母和数字，长度6～12位",
   "modal_project_slug_case_err": "Invio project slug 大小写不敏感，不允许包含大写字母",
 
+  "settings_update_title": "检测到新版本",
+  "settings_update_desc": "最新版本: {{updateVersion}}, 当前版本: {{currentVersion}}",
+  "settings_update_btn": "升级",
   "settings_basic": "基本设置",
   "settings_domain": "域名",
   "settings_domain_desc": "（可选）绑定的指向S3（或其他COS）的域名，主要用于预览和部署网页时SEO相关配置的自动注入。\n例如：https://search.google.com",

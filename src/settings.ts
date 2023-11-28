@@ -98,7 +98,7 @@ export const getDEFAULT_SETTINGS = (): InvioPluginSettings => {
     // vaultRandomID: "", // deprecated
     autoRunEveryMilliseconds: -1,
     initRunAfterMilliseconds: -1,
-    autoCheckEveryMilliseconds: 1000 * 60, 
+    autoCheckEveryMilliseconds: 1000 * 60 * 5, 
     initCheckAfterMilliseconds: 1000 * 10,
     agreeToUploadExtraMetadata: false,
     concurrency: 5,
@@ -468,6 +468,27 @@ export class InvioSettingTab extends PluginSettingTab {
     };
 
     containerEl.createEl("h1", { text: "Invio" });
+
+    const updateDiv = containerEl.createEl("div");
+    this.plugin.updater.update(true).then(updateInfo => {
+      if ((typeof updateInfo !== 'boolean') && updateInfo?.updateVersion) {
+        const desc = t('settings_update_desc', updateInfo);
+        new Setting(updateDiv)
+        .setName(t('settings_update_title'))
+        .setDesc(desc)
+        .addButton((button) => {
+          button.setButtonText(t('settings_update_btn'));
+          button.onClick(() => {
+            this.plugin.updater.update()
+            this.hide();
+          }); 
+        })
+      } else {
+        new Setting(updateDiv)
+        .setName('update')
+        .setDesc('latest version')
+      }
+    })
 
     // const dirChooserDiv = containerEl.createDiv();
     // dirChooserDiv.createEl("h2", { text: t("settings_chooseservice") });

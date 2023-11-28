@@ -59,6 +59,7 @@ import { syncWithRemoteProject, switchProject } from './hosting';
 import Utils from './utils';
 import { Analytics4, loadGA } from './ga';
 import { TDiffType, openDiffModal } from './diff/index';
+import AutoUpdater from './updater'
 
 const { iconNameSyncWait, iconNameSyncPending, iconNameSyncRunning, iconNameLogs, iconNameSyncLogo } = UsingIconNames;
 const Menu_Tab = `    `;
@@ -89,6 +90,7 @@ export default class InvioPlugin extends Plugin {
   recentSyncedFiles: any;
   ga: Analytics4;
   syncRunAbort: boolean | ((params: any) => void);
+  updater: AutoUpdater;
 
   isUnderWatch(file: TAbstractFile) {
     const rootDir = this.settings.localWatchDir;
@@ -871,12 +873,12 @@ export default class InvioPlugin extends Plugin {
     const touched = [ ...(toRemoteFiles || []), ...(toLocalFiles || []) ]
     await StatsView.activateStatsView(this);
     const view = StatsView.getStatsView(this, 'PendingStats');
-    view.setStatsType('PendingStats')
+    view?.setStatsType('PendingStats')
     const fileMap: Record<string, FileOrFolderMixedState>  = {};
     touched.forEach(item => {
       fileMap[item.key] = item;
     })
-    view.init(fileMap)
+    view?.init(fileMap)
   }
 
   async onload() {
@@ -947,7 +949,8 @@ export default class InvioPlugin extends Plugin {
 
     // must AFTER preparing DB
     this.enableAutoClearSyncPlanHist();
-
+    this.updater = new AutoUpdater(this);
+  
     this.app.workspace.onLayoutReady(() => {
       log.debug('layout ready...');
       // Add custom icon for root dir
@@ -974,6 +977,13 @@ export default class InvioPlugin extends Plugin {
       }, 300);
       // TODO: Change file icons to show sync status, like sync done, sync failed, pending to sync, etc.
     })
+
+    setTimeout(async () => {
+      this.updater.autoUpdate((info) => {
+        log.info('update info: ', info);
+        // TODO: Setup update alert
+      })
+    }, 60 * 1000)
     this.syncRunAbort = false;
     this.syncStatus = "idle";
 
