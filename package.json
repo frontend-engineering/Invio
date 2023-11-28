@@ -83,6 +83,7 @@
     "@typescript-eslint/parser": "5.29.0",
     "acorn": "^8.7.1",
     "aggregate-error": "^4.0.0",
+    "antd": "^5.11.4",
     "assert": "^2.0.0",
     "aws-crt": "^1.12.1",
     "buffer": "^6.0.3",

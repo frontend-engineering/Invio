@@ -21,8 +21,9 @@ export default class RemoteToLocalDiffView extends DiffView {
 		this.rightVList = [];
 		this.remote = remoteFile;
 		this.rightContent = remoteFile?.data;
-		this.rightName = 'remote version'
-		this.leftName = 'local version'
+		this.rightName = plugin.t('diff_view_remote_version'); // 'remote version'
+		this.leftName = plugin.t('diff_view_local_version'); // 'local version'
+
 		this.htmlConfig = {
 			drawFileList: true,
 			diffStyle: 'word',

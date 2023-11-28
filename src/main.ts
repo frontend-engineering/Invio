@@ -83,10 +83,12 @@ export default class InvioPlugin extends Plugin {
   currSyncMsg?: string;
   syncRibbon?: HTMLElement;
   autoRunIntervalID?: number;
+  autoCheckIntervalID?: number;
   i18n: I18n;
   vaultRandomID: string;
   recentSyncedFiles: any;
   ga: Analytics4;
+  syncRunAbort: boolean | ((params: any) => void);
 
   isUnderWatch(file: TAbstractFile) {
     const rootDir = this.settings.localWatchDir;
@@ -205,12 +207,57 @@ export default class InvioPlugin extends Plugin {
     }
   }
 
-  async syncRun(triggerSource: SyncTriggerSourceType = "manual", fileList?: string[]) {
+  async doSyncRunAbort(time?: number) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        reject('timeout')
+      }, time || 5000);
+      this.syncRunAbort = () => {
+        clearTimeout(timer);
+        resolve('')
+      };
+    })
+  }
+  isSyncRunAborted(): Boolean {
+    return !!this.syncRunAbort
+  }
+
+  async syncRun(triggerSource: SyncTriggerSourceType = "manual", fileList?: string[]): Promise<{
+    toRemoteFiles?: any[]
+    toLocalFiles?: any[]
+    conflictFiles?: any[]
+  }> {
     const t = (x: TransItemType, vars?: any) => {
       return this.i18n.t(x, vars);
     };
+    let originLabel = `${this.manifest.name}`;
+    if (this.syncRibbon !== undefined) {
+      originLabel = this.syncRibbon.getAttribute("aria-label");
+    }
+
+    let loadingModal: LoadingModal;
+
+    const cancelAction = () => {
+      log.info('cancel action');
+      HTMLGenerator.endBatch();
+      loadingModal?.close();
+      this.syncStatus = "idle";
+      if (this.syncRibbon !== undefined) {
+        setIcon(this.syncRibbon, iconNameSyncLogo);
+        this.setRibbonPendingStatus();
+      }
+      const resolver = this.syncRunAbort
+      this.syncRunAbort = false;
+
+      if (typeof resolver === 'function') {
+        resolver('')
+      }
+    }
 
     const getNotice = (modal: LoadingModal, x: string, timeout?: number) => {
+      if (triggerSource === 'pre') {
+        return;
+      }
       // only show notices in manual mode
       // no notice in auto mode
       if (triggerSource === "manual" || triggerSource === "dry") {
@@ -242,14 +289,16 @@ export default class InvioPlugin extends Plugin {
       fileNum: fileList?.length
     });
 
+    if (this.isSyncRunAborted()) {
+      cancelAction();
+      return
+    }
     await this.checkIfRemoteProjectSync();
-
-    let originLabel = `${this.manifest.name}`;
-    if (this.syncRibbon !== undefined) {
-      originLabel = this.syncRibbon.getAttribute("aria-label");
+    if (this.isSyncRunAborted()) {
+      cancelAction();
+      return;
     }
 
-    let loadingModal;
     try {
       log.info(
         `${
@@ -268,8 +317,10 @@ export default class InvioPlugin extends Plugin {
         );
       }
 
-      loadingModal = new LoadingModal(this.app, this);
-      loadingModal.open();
+      if ((triggerSource !== 'auto') && (triggerSource !== 'pre')) {
+        loadingModal = new LoadingModal(this.app, this);
+        loadingModal.open();
+      }
 
       const MAX_STEPS = 8;
 
@@ -310,8 +361,13 @@ export default class InvioPlugin extends Plugin {
         this.app.vault.getName(),
         () => self.saveSettings()
       );
+
+      if (this.isSyncRunAborted()) {
+        cancelAction();
+        return;
+      } 
       const remoteContents = await client.listFromRemote(this.settings.localWatchDir, RemoteSrcPrefix);
-      log.info('remote: ', remoteContents);
+      log.info('remote contents: ', remoteContents);
 
       getNotice(
         loadingModal,
@@ -336,6 +392,10 @@ export default class InvioPlugin extends Plugin {
         })
       );
       this.syncStatus = "getting_remote_extra_meta";
+      if (this.isSyncRunAborted()) {
+        cancelAction();
+        return;
+      }
       const { remoteStates, metadataFile } = await parseRemoteItems(
         remoteContents,
         this.db,
@@ -343,6 +403,10 @@ export default class InvioPlugin extends Plugin {
         client.serviceType,
         this.settings.password
       );
+      if (this.isSyncRunAborted()) {
+        cancelAction();
+        return;
+      }
       const origMetadataOnRemote = await fetchMetadataFile(
         metadataFile,
         client,
@@ -357,6 +421,11 @@ export default class InvioPlugin extends Plugin {
         })
       );
       this.syncStatus = "getting_local_meta";
+
+      if (this.isSyncRunAborted()) {
+        cancelAction();
+        return;
+      }
 
       const { local, localHistory, localConfigDirContents } = await this.getLocalFileStatus();
 
@@ -394,8 +463,20 @@ export default class InvioPlugin extends Plugin {
         return { plan, sortedKeys, deletions, sizesGoWrong, touchedFileMap }
       }
 
+      if (this.isSyncRunAborted()) {
+        cancelAction();
+        return;
+      }
+
       // get state to local state
       let { plan, sortedKeys, deletions, sizesGoWrong, touchedFileMap } = await internalCalculation();
+      if (triggerSource === 'pre') {
+        this.syncStatus = 'idle'
+        this.syncRunAbort = false;
+        cancelAction();
+        return TouchedPlanModel.getTouchedFilesGroup(touchedFileMap)
+      }
+
       try {
         if (loadingModal) {
           loadingModal.close();
@@ -411,6 +492,10 @@ export default class InvioPlugin extends Plugin {
             // silent mode
             if (triggerSource === 'auto') {
               resolve('skip');
+              return;
+            }
+            if (this.isSyncRunAborted()) {
+              cancelAction();
               return;
             }
             const touchedPlanModel = new TouchedPlanModel(this.app, this, touchedFileMap, (key: string, diffType: TDiffType) => {
@@ -449,6 +534,7 @@ export default class InvioPlugin extends Plugin {
       } catch (error) {
         log.info('user cancelled');
         this.syncStatus = "idle";
+        this.syncRunAbort = false;
         getNotice(loadingModal, 'user cancelled')
         if (this.syncRibbon !== undefined) {
           setIcon(this.syncRibbon, iconNameSyncLogo);
@@ -462,11 +548,17 @@ export default class InvioPlugin extends Plugin {
       // Nothing to sync, so end this process
       if (toRemoteFiles.length === 0 && toLocalFiles.length === 0) {
         this.syncStatus = "idle";
+        this.syncRunAbort = false;
         if (this.syncRibbon !== undefined) {
           setIcon(this.syncRibbon, iconNameSyncLogo);
           this.syncRibbon.setAttribute("aria-label", originLabel);
         }
         return; 
+      }
+
+      if (this.isSyncRunAborted()) {
+        cancelAction();
+        return;
       }
 
       // The operations above are almost read only and kind of safe.
@@ -492,7 +584,6 @@ export default class InvioPlugin extends Plugin {
             fileList.forEach(filePath => {
               const file = allFiles.find(file => file.path === filePath);
               if (file) {
-
                 remoteChangingFiles.push({
                   key: file.path,
                   syncStatus: 'syncing',
@@ -509,6 +600,11 @@ export default class InvioPlugin extends Plugin {
   
         this.syncStatus = "syncing";
         view?.info('Start to sync');
+
+        if (this.isSyncRunAborted()) {
+          cancelAction();
+          return;
+        }
 
         // TODO: Delete all remote html files if triggerSource === force
         let pubPathList: string[] = [];
@@ -622,6 +718,11 @@ export default class InvioPlugin extends Plugin {
           log.info('pub list: ', pubPathList, unPubList);
         }
 
+        if (this.isSyncRunAborted()) {
+          cancelAction();
+          return;
+        }
+
         await unpublishFile(client, this.app.vault, unPubList, (pathName: string, status: string) => {
           log.info('publishing ', pathName, status);
           if (status === 'START') {
@@ -698,6 +799,7 @@ export default class InvioPlugin extends Plugin {
 
       this.syncStatus = "finish";
       this.syncStatus = "idle";
+      this.syncRunAbort = false;
 
       if (this.syncRibbon !== undefined) {
         setIcon(this.syncRibbon, iconNameSyncLogo);
@@ -718,8 +820,7 @@ export default class InvioPlugin extends Plugin {
         useHost: this.settings.useHost,
         fileNum: fileList?.length
       }) 
-      // TODO: Show stats model
-      return toRemoteFiles;
+      return { toRemoteFiles };
     } catch (error) {
       const msg = t("syncrun_abort", {
         manifestID: this.manifest.id,
@@ -747,11 +848,10 @@ export default class InvioPlugin extends Plugin {
       } else {
         getNotice(null, error.message, 10 * 1000);
       }
+      this.syncRunAbort = false;
       this.syncStatus = "idle";
       if (this.syncRibbon !== undefined) {
         setIcon(this.syncRibbon, iconNameSyncLogo);
-        this.setRibbonPendingStatus();
-        this.syncRibbon.setAttribute("aria-label", originLabel);
         this.syncRibbon.setAttribute(
           "aria-label",
           t("syncrun_syncingribbon_err", {
@@ -760,6 +860,23 @@ export default class InvioPlugin extends Plugin {
         );
       }
     }
+  }
+
+  async pendingView() {
+    if (this.syncStatus !== 'idle') {
+      await this.doSyncRunAbort(8000);
+    }
+    const { toRemoteFiles, toLocalFiles } = await this.syncRun('pre') || {};
+    log.info('to remote files: ', toRemoteFiles, toLocalFiles);
+    const touched = [ ...(toRemoteFiles || []), ...(toLocalFiles || []) ]
+    await StatsView.activateStatsView(this);
+    const view = StatsView.getStatsView(this, 'PendingStats');
+    view.setStatsType('PendingStats')
+    const fileMap: Record<string, FileOrFolderMixedState>  = {};
+    touched.forEach(item => {
+      fileMap[item.key] = item;
+    })
+    view.init(fileMap)
   }
 
   async onload() {
@@ -846,6 +963,7 @@ export default class InvioPlugin extends Plugin {
             } else {
               Utils.mockLocaleFile(this) 
             }
+            this.pendingView()
           })
         } else {
           new Notice(
@@ -856,11 +974,11 @@ export default class InvioPlugin extends Plugin {
       }, 300);
       // TODO: Change file icons to show sync status, like sync done, sync failed, pending to sync, etc.
     })
-
+    this.syncRunAbort = false;
     this.syncStatus = "idle";
 
     // Stats View
-    this.registerView(VIEW_TYPE_STATS, (leaf) => new StatsView(this, leaf));
+    this.registerView(VIEW_TYPE_STATS, (leaf) => new StatsView(this, leaf, 'PendingStats'));
 
     this.registerEvent(
       this.app.workspace.on("file-menu", (menu, file) => {
@@ -890,6 +1008,14 @@ export default class InvioPlugin extends Plugin {
                 .setIcon("document")
                 .onClick(async () => {
                   this.syncRun("manual")
+                });
+            })
+            menu.addItem((item) => {
+              item
+                .setTitle(`${Menu_Tab}${t('command_sync_pre')}`)
+                .setIcon("document")
+                .onClick(async () => {
+                  this.pendingView()
                 });
             })
             menu.addItem((item) => {
@@ -953,7 +1079,10 @@ export default class InvioPlugin extends Plugin {
           fileOrFolder,
           this.vaultRandomID
         );
-        this.setRibbonPendingStatus();
+        if (this.isUnderWatch(fileOrFolder) && (!fileOrFolder.name.endsWith('.conflict.md'))) {
+          this.setRibbonPendingStatus();
+          log.debug('file delete: ', fileOrFolder);
+        }
       })
     );
 
@@ -966,7 +1095,7 @@ export default class InvioPlugin extends Plugin {
           this.vaultRandomID
         );
 
-        if (this.isUnderWatch(fileOrFolder)) {
+        if (this.isUnderWatch(fileOrFolder) && (!fileOrFolder.name.endsWith('.conflict.md'))) {
           this.setRibbonPendingStatus();
           log.debug('file rename: ', fileOrFolder);
         }
@@ -978,11 +1107,12 @@ export default class InvioPlugin extends Plugin {
       this.app.vault.on('modify', async (file) => {
         log.debug('file modified: ', file);
         if (this.isUnderWatch(file)) {
-          this.setRibbonPendingStatus();
           if (file.name.endsWith('.conflict.md')) {
             setTimeout(() => {
               addIconForconflictFile(this, file)
             }, 300)
+          } else {
+            this.setRibbonPendingStatus();
           }
         }
       })
@@ -992,11 +1122,12 @@ export default class InvioPlugin extends Plugin {
       this.app.vault.on('create', async (file) => {
         log.debug('file created: ', file);
         if (this.isUnderWatch(file)) {
-          this.setRibbonPendingStatus();
           if (file.name.endsWith('.conflict.md')) {
             setTimeout(() => {
               addIconForconflictFile(this, file)
             }, 300)
+          } else {
+            this.setRibbonPendingStatus();
           }
         }
       })
@@ -1067,7 +1198,15 @@ export default class InvioPlugin extends Plugin {
       `${this.manifest.name}`,
       async () => this.syncRun("manual")
     );
-    
+
+    this.addCommand({
+      id: "check-sync-pre",
+      name: t("command_sync_pre"),
+      icon: iconNameSyncLogo,
+      callback: async () => {
+        this.pendingView()
+      },
+    });
     this.addCommand({
       id: "start-sync-file",
       name: t("command_startsync_file"),
@@ -1142,6 +1281,8 @@ export default class InvioPlugin extends Plugin {
     } else {
       this.enableAutoSyncIfSet();
       this.enableInitSyncIfSet();
+      this.enableAutoCheckIfSet();
+      this.enableInitCheckIfSet();
     }
   }
 
@@ -1248,6 +1389,7 @@ export default class InvioPlugin extends Plugin {
     const dirname = value.trim();
     const name = await switchProject(dirname, this);
     if (!name) return;
+    this.syncRunAbort = false;
     this.settings.localWatchDir = name;
     icon.removeIconInNode(document.body);
     const { iconSvgSyncWait } = getIconSvg();
@@ -1350,6 +1492,38 @@ export default class InvioPlugin extends Plugin {
       });
     }
   }
+
+
+  enableAutoCheckIfSet() {
+    if (
+      this.settings.autoCheckEveryMilliseconds !== undefined &&
+      this.settings.autoCheckEveryMilliseconds !== null &&
+      this.settings.autoCheckEveryMilliseconds > 0
+    ) {
+      this.app.workspace.onLayoutReady(() => {
+        const intervalID = window.setInterval(() => {
+          this.pendingView()
+        }, this.settings.autoCheckEveryMilliseconds);
+        this.autoCheckIntervalID = intervalID;
+        this.registerInterval(intervalID);
+      });
+    }
+  }
+
+  enableInitCheckIfSet() {
+    if (
+      this.settings.initCheckAfterMilliseconds !== undefined &&
+      this.settings.initCheckAfterMilliseconds !== null &&
+      this.settings.initCheckAfterMilliseconds > 0
+    ) {
+      this.app.workspace.onLayoutReady(() => {
+        window.setTimeout(() => {
+          this.pendingView()
+        }, this.settings.initCheckAfterMilliseconds);
+      });
+    }
+  }
+
 
   async saveAgreeToUseNewSyncAlgorithm() {
     this.settings.agreeToUploadExtraMetadata = true;

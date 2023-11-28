@@ -45,7 +45,7 @@ export class HTMLGenerator {
 		})
 		GlobalDataGenerator.getFileTree(files);
 		await StatsView.activateStatsView(plugin);
-		const view = StatsView.getStatsView(plugin);
+		const view = StatsView.getStatsView(plugin, 'SyncingStats');
 		await AssetHandler.updateAssetCache(view);
 		await MarkdownRenderer.beginBatch(plugin);
 		return view;
