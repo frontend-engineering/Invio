@@ -1,3 +1,10 @@
+.view-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding-bottom: 22px;
+}
+
 .header {
     text-align: center;
     width: 100%;
@@ -28,6 +35,15 @@
 .header > .settings:hover {
     transform: rotateZ(45deg);
     
+}
+.scroll-container {
+    overflow-y: scroll;
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+}
+
+.scroll-container::-webkit-scrollbar { 
+    display: none;  /* Safari and Chrome */
 }
 .empty-report {
     display: flex;

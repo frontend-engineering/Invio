@@ -411,7 +411,7 @@ const isSkipItem = (
       }
     }
   }
-  if (watchDir && !key.startsWith(watchDir)) {
+  if (watchDir && !key.startsWith(watchDir.endsWith('/') ? watchDir : (watchDir + '/'))) {
     return true;
   }
 
@@ -614,7 +614,16 @@ const ensembleMixedStates = async (
     } else {
       results[key] = r;
 
-      results[key].existLocal = false;
+      const localStats = await vault.adapter.stat(key)
+      if (localStats?.type === 'folder') {
+        results[key].existLocal = true;
+        results[key].mtimeLocal = localStats.mtime
+        results[key].mtimeLocalFmt = unixTimeToStr(localStats.mtime);
+        results[key].sizeLocal = localStats.size;
+        results[key].sizeLocalEnc = localStats.size;
+      } else {
+        results[key].existLocal = false;
+      }
       results[key].existRemote = false;
     }
   }

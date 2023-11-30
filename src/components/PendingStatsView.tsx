@@ -85,56 +85,58 @@ export const PendingStatsViewComponent = (props: { plugin: InvioPlugin }) => {
         </>
     }
     return (
-        <>
+        <div className={styles['viewContainer']}>
             <h4 className={styles['header']}>
                 <Logo className={styles['icon']} />
                 Touched Files Status
                 <Cog className={styles['settings']} onClick={openSettings} />
             </h4>
-            {
-                treeToLocalData?.length > 0 ?
-                    <>
-                        <div className={styles['subHeader']}>Online Changed Files</div>
-                        <Tree
-                            checkable
-                            showLine
-                            defaultExpandAll
-                            multiple={false}
-                            rootStyle={{
-                                background: 'black',
-                                color: 'white',
-                                paddingTop: '18px',
-                                paddingBottom: '18px',
-                            }}
-                            selectedKeys={[]}
-                            onSelect={onToLocalSelect}
-                            onCheck={onToLocalCheck}
-                            treeData={treeToLocalData}
-                        />
-                    </> :
-                    null
-            }
-            
-            <div className={styles['subHeader']}>Local Changed Files</div>
-            <Tree
-                checkable
-                showLine
-                defaultExpandAll
-                multiple={false}
-                rootStyle={{
-                    background: 'black',
-                    color: 'white',
-                    paddingTop: '18px',
-                    paddingBottom: '18px',
-                }}
-                selectedKeys={[]}
-                onSelect={onToRemoteSelect}
-                onCheck={onToRemoteCheck}
-                treeData={treeToRemoteData}
-            />
-            <div className={styles['actions']}>
-                <Button onClick={startSync}>Sync</Button>
+            <div className={styles['scrollContainer']}>
+                {
+                    treeToLocalData?.length > 0 ?
+                        <>
+                            <div className={styles['subHeader']}>Online Changed Files</div>
+                            <Tree
+                                checkable
+                                showLine
+                                defaultExpandAll
+                                multiple={false}
+                                rootStyle={{
+                                    background: 'black',
+                                    color: 'white',
+                                    paddingTop: '18px',
+                                    paddingBottom: '18px',
+                                }}
+                                selectedKeys={[]}
+                                onSelect={onToLocalSelect}
+                                onCheck={onToLocalCheck}
+                                treeData={treeToLocalData}
+                            />
+                        </> :
+                        null
+                }
+                
+                <div className={styles['subHeader']}>Local Changed Files</div>
+                <Tree
+                    checkable
+                    showLine
+                    defaultExpandAll
+                    multiple={false}
+                    rootStyle={{
+                        background: 'black',
+                        color: 'white',
+                        paddingTop: '18px',
+                        paddingBottom: '18px',
+                    }}
+                    selectedKeys={[]}
+                    onSelect={onToRemoteSelect}
+                    onCheck={onToRemoteCheck}
+                    treeData={treeToRemoteData}
+                />
+                <div className={styles['actions']}>
+                    <Button onClick={startSync}>Sync</Button>
+                </div>
             </div>
-        </>
+        </div>
     );
 }
