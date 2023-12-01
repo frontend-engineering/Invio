@@ -52,7 +52,7 @@ export class StatsView extends ItemView {
     
         await plugin.app.workspace.getRightLeaf(false).setViewState({
           type: VIEW_TYPE_STATS,
-          active: true,
+          active: false,
         });
     
         plugin.app.workspace.revealLeaf(
