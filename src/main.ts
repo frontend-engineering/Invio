@@ -187,25 +187,28 @@ export default class InvioPlugin extends Plugin {
   async getLocalFileStatus() {
     const isWatched = (p: string) => {
       const pF = new Path(p)
-      pF.isInsideDir(this.settings.localWatchDir) &&
-        !pF.isInsideDir(RemoteConflictPrefix) &&
-        !pF.isInsideDir(LocalConflictPrefix) &&
+      if (p.endsWith('/')) {
+        return pF.isInsideDir(this.settings.localWatchDir) &&
+        !pF.isInsideDir(this.settings.localWatchDir + '/' + RemoteConflictPrefix) &&
+        !pF.isInsideDir(this.settings.localWatchDir + '/' + LocalConflictPrefix) &&
+        !(pF.asString === (this.settings.localWatchDir + '/' + RemoteConflictPrefix)) && 
+        !(pF.asString === (this.settings.localWatchDir + '/' + LocalConflictPrefix))
+      }
+      return pF.isInsideDir(this.settings.localWatchDir) &&
+        !pF.isInsideDir(this.settings.localWatchDir + '/' + RemoteConflictPrefix) &&
+        !pF.isInsideDir(this.settings.localWatchDir + '/' + LocalConflictPrefix) &&
         !p.endsWith('.conflict.md')
     }
     // this.app.vault.getAllLoadedFiles
     // TODO: List only concerned files, only source of truth
     // *.conflict.md files is for data backup when conflicts happened
-    const local = this.app.vault.getMarkdownFiles().filter(file => {
-      return isWatched(file.path)
-    });
+    const local = this.app.vault.getMarkdownFiles().filter(file => isWatched(file.path));
     log.info('local file path list: ', local);
     // const local = this.app.vault.getAllLoadedFiles();
     const localHistory = (await loadFileHistoryTableByVault(
       this.db,
       this.vaultRandomID
-    )).filter(item => {
-      return isWatched(item.key)
-    })
+    )).filter(item => isWatched(item.key))
     let localConfigDirContents: ObsConfigDirFileType[] = undefined;
     if (this.settings.syncConfigDir) {
       localConfigDirContents = await listFilesInObsFolder(
