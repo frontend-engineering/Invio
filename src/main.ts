@@ -130,14 +130,21 @@ export default class InvioPlugin extends Plugin {
       return null
     })
     log.info('remote md: ', remoteMD);
-    if (!remoteMD?.data) {
-      new Notice(`The file(${filePath}) does not exist remotely`)
-      return;
+
+    if (remoteMD.deleted) {
+      remoteMD.data = '';
+      remoteMD.lastModified = Date.valueOf();
+    }
+    let remoteData = remoteMD?.data || '';
+    let remoteModiDate = remoteMD?.lastModified || Date.valueOf(); 
+    if (!remoteData) {
+      // new Notice(`The file(${filePath}) does not exist remotely`)
     }
     return new Promise((resolve, reject) => {
       openDiffModal(this.app, this, file, {
-        data: remoteMD.data,
-        ts: remoteMD?.lastModified,
+        deleted: remoteMD.deleted,
+        data: remoteData,
+        ts: remoteModiDate,
         path: filePath
       }, diffType, (file: TFile) => {
         if (file) {
@@ -886,7 +893,7 @@ export default class InvioPlugin extends Plugin {
       await this.doSyncRunAbort(8000);
     }
     const { toRemoteFiles, toLocalFiles } = await this.syncRun('pre') || {};
-    log.info('to remote files: ', toRemoteFiles, toLocalFiles);
+    log.info('toughed files: ', toRemoteFiles, toLocalFiles);
     const touched = [ ...(toRemoteFiles || []), ...(toLocalFiles || []) ]
     await StatsView.activateStatsView(this);
     const view = StatsView.getStatsView(this, 'PendingStats');

@@ -5,12 +5,8 @@ import { Diff2HtmlConfig, html } from 'diff2html';
 import type InvioPlugin from '../main';
 import type { recResult, vRecoveryItem } from './interfaces';
 import { FILE_REC_WARNING } from './constants';
-import DiffView, { TDiffType } from './abstract_diff_view';
-export interface IRemoteFile {
-    data: string;
-    ts: number;
-    path: string;
-}
+import DiffView, { IRemoteFile } from './abstract_diff_view';
+
 export default class RemoteToLocalDiffView extends DiffView {
 	remote: IRemoteFile
 	versions: recResult[];
@@ -62,6 +58,7 @@ export default class RemoteToLocalDiffView extends DiffView {
 								<table class="d2h-diff-table">
 									<tbody class="d2h-diff-tbody">
 									{{{diffs.right}}}
+									${this.remote.deleted ? '<div class="d2h-code-title">The file does not exist</div>' : ''}
 									</tbody>
 								</table>
 							</div>

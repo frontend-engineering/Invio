@@ -9,13 +9,13 @@ import {
 import type InvioPlugin from '../main';
 import type { recResult, vRecoveryItem } from './interfaces';
 import { FILE_REC_WARNING } from './constants';
-import DiffView, { TDiffType } from './abstract_diff_view';
+import DiffView, { IRemoteFile } from './abstract_diff_view';
 import { Diff2HtmlConfig, html } from 'diff2html';
 export default class ConflictDiffView extends DiffView {
-	remote: recResult
+	remote: IRemoteFile
 	versions: recResult[];
 	rightVList: vRecoveryItem[];
-	constructor(plugin: InvioPlugin, app: App, file: TFile, remoteFile: recResult, fileChangedHook: (f: TFile) => void, cancelHook: () => void) {
+	constructor(plugin: InvioPlugin, app: App, file: TFile, remoteFile: IRemoteFile, fileChangedHook: (f: TFile) => void, cancelHook: () => void) {
 		super(plugin, app, file, fileChangedHook, cancelHook);
 		this.versions = [];
 		this.rightVList = [];
@@ -52,6 +52,7 @@ export default class ConflictDiffView extends DiffView {
 								<table class="d2h-diff-table">
 									<tbody class="d2h-diff-tbody">
 									{{{diffs.left}}}
+									${this.remote.deleted ? '<div class="d2h-code-title">The file does not exist</div>' : ''}
 									</tbody>
 								</table>
 							</div>
@@ -92,7 +93,6 @@ export default class ConflictDiffView extends DiffView {
 	public basicHtml(diff: string): void {
 		// set title
 		this.titleEl.setText(this.t('diff_view_conflict_title'));
-		// set top action bar
 
 		const contentParent = this.syncHistoryContentContainer.parentElement;
 		const topAction = contentParent.createDiv({
@@ -108,7 +108,7 @@ export default class ConflictDiffView extends DiffView {
 		});
 		diffResetBtn.addEventListener('click', e => {
 			e.preventDefault();
-			this.changeFileAndCloseModal(this.leftContent);
+			this.changeFileAndCloseModal(this.leftContent, this.remote.deleted);
 
 			new Notice(
 				`The ${this.file.basename} file has been overwritten with the online remote version.`
@@ -162,7 +162,7 @@ export default class ConflictDiffView extends DiffView {
 				this.versions.push(version);
 			}
 		}
-		if (!(this.versions.length > 1)) {
+		if (!(this.versions.length > 0)) {
 			this.close();
 			new Notice(
 				'There is not at least on version in the file recovery.'

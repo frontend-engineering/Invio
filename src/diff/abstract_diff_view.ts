@@ -8,7 +8,12 @@ import type { LangType, LangTypeAndAuto, TransItemType } from "../i18n";
 
 type TviewOutputFormat = `side-by-side` | `line-by-line`
 export type TDiffType = `LocalToRemote` | `RemoteToLocal` | `Conflict`
-
+export interface IRemoteFile {
+    data: string;
+    ts: number;
+    path: string;
+	deleted?: boolean;
+}
 export default abstract class DiffView extends Modal {
 	plugin: InvioPlugin;
 	app: App;
@@ -161,8 +166,12 @@ export default abstract class DiffView extends Modal {
 		return this.plugin.i18n.t(x, vars);
 	}
 
-	public async changeFileAndCloseModal(contents: string) {
-		await this.app.vault.modify(this.file, contents);
+	public async changeFileAndCloseModal(contents: string, deleted?: boolean) {
+		if (deleted) {
+			await this.app.vault.adapter.trashLocal(this.file.path);
+		} else {
+			await this.app.vault.modify(this.file, contents);
+		}
 		this.fileChangedHook && this.fileChangedHook(this.file);
 		this.silentClose = true
 

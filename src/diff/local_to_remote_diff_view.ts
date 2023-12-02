@@ -10,12 +10,8 @@ import { Diff2HtmlConfig, html } from 'diff2html';
 import type InvioPlugin from '../main';
 import type { recResult, vRecoveryItem } from './interfaces';
 import { FILE_REC_WARNING } from './constants';
-import DiffView, { TDiffType } from './abstract_diff_view';
-export interface IRemoteFile {
-    data: string;
-    ts: number;
-    path: string;
-}
+import DiffView, { IRemoteFile } from './abstract_diff_view';
+
 export default class LocalToRemoteDiffView extends DiffView {
 	remote: IRemoteFile
 	versions: recResult[];
@@ -57,6 +53,7 @@ export default class LocalToRemoteDiffView extends DiffView {
 								<table class="d2h-diff-table">
 									<tbody class="d2h-diff-tbody">
 									{{{diffs.left}}}
+									${this.remote.deleted ? '<div class="d2h-code-title">The file does not exist</div>' : ''}
 									</tbody>
 								</table>
 							</div>
@@ -132,8 +129,7 @@ export default class LocalToRemoteDiffView extends DiffView {
 		});
 		diffResetBtn.addEventListener('click', e => {
 			e.preventDefault();
-			this.changeFileAndCloseModal(this.leftContent);
-
+			this.changeFileAndCloseModal(this.leftContent, this.remote.deleted);
 			new Notice(
 				`The ${this.file.basename} file has been overwritten with the online remote version.`
 			);
@@ -166,7 +162,7 @@ export default class LocalToRemoteDiffView extends DiffView {
 				this.versions.push(version);
 			}
 		}
-		if (!(this.versions.length > 1)) {
+		if (!(this.versions.length > 0)) {
 			this.close();
 			new Notice(
 				'There is not at least on version in the file recovery.'

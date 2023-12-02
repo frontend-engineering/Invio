@@ -339,7 +339,7 @@ export const fetchRemoteFileMD = async (
   }
 
   log.info('fetch remote file path: ', remoteFilePath);
-  const buf = await client.downloadFromRemote(
+  const buf: any = await client.downloadFromRemote(
     remoteFilePath,
     RemoteSrcPrefix,
     vault,
@@ -347,7 +347,18 @@ export const fetchRemoteFileMD = async (
     password,
     '',
     true
-  );
+  ).catch(err => {
+    if (err?.status === 404) {
+      return {
+        deleted: true,
+        data: ''
+      }
+    }
+    throw err;
+  })
+  if (buf?.deleted) {
+    return buf;
+  }
   const resp: RemoteItem = await client.getRemoteMeta(RemoteSrcPrefix + remoteFilePath)
 
   let data;
@@ -440,7 +451,7 @@ export const pruneTouchedFiles = async (vault: Vault, client: RemoteClient, list
         return null;
       })
       log.info('remote md: ', remoteMD);
-      if (!remoteMD) {
+      if (!remoteMD || remoteMD.deleted) {
         return;
       }
       const diff = await isRemoteFileDiff(vault, item.key, remoteMD.data);

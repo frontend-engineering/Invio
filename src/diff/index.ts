@@ -1,8 +1,8 @@
 import { App, TFile, Notice, Vault } from 'obsidian';
-import LocalToRemoteDiffView, { IRemoteFile } from './local_to_remote_diff_view';
+import LocalToRemoteDiffView from './local_to_remote_diff_view';
 import RemoteToLocalDiffView from './remote_to_local_diff_view';
 import ConflictDiffView from './conflict_diff_view';
-import { TDiffType } from './abstract_diff_view';
+import { TDiffType, IRemoteFile } from './abstract_diff_view';
 import type InvioPlugin from '../main';
 import { diff_match_patch } from './effective_diff.js';
 import { log } from '../moreOnLog'

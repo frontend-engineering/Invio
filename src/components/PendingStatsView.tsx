@@ -17,10 +17,8 @@ import { CheckSettingsModal } from './CheckSettingsModal';
 export const PendingStatsViewComponent = (props: { plugin: InvioPlugin }) => {
     const { record, toLocalSelected, toRemoteSelected, getToLocalFileList, getToRemoteFileList, updateSelectedToLocalFileList, updateSelectedToRemoteFileList } = useStore();
     const toLocalTouched = getToLocalFileList();
-    console.log('toLocaltouched - ', toLocalTouched)
 
     const toRemoteTouched = getToRemoteFileList();
-    console.log('toRemoteTouched - ', toRemoteTouched)
 
     const treeToLocalData: DataNode[] = toLocalTouched?.map((item: any) => {
         item.title = item.key
@@ -34,9 +32,14 @@ export const PendingStatsViewComponent = (props: { plugin: InvioPlugin }) => {
     })
 
     const onSelect = (selectedKeys: any, info: any, type: `ToLocal` | `ToRemote`) => {
-        console.log('selected', selectedKeys, info);
         const key = selectedKeys[0]
         props.plugin.viewFileDiff(key, type === 'ToLocal' ? 'RemoteToLocal' : 'LocalToRemote')
+        .then(file => {
+            log.info('diff file changed - ', file);
+            if (file) {
+                props.plugin.pendingView()
+            }
+          })
         setTimeout(() => {
             selectedKeys = []
         }, 300)
@@ -51,22 +54,18 @@ export const PendingStatsViewComponent = (props: { plugin: InvioPlugin }) => {
     }
 
     const onToLocalCheck: TreeProps['onCheck'] = (checkedKeys: string[], info: any) => {
-        console.log('onLocalCheck', checkedKeys, info);
         updateSelectedToLocalFileList(checkedKeys.filter(key => toLocalTouched.find(t => t.key === key)))
     };
 
     const onToRemoteCheck: TreeProps['onCheck'] = (checkedKeys: string[], info: any) => {
-        console.log('onToRemoteCheck', checkedKeys, info);
         updateSelectedToRemoteFileList(checkedKeys.filter(key => toRemoteTouched.find(t => t.key === key)))
     };
 
     const startSync = async () => {
-        console.log('start syncing...', [...toLocalSelected, ...toRemoteSelected])
         await props.plugin.syncRun('manual', [...toLocalSelected, ...toRemoteSelected])
     }
 
     const openSettings = () => {
-        console.log('open settings');
         const modal = new CheckSettingsModal(props.plugin.app, props.plugin);
         modal.open();
     }
