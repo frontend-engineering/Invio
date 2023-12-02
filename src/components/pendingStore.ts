@@ -32,6 +32,36 @@ interface State {
   clean: () => void;
 }
 
+function convertList(ListSource: any[]) {
+  const ListDest: any[] = [];
+
+  for (let item of ListSource) {
+    const keys = item.key.split('/');
+    let currentObj: any = ListDest;
+
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i];
+
+      if (!currentObj.find((obj: any) => obj.key === key)) {
+        if (i === keys.length - 1) {
+          currentObj.push({
+            ...item,
+            title: key
+          });
+        } else {
+          const newObj: any = { key: key, title: key, children: [] };
+          currentObj.push(newObj);
+          currentObj = newObj.children;
+        }
+      } else {
+        currentObj = currentObj.find((obj: any) => obj.key === key).children;
+      }
+    }
+  }
+
+  return ListDest;
+}
+
 const TouchedFileList = [
   ...RemoteFileTouchedDecisions,
   ...LocalFileTouchedDecisions
@@ -61,8 +91,11 @@ const useStore = create<State>()((set, get) => ({
   },
   getToRemoteFileList: () => {
     const obj = get().record;
-    console.log('get to remote data: ', obj)
-    return Object.keys(obj).filter(key => obj[key].syncType === 'TOREMOTE').map(key => obj[key])
+    const list = Object.keys(obj)
+      .filter(key => obj[key].syncType === 'TOREMOTE')
+      .map(key => obj[key])
+
+    return convertList(list) as FileOrFolderMixedState[]
   },
 
   updateSelectedToLocalFileList: (list: string[]) => {
