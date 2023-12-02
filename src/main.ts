@@ -1429,6 +1429,7 @@ export default class InvioPlugin extends Plugin {
     const { iconSvgSyncWait } = getIconSvg();
     icon.createIconNode(this, this.settings.localWatchDir, iconSvgSyncWait);
     await this.saveSettings();
+    this.pendingView()
   }
 
   async checkIfRemoteProjectSync() {
