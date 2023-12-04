@@ -8,14 +8,12 @@ import useStore, { LogType } from './pendingStore';
 import styles from './PendingStatsView.module.css';
 import { AlertTriangle, CheckCircle, ArrowDownUp, Activity, LineChart, Cog, Siren, FileType, ScrollText, Info, AlertCircle, XCircle, ChevronRight, Terminal, RedoDot, UploadCloud, DownloadCloud } from 'lucide-react';
 import { log } from '../moreOnLog'
-import { Utils } from '../utils/utils';
-import { Notice } from "obsidian";
 import Logo from './InvioLogo';
 import InvioPlugin from "src/main";
 import { CheckSettingsModal } from './CheckSettingsModal';
 
 export const PendingStatsViewComponent = (props: { plugin: InvioPlugin }) => {
-    const { record, toLocalSelected, toRemoteSelected, getToLocalFileList, getToRemoteFileList, existToLocalFile, existToRemoteFile, updateSelectedToLocalFileList, updateSelectedToRemoteFileList } = useStore();
+    const { record, toLocalSelected, toRemoteSelected, getToLocalFileList, getToRemoteFileList, getAllCheckedFileList, existToLocalFile, existToRemoteFile, updateSelectedToLocalFileList, updateSelectedToRemoteFileList } = useStore();
     const toLocalTouched = getToLocalFileList();
 
     const toRemoteTouched = getToRemoteFileList();
@@ -51,15 +49,15 @@ export const PendingStatsViewComponent = (props: { plugin: InvioPlugin }) => {
     }
 
     const onToLocalCheck: TreeProps['onCheck'] = (checkedKeys: string[], info: any) => {
-        updateSelectedToLocalFileList(checkedKeys.filter(key => toLocalTouched.find(t => t.key === key)))
+        updateSelectedToLocalFileList(checkedKeys)
     };
 
     const onToRemoteCheck: TreeProps['onCheck'] = (checkedKeys: string[], info: any) => {
-        updateSelectedToRemoteFileList(checkedKeys.filter(key => toRemoteTouched.find(t => t.key === key)))
+        updateSelectedToRemoteFileList(checkedKeys)
     };
 
     const startSync = async () => {
-        await props.plugin.syncRun('manual', [...toLocalSelected, ...toRemoteSelected])
+        await props.plugin.syncRun('manual', getAllCheckedFileList())
     }
 
     const openSettings = () => {

@@ -26,6 +26,9 @@ interface State {
   init: (data: Record<string, FileOrFolderMixedState>, logs?: LogItem[]) => void;
   getToLocalFileList: () => FileOrFolderMixedState[];
   getToRemoteFileList: () => FileOrFolderMixedState[];
+  getAllCheckedFileList: () => string[];
+  getToLocalFileListFlat: () => FileOrFolderMixedState[];
+  getToRemoteFileListFlat: () => FileOrFolderMixedState[];
   existToLocalFile: (path: string) => boolean;
   existToRemoteFile: (path: string) => boolean;
   updateSelectedToLocalFileList: (list: string[]) => string[];
@@ -86,12 +89,27 @@ const useStore = create<State>()((set, get) => ({
       toRemoteSelected: [],
     })
   },
+  getToLocalFileListFlat: () => {
+    const obj = get().record;
+    const list = Object.keys(obj)
+      .filter(key => obj[key].syncType === 'TOLOCAL')
+      .map(key => obj[key])
+    return list
+  },
   getToLocalFileList: () => {
     const obj = get().record;
     const list = Object.keys(obj)
       .filter(key => obj[key].syncType === 'TOLOCAL')
       .map(key => obj[key])
     return convertList(list) as FileOrFolderMixedState[]
+  },
+  getToRemoteFileListFlat: () => {
+    const obj = get().record;
+    const list = Object.keys(obj)
+      .filter(key => obj[key].syncType === 'TOREMOTE')
+      .map(key => obj[key])
+
+    return list
   },
   getToRemoteFileList: () => {
     const obj = get().record;
@@ -100,6 +118,10 @@ const useStore = create<State>()((set, get) => ({
       .map(key => obj[key])
 
     return convertList(list) as FileOrFolderMixedState[]
+  },
+
+  getAllCheckedFileList: () => {
+    return [ ...get().toLocalSelected, ...get().toRemoteSelected ]
   },
 
   existToLocalFile: (filePath: string) => {
@@ -114,14 +136,16 @@ const useStore = create<State>()((set, get) => ({
   },
 
   updateSelectedToLocalFileList: (list: string[]) => {
+    const toRemoteList = get().getToLocalFileListFlat();
     set({
-      toLocalSelected: list || []
+      toLocalSelected: (list || []).filter((p: string) => toRemoteList.find(item => item.key === p))
     })
     return get().toLocalSelected
   },
   updateSelectedToRemoteFileList: (list: string[]) => {
+    const toRemoteList = get().getToRemoteFileListFlat();
     set({
-      toRemoteSelected: list || []
+      toRemoteSelected: (list || []).filter((p: string) => toRemoteList.find(item => item.key === p))
     })
     return get().toRemoteSelected
   },
