@@ -15,42 +15,39 @@ import InvioPlugin from "src/main";
 import { CheckSettingsModal } from './CheckSettingsModal';
 
 export const PendingStatsViewComponent = (props: { plugin: InvioPlugin }) => {
-    const { record, toLocalSelected, toRemoteSelected, getToLocalFileList, getToRemoteFileList, updateSelectedToLocalFileList, updateSelectedToRemoteFileList } = useStore();
+    const { record, toLocalSelected, toRemoteSelected, getToLocalFileList, getToRemoteFileList, existToLocalFile, existToRemoteFile, updateSelectedToLocalFileList, updateSelectedToRemoteFileList } = useStore();
     const toLocalTouched = getToLocalFileList();
 
     const toRemoteTouched = getToRemoteFileList();
 
-    const treeToLocalData: DataNode[] = toLocalTouched?.map((item: any) => {
-        item.title = item.key
-        item.key = item.key
-        return item;
-    })
-    const treeToRemoteData: DataNode[] = toRemoteTouched?.map((item: any) => {
-        item.title = item.key
-        item.key = item.key
-        return item;
-    })
+    const treeToLocalData: DataNode[] = toLocalTouched
+    const treeToRemoteData: DataNode[] = toRemoteTouched
 
     const onSelect = (selectedKeys: any, info: any, type: `ToLocal` | `ToRemote`) => {
+        log.info('on select: ', selectedKeys)
         const key = selectedKeys[0]
+        if (!key) return;
         props.plugin.viewFileDiff(key, type === 'ToLocal' ? 'RemoteToLocal' : 'LocalToRemote')
-        .then(file => {
-            log.info('diff file changed - ', file);
-            if (file) {
-                props.plugin.pendingView()
-            }
-          })
+            .then(file => {
+                log.info('diff file changed - ', file);
+                if (file) {
+                    props.plugin.pendingView()
+                }
+              })
+
         setTimeout(() => {
             selectedKeys = []
         }, 300)
     };
 
     const onToLocalSelect: TreeProps['onSelect'] = (selectedKeys: any, info: any) => {
-        onSelect(selectedKeys, info, 'ToLocal')
+        const keys = selectedKeys.filter((key: string) => existToLocalFile(key))
+        onSelect(keys, info, 'ToLocal')
     }
 
     const onToRemoteSelect: TreeProps['onSelect'] = (selectedKeys: any, info: any) => {
-        onSelect(selectedKeys, info, 'ToRemote')
+        const keys = [ ...selectedKeys ].filter((key: string) => existToRemoteFile(key))
+        onSelect(keys, info, 'ToRemote')
     }
 
     const onToLocalCheck: TreeProps['onCheck'] = (checkedKeys: string[], info: any) => {

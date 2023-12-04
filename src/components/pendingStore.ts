@@ -26,6 +26,8 @@ interface State {
   init: (data: Record<string, FileOrFolderMixedState>, logs?: LogItem[]) => void;
   getToLocalFileList: () => FileOrFolderMixedState[];
   getToRemoteFileList: () => FileOrFolderMixedState[];
+  existToLocalFile: (path: string) => boolean;
+  existToRemoteFile: (path: string) => boolean;
   updateSelectedToLocalFileList: (list: string[]) => string[];
   updateSelectedToRemoteFileList: (list: string[]) => string[];
   // updateRecord: (key: string, data: Partial<FileOrFolderMixedState>) => void;
@@ -86,8 +88,10 @@ const useStore = create<State>()((set, get) => ({
   },
   getToLocalFileList: () => {
     const obj = get().record;
-    console.log('get to local data: ', obj)
-    return Object.keys(obj).filter(key => obj[key].syncType === 'TOLOCAL').map(key => obj[key])
+    const list = Object.keys(obj)
+      .filter(key => obj[key].syncType === 'TOLOCAL')
+      .map(key => obj[key])
+    return convertList(list) as FileOrFolderMixedState[]
   },
   getToRemoteFileList: () => {
     const obj = get().record;
@@ -96,6 +100,17 @@ const useStore = create<State>()((set, get) => ({
       .map(key => obj[key])
 
     return convertList(list) as FileOrFolderMixedState[]
+  },
+
+  existToLocalFile: (filePath: string) => {
+    const obj = get().record;
+    return !!Object.keys(obj).filter(key => obj[key].syncType === 'TOLOCAL').find(key => key === filePath)
+  },
+  existToRemoteFile: (filePath: string) => {
+    const obj = get().record;
+    return !!Object.keys(obj)
+      .filter(key => obj[key].syncType === 'TOREMOTE')
+      .find(key => key === filePath)
   },
 
   updateSelectedToLocalFileList: (list: string[]) => {
