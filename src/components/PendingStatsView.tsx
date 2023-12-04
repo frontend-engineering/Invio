@@ -1,9 +1,6 @@
 import * as React from "react";
 import { Tree, Button } from 'antd';
 import type { DataNode, TreeProps } from 'antd/es/tree';
-
-import { throttle } from 'lodash';
-import classnames from 'classnames';
 import useStore, { LogType } from './pendingStore';
 import styles from './PendingStatsView.module.css';
 import { AlertTriangle, CheckCircle, ArrowDownUp, Activity, LineChart, Cog, Siren, FileType, ScrollText, Info, AlertCircle, XCircle, ChevronRight, Terminal, RedoDot, UploadCloud, DownloadCloud } from 'lucide-react';
@@ -13,7 +10,7 @@ import InvioPlugin from "src/main";
 import { CheckSettingsModal } from './CheckSettingsModal';
 
 export const PendingStatsViewComponent = (props: { plugin: InvioPlugin }) => {
-    const { record, toLocalSelected, toRemoteSelected, getToLocalFileList, getToRemoteFileList, getAllCheckedFileList, existToLocalFile, existToRemoteFile, updateSelectedToLocalFileList, updateSelectedToRemoteFileList } = useStore();
+    const { getToLocalFileList, getToRemoteFileList, getAllCheckedFileList, existToLocalFile, existToRemoteFile, updateSelectedToLocalFileList, updateSelectedToRemoteFileList } = useStore();
     const toLocalTouched = getToLocalFileList();
 
     const toRemoteTouched = getToRemoteFileList();
@@ -86,6 +83,9 @@ export const PendingStatsViewComponent = (props: { plugin: InvioPlugin }) => {
                 <Cog className={styles['settings']} onClick={openSettings} />
             </h4>
             <div className={styles['scrollContainer']}>
+                <div className={styles['extraAction']}>
+                    <div className={styles['btn']} onClick={() => { props.plugin.pendingView()}}><ArrowDownUp className={styles['icon']} />Refresh</div>
+                </div>
                 {
                     treeToLocalData?.length > 0 ?
                         <>
@@ -110,7 +110,9 @@ export const PendingStatsViewComponent = (props: { plugin: InvioPlugin }) => {
                         null
                 }
                 
-                <div className={styles['subHeader']}>Local Changed Files</div>
+                <div className={styles['subHeader']}>
+                    Local Changed Files
+                </div>
                 <Tree
                     checkable
                     showLine

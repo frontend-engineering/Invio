@@ -34,7 +34,27 @@
 }
 .header > .settings:hover {
     transform: rotateZ(45deg);
-    
+}
+.extra-action {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.extra-action > .btn {
+    flex: 0 0 64px;
+    text-align: center;
+    font-size: smaller;
+    margin: 2px;
+    line-height: var(--nav-item-size);
+    /* color: var(--interactive-accent); */
+    cursor: pointer;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 4px 6px;
+    /* border: 1px solid var(--interactive-accent); */
+    box-shadow: 0 0 2px 1px var(--interactive-accent);
+    border-radius: 4px;
 }
 .scroll-container {
     overflow-y: scroll;
