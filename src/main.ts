@@ -1363,9 +1363,15 @@ export default class InvioPlugin extends Plugin {
   getRemoteDomain() {
     let domain = this.settings.remoteDomain;
     if (!domain) {
-      if (this.settings.useHost && this.settings.hostConfig?.hostPair?.slug) {
-        const slug = this.settings.hostConfig?.hostPair.slug;
-        domain = `https://${slug}.${ServerDomain}`;
+      if (this.settings.useHost) {
+        if (this.settings.hostConfig?.hostPair?.slug) {
+          const slug = this.settings.hostConfig?.hostPair.slug;
+          domain = `https://${slug}.${ServerDomain}`;
+        } else {
+          // Redo auth
+          Utils.gotoAuth();
+          return '';
+        }
       } else {
         if (!this.settings.s3.s3BucketName) return '';
         domain = `https://${this.settings.s3.s3BucketName}.${this.settings.s3.s3Endpoint}`;
@@ -1391,11 +1397,10 @@ export default class InvioPlugin extends Plugin {
       this.settings.localWatchDir,
       this.app.vault.getName(),
     );
-    const publishedKey = client.getUseHostSlugPath(pathName)
     // Check remote link
-    const remoteContents = await client.listFromRemote(publishedKey?.split('/').slice(0, -1).join('/'), RemoteSrcPrefix);
-    const existed = remoteContents.find(item => item.key === (RemoteSrcPrefix + publishedKey).replace('//', '/'))
-    return existed ? (domain + `/${publishedKey.replace(/\.md$/, '.html')}`) : null
+    const remoteContents = await client.listFromRemote(pathName?.split('/').slice(0, -1).join('/'), RemoteSrcPrefix);
+    const existed = remoteContents.find(item => item.key === (RemoteSrcPrefix + pathName).replace('//', '/'))
+    return existed ? (domain + `${pathName.replace(/\.md$/, '.html').replace(this.settings.localWatchDir, '')}`) : null
   }
 
   async enableHostService() {
