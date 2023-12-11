@@ -109,26 +109,31 @@ export const PendingStatsViewComponent = (props: { plugin: InvioPlugin }) => {
                         </> :
                         null
                 }
-                
-                <div className={styles['subHeader']}>
-                    Local Changed Files
-                </div>
-                <Tree
-                    checkable
-                    showLine
-                    defaultExpandAll
-                    multiple={false}
-                    rootStyle={{
-                        background: 'black',
-                        color: 'white',
-                        paddingTop: '18px',
-                        paddingBottom: '18px',
-                    }}
-                    selectedKeys={[]}
-                    onSelect={onToRemoteSelect}
-                    onCheck={onToRemoteCheck}
-                    treeData={treeToRemoteData}
-                />
+                {
+                    treeToRemoteData?.length > 0 ?
+                    <>
+                        <div className={styles['subHeader']}>
+                            Local Changed Files
+                        </div>
+                        <Tree
+                            checkable
+                            showLine
+                            defaultExpandAll
+                            multiple={false}
+                            rootStyle={{
+                                background: 'black',
+                                color: 'white',
+                                paddingTop: '18px',
+                                paddingBottom: '18px',
+                            }}
+                            selectedKeys={[]}
+                            onSelect={onToRemoteSelect}
+                            onCheck={onToRemoteCheck}
+                            treeData={treeToRemoteData}
+                        />
+                    </> :
+                    null
+                }
                 <div className={styles['actions']}>
                     <Button onClick={startSync}>Sync</Button>
                 </div>

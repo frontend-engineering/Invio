@@ -19,6 +19,7 @@ import type {
 } from "./baseTypes";
 import {
   COMMAND_CALLBACK,
+  COMMAND_CALLBACK_IMPORT,
   COMMAND_URI,
 } from "./baseTypes";
 import { importQrCodeUri } from "./importExport";
@@ -60,7 +61,7 @@ import Utils from './utils';
 import { Analytics4, loadGA } from './ga';
 import { TDiffType, openDiffModal } from './diff/index';
 import AutoUpdater from './updater'
-
+import { mkdirpInVault } from "./misc";
 const { iconNameSyncWait, iconNameSyncPending, iconNameSyncRunning, iconNameLogs, iconNameSyncLogo } = UsingIconNames;
 const Menu_Tab = `    `;
 
@@ -1183,6 +1184,47 @@ export default class InvioPlugin extends Plugin {
         );
       }
     });
+
+    this.registerObsidianProtocolHandler(
+      COMMAND_CALLBACK_IMPORT,
+      async (inputParams) => {
+        log.info('protocol: ', COMMAND_CALLBACK_IMPORT, inputParams)
+        
+        const { token, user, name, slug } = inputParams;
+        const dir = name
+        if (await app.vault.adapter.exists(dir)) {
+          new Notice(`Local folder ${dir} existed, import aborted`)
+          return;
+        }
+        if (!(dir || (typeof dir === 'string'))) {
+          return;
+        }
+
+        if (!this.settings.hostConfig) {
+          this.settings.hostConfig = {} as THostConfig;
+        }
+        if (token && user) {
+          this.settings.hostConfig.token = token;
+          try {
+            this.settings.hostConfig.user = JSON.parse(user);
+          } catch (error) {
+            log.error('parse user info failed: ', error);
+            this.settings.hostConfig.token = '';
+            this.settings.hostConfig.user = null;
+          }
+        }
+        await this.app.vault.adapter.mkdir(dir);
+        await this.switchWorkingDir(dir);
+  
+        log.info('sync with remote project: ', this.settings.localWatchDir, this.settings.hostConfig);
+        if (this.settings.localWatchDir) {
+          await syncWithRemoteProject(this.settings.localWatchDir, this);
+        }
+        setTimeout(() => {
+          // this.syncRun('auto');
+        }, 100)
+      }
+    );
 
     this.registerObsidianProtocolHandler(
       COMMAND_CALLBACK,

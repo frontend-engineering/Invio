@@ -128,6 +128,7 @@ export interface RemoteItem {
 
 export const COMMAND_URI = "invio";
 export const COMMAND_CALLBACK = "invio-auth-cb";
+export const COMMAND_CALLBACK_IMPORT = "invio-project-import";
 export const COMMAND_CALLBACK_ONEDRIVE = "invio-cb-onedrive";
 export const COMMAND_CALLBACK_DROPBOX = "invio-cb-dropbox";
 

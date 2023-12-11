@@ -51,9 +51,9 @@ export class RemoteClient {
       throw new Error('ProjectNotSync');
     }
     if (this.hostConfig?.hostPair?.dir !== this.localWatchDir) {
-      throw new Error('NeedSwitchProject');
+      throw new Error(`NeedSwitchProject: ${this.localWatchDir} to ${this.hostConfig?.hostPair?.dir}`);
     }
-    return (this.hostConfig?.hostPair?.password ? 'p/' : '') + this.hostConfig?.hostPair.slug;
+    return this.hostConfig?.hostPair.slug;
   }
 
   getUseHostDirname() {
@@ -68,7 +68,7 @@ export class RemoteClient {
       throw new Error('ProjectNotSync');
     }
     if (this.hostConfig?.hostPair?.dir !== this.localWatchDir) {
-      throw new Error('NeedSwitchProject');
+      throw new Error(`NeedSwitchProject: ${this.localWatchDir} to ${this.hostConfig?.hostPair?.dir}`);
     }
     return this.hostConfig?.hostPair.dir;
   }
@@ -82,13 +82,8 @@ export class RemoteClient {
       const paths = Path.splitString(key);
       if (paths?.length > 0) {
         let dir = hasPrefix ? paths[1] : paths[0];
-        if (dir === 'p') {
-          paths.splice(0, 1);
-          dir = hasPrefix ? paths[1] : paths[0];
-        }
-  
         if (dir !== this.localWatchDir) {
-          throw new Error('NeedSwitchProject');
+          throw new Error(`NeedSwitchProject: ${this.localWatchDir} to ${dir}`);
         }
         if (hasPrefix) {
           paths[1] = this.getUseHostSlug();
@@ -109,21 +104,16 @@ export class RemoteClient {
     } else {
       const hasPrefix = slug?.startsWith(RemoteSrcPrefix);
       const paths = slug?.split(WEB_PATH_SPLITER);
-      let encrypted = false;
       if (paths?.length > 0) {
         let dir = hasPrefix ? paths[1] : paths[0];
-        if (dir === 'p') {
-          encrypted = true;
-          dir = hasPrefix ? paths[2] : paths[1];
-        }
         const getSlug = this.getUseHostSlug();
-        if (dir !== getSlug?.replace(/^p\//, '')) {
-          throw new Error('NeedSwitchProject');
+        if (dir !== getSlug) {
+          throw new Error(`NeedSwitchProject: ${getSlug} to ${dir}`);
         }
         if (hasPrefix) {
-          paths[encrypted ? 2 : 1] = this.getUseHostDirname();
+          paths[1] = this.getUseHostDirname();
         } else {
-          paths[encrypted ? 1 : 0] = this.getUseHostDirname();
+          paths[0] = this.getUseHostDirname();
         }
         webPath = Path.joinString(paths);
         log.info('get local path: ', webPath)

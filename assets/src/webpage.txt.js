@@ -379,8 +379,16 @@ async function loadDocument(url, pushHistory = true, scrollTo = true)
 		doc.documentElement.innerHTML = html;
 
 		// copy document content and outline tree
-		document.querySelector(".document-container").innerHTML = doc.querySelector(".document-container").innerHTML;
-		document.querySelector(".outline-tree").innerHTML = doc.querySelector(".outline-tree").innerHTML;
+		const container = doc.querySelector(".document-container");
+		if (container) {
+			document.querySelector(".document-container").innerHTML = container.innerHTML;
+			document.querySelector(".outline-tree").innerHTML = doc.querySelector(".outline-tree").innerHTML;
+		} else {
+			console.warn('html response is not work as expected, show directly: ', url);
+			// Error html response
+			window.location.assign(url);
+			return;
+		}
 	
 		// if the url has a heading, scroll to it
 		let splitURL = url.split("#");

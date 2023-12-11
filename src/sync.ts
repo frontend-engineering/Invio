@@ -359,8 +359,7 @@ export const fetchRemoteFileMD = async (
   if (buf?.deleted) {
     return buf;
   }
-  const resp: RemoteItem = await client.getRemoteMeta(RemoteSrcPrefix + remoteFilePath)
-
+  const resp: RemoteItem = await client.getRemoteMeta(RemoteSrcPrefix + client.getUseHostSlugPath(remoteFilePath))
   let data;
   if (typeof buf === "string") {
     data = buf;
@@ -447,7 +446,7 @@ export const pruneTouchedFiles = async (vault: Vault, client: RemoteClient, list
         client,
         vault,
       ).catch(err => {
-        log.info('remote empty ', err);
+        log.info('remote empty uploadLocalToRemote ', item.key, err);
         return null;
       })
       log.info('remote md: ', remoteMD);
@@ -468,10 +467,9 @@ export const pruneTouchedFiles = async (vault: Vault, client: RemoteClient, list
         client,
         vault,
       ).catch(err => {
-        log.info('remote empty ', err);
+        log.info('remote empty ', item.key, err);
         return null;
       })
-      log.info('remote md: ', remoteMD);
       if (!remoteMD || !(await isRemoteFileDiff(vault, item.key, remoteMD.data))) {
         log.info('file contents diff nothing', attr, item.key)
         list[attr] = null;
@@ -482,6 +480,7 @@ export const pruneTouchedFiles = async (vault: Vault, client: RemoteClient, list
   })
   const result = await Promise.all(promises);
   log.info('list result: ', result);
+  return result;
 }
 
 const ensembleMixedStates = async (
