@@ -726,29 +726,24 @@ export default class InvioPlugin extends Plugin {
 
         log.info('sync done with touched file map: ', JSON.stringify(toRemoteFiles));
 
-        // selected mode
-        // Get redo file list and redo the publish/unpublish job
-        if (fileList?.length > 0) {
-          fileList.forEach(p => {
-            const exist = allFiles.find(file => file.path === p);
-            if (exist) {
-              if (pubPathList.indexOf(p) === -1) {
-                pubPathList.push(p)
-              }
-            } else {
-              if (unPubList.indexOf(p) === -1) {
-                unPubList.push(p);
-              }
-            }
-          })
-          log.info('selected mode');
-          log.info('pub list: ', pubPathList, unPubList);
-        }
-
         if (this.isSyncRunAborted()) {
           cancelAction();
           return;
         }
+
+        const addFiles: TFile[] = [];
+        const delFiles: string[] = [];
+        toLocalFiles?.map(toLocal => {
+          if (toLocal.decision === 'downloadRemoteToLocal') {
+            const file = this.app.vault.getAbstractFileByPath(toLocal.key)
+            if (file instanceof TFile) {
+              addFiles.push(file)
+            }
+          } else if (toLocal.decision === 'keepRemoteDelHist') {
+            delFiles.push(toLocal.key)
+          }
+        })
+        HTMLGenerator.updateTree(addFiles, delFiles);
 
         await unpublishFile(client, this.app.vault, unPubList, (pathName: string, status: string) => {
           log.info('publishing ', pathName, status);
@@ -1213,6 +1208,8 @@ export default class InvioPlugin extends Plugin {
             this.settings.hostConfig.user = null;
           }
         }
+        await this.saveSettings()
+
         await this.app.vault.adapter.mkdir(dir);
         await this.switchWorkingDir(dir);
   
@@ -1251,6 +1248,7 @@ export default class InvioPlugin extends Plugin {
               this.settings.hostConfig.token = '';
               this.settings.hostConfig.user = null;
             }
+            await this.saveSettings()
             if (this.settings.localWatchDir) {
               await syncWithRemoteProject(this.settings.localWatchDir, this);
             }

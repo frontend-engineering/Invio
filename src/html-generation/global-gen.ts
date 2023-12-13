@@ -362,10 +362,12 @@ export class GlobalDataGenerator
 
 
 	static fileTreeCache: LinkTree | undefined;
+	static filesCache: TFileWithMeta[] | undefined;
 
 	public static clearFileTreeCache()
 	{
 		GlobalDataGenerator.fileTreeCache = undefined;
+		GlobalDataGenerator.filesCache = undefined;
 	}
 
 	// return the file tree as a list of objects with size, title, and href
@@ -375,9 +377,33 @@ export class GlobalDataGenerator
 	public static getFileTree(exportedFiles: TFileWithMeta[] | undefined = undefined): LinkTree
 	{
 		if (this.fileTreeCache != undefined) return this.fileTreeCache;
+		this.filesCache = exportedFiles;
 		if (exportedFiles == undefined) return new LinkTree(undefined, undefined, 0);
 		
 		let fileTree = LinkTree.fromFiles(exportedFiles);
+		fileTree.sortAlphabetically();
+		fileTree.sortByIsFolder(true);
+		fileTree.sortMeta();
+		if(InvioSettingTab.settings.makeNamesWebStyle) fileTree.makeLinksWebStyle();
+
+		this.fileTreeCache = fileTree;
+
+		return fileTree;
+	}
+
+
+	public static updateFileTree(addFiles: TFileWithMeta[] | undefined = undefined, delFiles: string[] | undefined = undefined): LinkTree
+	{
+		if (!addFiles && !delFiles) return this.fileTreeCache;
+		this.filesCache = [ ...(this.filesCache || []), ...(addFiles || []) ];
+		if (delFiles) {
+			delFiles.forEach((delFilePath) => {
+				const idx = this.filesCache.findIndex(fCache => fCache.path === delFilePath);
+				this.filesCache.splice(idx, 1)
+			})
+		}
+		
+		let fileTree = LinkTree.fromFiles(this.filesCache);
 		fileTree.sortAlphabetically();
 		fileTree.sortByIsFolder(true);
 		fileTree.sortMeta();

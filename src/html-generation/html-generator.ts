@@ -55,6 +55,16 @@ export class HTMLGenerator {
 		MarkdownRenderer.endBatch();
 	}
 
+	// Only work before generaeWebpage
+	public static updateTree(patchFiles: TFile[], delFiles: string[]) {
+		const files = patchFiles.map(f => {
+			const pageConfig = this.getPageOnlyMeta(f);
+			(f as TFileWithMeta).sort = pageConfig?.sort || 0
+			return f;
+		})	
+		GlobalDataGenerator.updateFileTree(files, delFiles)
+	}
+
 	// rootPath is used for collecting context nodes
 	public static async generateWebpage(
 		file: ExportFile,
