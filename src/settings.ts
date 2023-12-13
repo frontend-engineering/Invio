@@ -970,7 +970,7 @@ export class InvioSettingTab extends PluginSettingTab {
               realVal > 0
             ) {
               const intervalID = window.setInterval(() => {
-                this.plugin.pendingView();
+                this.plugin.pendingView(true);
               }, realVal);
               this.plugin.autoCheckIntervalID = intervalID;
               this.plugin.registerInterval(intervalID);

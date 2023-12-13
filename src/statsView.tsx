@@ -56,7 +56,7 @@ export class StatsView extends ItemView {
         });
     
         plugin.app.workspace.revealLeaf(
-          plugin.app.workspace.getLeavesOfType(VIEW_TYPE_STATS)[0]
+            plugin.app.workspace.getLeavesOfType(VIEW_TYPE_STATS)[0]
         );
     }
 

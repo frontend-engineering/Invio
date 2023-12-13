@@ -884,14 +884,16 @@ export default class InvioPlugin extends Plugin {
     }
   }
 
-  async pendingView() {
+  async pendingView(silent?: boolean) {
     if (this.syncStatus !== 'idle') {
       await this.doSyncRunAbort(8000);
     }
     const { toRemoteFiles, toLocalFiles } = await this.syncRun('pre') || {};
     log.info('toughed files: ', toRemoteFiles, toLocalFiles);
     const touched = [ ...(toRemoteFiles || []), ...(toLocalFiles || []) ]
-    await StatsView.activateStatsView(this);
+    if (!silent) {
+      await StatsView.activateStatsView(this);
+    }
     const view = StatsView.getStatsView(this, 'PendingStats');
     view?.setStatsType('PendingStats')
     const fileMap: Record<string, FileOrFolderMixedState>  = {};
@@ -986,7 +988,7 @@ export default class InvioPlugin extends Plugin {
             } else {
               Utils.mockLocaleFile(this) 
             }
-            this.pendingView()
+            this.pendingView(true)
           })
         } else {
           new Notice(
@@ -1582,7 +1584,7 @@ export default class InvioPlugin extends Plugin {
     ) {
       this.app.workspace.onLayoutReady(() => {
         const intervalID = window.setInterval(() => {
-          this.pendingView()
+          this.pendingView(true)
         }, this.settings.autoCheckEveryMilliseconds);
         this.autoCheckIntervalID = intervalID;
         this.registerInterval(intervalID);
@@ -1598,7 +1600,7 @@ export default class InvioPlugin extends Plugin {
     ) {
       this.app.workspace.onLayoutReady(() => {
         window.setTimeout(() => {
-          this.pendingView()
+          this.pendingView(true)
         }, this.settings.initCheckAfterMilliseconds);
       });
     }
