@@ -7,7 +7,7 @@ import type {
 import * as s3 from "./remoteForS3";
 import { Path, WEB_PATH_SPLITER } from './utils/path';
 import { log } from "./moreOnLog";
-import { RemoteSrcPrefix } from "./sync";
+import { RemoteSrcPrefix, RemoteAttPrefix } from "./sync";
 
 export { ServerDomain, HostServerUrl, AppHostServerUrl } from './remoteForS3'
 export class RemoteClient {
@@ -78,7 +78,7 @@ export class RemoteClient {
     if (!this.useHost) {
       localPath = key;
     } else {
-      const hasPrefix = key?.startsWith(RemoteSrcPrefix);
+      const hasPrefix = key?.startsWith(RemoteSrcPrefix) || key?.startsWith(RemoteAttPrefix);
       const paths = Path.splitString(key);
       if (paths?.length > 0) {
         let dir = hasPrefix ? paths[1] : paths[0];
@@ -93,7 +93,6 @@ export class RemoteClient {
         localPath = Path.joinString(paths);
       }
     }
-
     return localPath;
   }
 

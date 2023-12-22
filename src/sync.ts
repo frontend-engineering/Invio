@@ -1795,7 +1795,7 @@ export const syncAttachment = async (vault: Vault, client: RemoteClient, embeds:
         null,
         false,
         null,
-        `${RemoteAttPrefix}/${link}`
+        `${RemoteAttPrefix}${client.localWatchDir}/${link}`
       )
       .then(resp => {
         cb && cb('upload', link, resp);
@@ -1819,7 +1819,7 @@ export const syncAttachment = async (vault: Vault, client: RemoteClient, embeds:
     await Promise.all(diff.map(async link => {
       log.info('downloading attachment: ', link);
       return client.downloadFromRemote(
-        link,
+        `${client.localWatchDir}/${link}`,
         RemoteAttPrefix,
         vault,
         Date.now(),
