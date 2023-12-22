@@ -147,9 +147,14 @@ export class LinkTree
 	 * @param fileDocument The document to create the tree from.
 	 * @param minDepth The minimum depth of headings to include in the tree. 1 will include h1.
 	 */
-	public static headersFromFile(file: TFile, minDepth: number = 1): LinkTree
+	public static async headersFromFile(file: TFile, minDepth: number = 1): Promise<LinkTree>
 	{
-		let headings = app.metadataCache.getFileCache(file)?.headings ?? [];
+		let meta = app.metadataCache.getFileCache(file);
+		if (!meta) {
+			await app.vault.adapter.read(file.path);
+			meta = app.metadataCache.getFileCache(file);
+		}
+		let headings = meta?.headings ?? [];
 		if(headings.length > 0 && (headings[0].level != 1 && minDepth <= 1 && headings[0].heading != file.basename)) headings.unshift({heading: file.basename, level: 1, position: {start: {col: 0, line: 0, offset: 0}, end: {col: 0, line: 0, offset: 0}}});
 		let minHeadingSize = Math.min(...headings.map(h => h.level));
 		let root = new LinkTree(undefined, undefined, minHeadingSize - 1);

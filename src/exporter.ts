@@ -145,9 +145,16 @@ export const publishFiles = async (
     }
     // metadataCache
     const filesMetadata: any = {};
-    allFiles.forEach(file => {
-        filesMetadata[file.path] = app.metadataCache.getFileCache(file)
+    const iterPromises = allFiles.map(async file => {
+        let cache = app.metadataCache.getFileCache(file);
+		if (!cache) {
+			await app.vault.adapter.read(file.path)
+            cache = app.metadataCache.getFileCache(file); 
+		}
+        filesMetadata[file.path] = cache
+        return cache;
     });
+    await Promise.all(iterPromises);
 
     const metaDownload = new Downloadable('meta.json', JSON.stringify(filesMetadata), htmlPath.joinString(settings.localWatchDir));
     Object.assign(metaDownload, {

@@ -38,12 +38,14 @@ export class HTMLGenerator {
 	public static async beginBatch(plugin: InvioPlugin, exportingFiles: TFile[]) {
 		GlobalDataGenerator.clearGraphCache();
 		GlobalDataGenerator.clearFileTreeCache();
-		const files = exportingFiles.map(f => {
-			const pageConfig = this.getPageOnlyMeta(f);
+		const filePromises = exportingFiles.map(async f => {
+			const pageConfig = await this.getPageOnlyMeta(f);
 			(f as TFileWithMeta).sort = pageConfig?.sort || 0
 			return f;
 		})
-		GlobalDataGenerator.getFileTree(files);
+		Promise.all(filePromises).then(files => {
+			GlobalDataGenerator.getFileTree(files);
+		})
 		await StatsView.activateStatsView(plugin);
 		const view = StatsView.getStatsView(plugin, 'SyncingStats');
 		await AssetHandler.updateAssetCache(view);
@@ -56,13 +58,16 @@ export class HTMLGenerator {
 	}
 
 	// Only work before generaeWebpage
-	public static updateTree(patchFiles: TFile[], delFiles: string[]) {
-		const files = patchFiles.map(f => {
-			const pageConfig = this.getPageOnlyMeta(f);
-			(f as TFileWithMeta).sort = pageConfig?.sort || 0
-			return f;
-		})	
-		GlobalDataGenerator.updateFileTree(files, delFiles)
+	public static async updateTree(patchFiles: TFile[], delFiles: string[]) {
+		const promises = patchFiles.map(f => {
+			return this.getPageOnlyMeta(f).then(pageConfig => {
+				(f as TFileWithMeta).sort = pageConfig?.sort || 0
+				return f;
+			})
+		})
+		return Promise.all(promises).then(files => {
+			GlobalDataGenerator.updateFileTree(files, delFiles)
+		})
 	}
 
 	// rootPath is used for collecting context nodes
@@ -94,13 +99,13 @@ export class HTMLGenerator {
 
 		// inject outline
 		if (InvioSettingTab.settings.includeOutline) {
-			let headerTree = LinkTree.headersFromFile(file.markdownFile, 1);
+			let headerTree = await LinkTree.headersFromFile(file.markdownFile, 1);
 			let outline: HTMLElement | undefined = this.generateHTMLTree(headerTree, usingDocument, "Table Of Contents", "outline-tree", false, 1, 2, InvioSettingTab.settings.startOutlineCollapsed);
 			rightSidebar.appendChild(outline);
 		}
 
 		// inject icon and title
-		const config = this.getMeta(file);
+		const config = await this.getMeta(file);
 		const pageTitle = config?.title || app.vault.getName();
 
 		let brandHeader = this.generateBrandHeader(usingDocument, config.brand, config.icon, config.slogan, config?.home);
@@ -389,8 +394,7 @@ export class HTMLGenerator {
 	}
 
 	private static async fillInHead(file: ExportFile, rootPath: Path, remoteDomain: string = '') {
-		// const pageConfig = app.metadataCache.getFileCache(file.markdownFile).frontmatter;
-		const pageConfig = this.getMeta(file);
+		const pageConfig = await this.getMeta(file);
 		log.info('get file metadata: ', pageConfig, remoteDomain);
 		log.info('head with remote domain: ', remoteDomain);
 		let pageTitle = file.markdownFile.basename;
@@ -583,26 +587,38 @@ export class HTMLGenerator {
 				}
 			})
 		}
-		
-		
 	}
 
-	private static getPageOnlyMeta(file: TFile) {
-		const pageConfig = (app.metadataCache.getFileCache(file).frontmatter || {}) as IMetaConfig;
+	private static async getPageOnlyMeta(file: TFile) {
+		let cache = app.metadataCache.getFileCache(file);
+		if (!cache) {
+			await app.vault.adapter.read(file.path);
+			cache = app.metadataCache.getFileCache(file);
+		}
+		const pageConfig = (cache?.frontmatter || {}) as IMetaConfig;
 		return pageConfig;
 	}
-	private static getMeta(file: ExportFile): IMetaConfig {
+	private static async getMeta(file: ExportFile): Promise<IMetaConfig> {
 		// Get site config
 		const indexPath = file.exportedFolder.joinString('index.md');
 		const indexFile = app.vault.getAbstractFileByPath(indexPath.asString);
 
-		const pageConfig = (app.metadataCache.getFileCache(file.markdownFile).frontmatter || {}) as IMetaConfig;
+		let meta = app.metadataCache.getFileCache(file.markdownFile);
+        if (!meta) {
+            await app.vault.adapter.read(file.markdownFile.path)
+			meta = app.metadataCache.getFileCache(file.markdownFile);
+        }
+		const pageConfig = (meta?.frontmatter || {}) as IMetaConfig;
 		log.info('page config: ', pageConfig);
 
 		const siteConfig: IMetaConfig = {};
 		if (indexFile instanceof TFile) {
-			const indexMeta = app.metadataCache.getFileCache(indexFile);
-			Object.assign(siteConfig, indexMeta?.frontmatter || {});
+			let meta = app.metadataCache.getFileCache(indexFile);
+        	if (!meta) {
+         	   await app.vault.adapter.read(indexFile.path)
+				meta = app.metadataCache.getFileCache(indexFile);
+    	    }
+			Object.assign(siteConfig, meta?.frontmatter || {});
 			log.info('site meta: ', siteConfig);
 		}
 

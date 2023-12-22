@@ -692,7 +692,11 @@ export default class InvioPlugin extends Plugin {
               const syncedFile = this.app.vault.getAbstractFileByPath(pathName);
               if (syncedFile instanceof TFile) {
                 this.addRecentSyncedFile(syncedFile);
-                const meta = this.app.metadataCache.getFileCache(syncedFile);
+                let meta = this.app.metadataCache.getFileCache(syncedFile);
+                if (!meta) {
+                  await app.vault.adapter.read(syncedFile.path);
+                  meta = this.app.metadataCache.getFileCache(syncedFile);
+                }
                 if (meta?.embeds) {
                   await syncAttachment(
                     this.app.vault,
@@ -743,7 +747,7 @@ export default class InvioPlugin extends Plugin {
             delFiles.push(toLocal.key)
           }
         })
-        HTMLGenerator.updateTree(addFiles, delFiles);
+        await HTMLGenerator.updateTree(addFiles, delFiles);
 
         await unpublishFile(client, this.app.vault, unPubList, (pathName: string, status: string) => {
           log.info('publishing ', pathName, status);
