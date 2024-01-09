@@ -1074,7 +1074,7 @@ export default class InvioPlugin extends Plugin {
                   if (this.settings.useHost) {
                     // TODO: Show share progress
                     const link = this.getClient().getUseHostSlug()
-                    open(`https://app.turbosite.cloud/${link}`)
+                    open(`https://app.turbosite.cloud/${link}/settings/people`)
                   } else {
                     await InvioSettingTab.exportSettings(this)
                   }
