@@ -892,14 +892,16 @@ export default class InvioPlugin extends Plugin {
     if (this.syncStatus !== 'idle') {
       await this.doSyncRunAbort(8000);
     }
-    const { toRemoteFiles, toLocalFiles } = await this.syncRun('pre') || {};
-    log.info('toughed files: ', toRemoteFiles, toLocalFiles);
-    const touched = [ ...(toRemoteFiles || []), ...(toLocalFiles || []) ]
     if (!silent) {
       await StatsView.activateStatsView(this);
     }
     const view = StatsView.getStatsView(this, 'PendingStats');
     view?.setStatsType('PendingStats')
+
+    view.loading()
+    const { toRemoteFiles, toLocalFiles } = await this.syncRun('pre') || {};
+    log.info('toughed files: ', toRemoteFiles, toLocalFiles);
+    const touched = [ ...(toRemoteFiles || []), ...(toLocalFiles || []) ]
     const fileMap: Record<string, FileOrFolderMixedState>  = {};
     touched.forEach(item => {
       fileMap[item.key] = item;
@@ -1092,8 +1094,8 @@ export default class InvioPlugin extends Plugin {
                 .onClick(async () => {
                   const filePath = file.path;
                   const link = await this.getRemoteLink(filePath);
+                  await navigator.clipboard.writeText(link || '');
                   if (link) {
-                    await navigator.clipboard.writeText(link);
                     new Notice(
                       this.t("syncrun_copy_link_msg")
                     );
@@ -1446,7 +1448,8 @@ export default class InvioPlugin extends Plugin {
     // Check remote link
     const remoteContents = await client.listFromRemote(pathName?.split('/').slice(0, -1).join('/'), RemoteSrcPrefix);
     const existed = remoteContents.find(item => item.key === (RemoteSrcPrefix + pathName).replace('//', '/'))
-    return existed ? (domain + `${pathName.replace(/\.md$/, '.html').replace(this.settings.localWatchDir, '')}`) : null
+    const localDirPrefixReg = new RegExp(`^${this.settings.localWatchDir}/`)
+    return existed ? (domain + `${pathName.replace(/\.md$/, '.html').replace(localDirPrefixReg, '/')}`) : null
   }
 
   async enableHostService() {

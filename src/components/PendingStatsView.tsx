@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Tree, Button } from 'antd';
+import classnames from 'classnames';
 import type { DataNode, TreeProps } from 'antd/es/tree';
 import useStore, { LogType } from './pendingStore';
 import styles from './PendingStatsView.module.css';
@@ -10,7 +11,7 @@ import InvioPlugin from "src/main";
 import { CheckSettingsModal } from './CheckSettingsModal';
 
 export const PendingStatsViewComponent = (props: { plugin: InvioPlugin }) => {
-    const { getToLocalFileList, getToRemoteFileList, getAllCheckedFileList, existToLocalFile, existToRemoteFile, updateSelectedToLocalFileList, updateSelectedToRemoteFileList } = useStore();
+    const { loading, getToLocalFileList, getToRemoteFileList, getAllCheckedFileList, existToLocalFile, existToRemoteFile, updateSelectedToLocalFileList, updateSelectedToRemoteFileList } = useStore();
     const toLocalTouched = getToLocalFileList();
 
     const toRemoteTouched = getToRemoteFileList();
@@ -61,20 +62,35 @@ export const PendingStatsViewComponent = (props: { plugin: InvioPlugin }) => {
         const modal = new CheckSettingsModal(props.plugin.app, props.plugin);
         modal.open();
     }
-    if (!(toLocalTouched.length > 0) && !(toRemoteTouched.length > 0)) {
-        return <>
-            <h4 className={styles['header']}>
-                <Logo className={styles['icon']} />
-                Touched Files Status
-                <Cog className={styles['settings']} onClick={openSettings} />
-            </h4>
-            
-            <div className={styles['emptyReport']}>
-                <ScrollText className={styles['icon']} />
-                <span>No file changed</span>
-            </div>
-        </>
-    }
+
+    const loadingSVG = () => <svg style={{ height: '18px', marginRight: '6px' }} version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+      width="36px" height="45px" viewBox="0 0 24 30" xmlSpace="preserve">
+      <rect x="0" y="13" width="4" height="5" fill="currentColor">
+        <animate attributeName="height" attributeType="XML"
+          values="5;21;5" 
+          begin="0s" dur="0.6s" repeatCount="indefinite" />
+        <animate attributeName="y" attributeType="XML"
+          values="13; 5; 13"
+          begin="0s" dur="0.6s" repeatCount="indefinite" />
+      </rect>
+      <rect x="10" y="13" width="4" height="5" fill="currentColor">
+        <animate attributeName="height" attributeType="XML"
+          values="5;21;5" 
+          begin="0.15s" dur="0.6s" repeatCount="indefinite" />
+        <animate attributeName="y" attributeType="XML"
+          values="13; 5; 13"
+          begin="0.15s" dur="0.6s" repeatCount="indefinite" />
+      </rect>
+      <rect x="20" y="13" width="4" height="5" fill="currentColor">
+        <animate attributeName="height" attributeType="XML"
+          values="5;21;5" 
+          begin="0.3s" dur="0.6s" repeatCount="indefinite" />
+        <animate attributeName="y" attributeType="XML"
+          values="13; 5; 13"
+          begin="0.3s" dur="0.6s" repeatCount="indefinite" />
+      </rect>
+    </svg>
+
     return (
         <div className={styles['viewContainer']}>
             <h4 className={styles['header']}>
@@ -82,10 +98,18 @@ export const PendingStatsViewComponent = (props: { plugin: InvioPlugin }) => {
                 Touched Files Status
                 <Cog className={styles['settings']} onClick={openSettings} />
             </h4>
-            <div className={styles['scrollContainer']}>
+            <div className={classnames(styles['scrollContainer'], loading ? styles['loadingOpacity'] : null)}>
                 <div className={styles['extraAction']}>
+                    { loading ? loadingSVG() : null}
                     <div className={styles['btn']} onClick={() => { props.plugin.pendingView()}}><ArrowDownUp className={styles['icon']} />Refresh</div>
                 </div>
+                {
+                    (!(toLocalTouched.length > 0) && !(toRemoteTouched.length > 0)) ?
+                        <div className={styles['emptyReport']}>
+                            <ScrollText className={styles['icon']} />
+                            <span>No file changed</span>
+                        </div> : null
+                }
                 {
                     treeToLocalData?.length > 0 ?
                         <>
@@ -134,9 +158,12 @@ export const PendingStatsViewComponent = (props: { plugin: InvioPlugin }) => {
                     </> :
                     null
                 }
-                <div className={styles['actions']}>
-                    <Button onClick={startSync}>Sync</Button>
-                </div>
+                {
+                    (!(toLocalTouched.length > 0) && !(toRemoteTouched.length > 0)) ? null :
+                    <div className={styles['actions']}>
+                        <Button onClick={startSync}>Sync</Button>
+                    </div>
+                }
             </div>
         </div>
     );

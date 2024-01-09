@@ -38,6 +38,7 @@
 .extra-action {
     display: flex;
     justify-content: flex-end;
+    align-items: center;
 }
 
 .extra-action > .btn {
@@ -60,6 +61,10 @@
     overflow-y: scroll;
     -ms-overflow-style: none;  /* Internet Explorer 10+ */
     scrollbar-width: none;  /* Firefox */
+}
+
+.loading-opacity {
+    opacity: 0.4;
 }
 
 .scroll-container::-webkit-scrollbar { 

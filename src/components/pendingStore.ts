@@ -20,9 +20,11 @@ export interface LogItem {
 const MAX_LOG_NUM = 1000;
 
 interface State {
+  loading: boolean;
   record: Record<string, FileOrFolderMixedState>;
   toLocalSelected: string[],
   toRemoteSelected: string[],
+  setLoading: (state: boolean) => void;
   init: (data: Record<string, FileOrFolderMixedState>, logs?: LogItem[]) => void;
   getToLocalFileList: () => FileOrFolderMixedState[];
   getToRemoteFileList: () => FileOrFolderMixedState[];
@@ -72,9 +74,15 @@ const TouchedFileList = [
   ...LocalFileTouchedDecisions
 ]
 const useStore = create<State>()((set, get) => ({
+  loading: false,
   record: {},
   toLocalSelected: [],
   toRemoteSelected: [],
+  setLoading: (state) => {
+    set({
+      loading: state
+    })
+  },
   init: (data: Record<string, FileOrFolderMixedState>, logs?: LogItem[]) => {
     set({
         record: data,

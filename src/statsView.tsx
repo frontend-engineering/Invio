@@ -13,7 +13,7 @@ import usePendingStore from './components/pendingStore';
 import { UsingIconNames } from './utils/icon';
 
 const { init, updateRecord, addLog, clean } = useStore.getState();
-const { init: pendingInit } = usePendingStore.getState();
+const { init: pendingInit, setLoading: setPVLoading } = usePendingStore.getState();
 
 export * from './components/store';
 export const VIEW_TYPE_STATS = "stats-view";
@@ -79,11 +79,17 @@ export class StatsView extends ItemView {
         return this.type === 'PendingStats' ? 'Touched Files' : "Invio Stats";
     }
 
+    loading(state: boolean = true) {
+        // TODO: Other views
+        setPVLoading(state)
+    }
+
     init(data: Record<string, FileOrFolderMixedState>, logs?: LogItem[]) {
         log.info('init view with data: ', data);
         if (this.type === 'SyncingStats') {
             init(data, logs);
         } else if (this.type === 'PendingStats') {
+            setPVLoading(false)
             pendingInit(data)
         }
     }
