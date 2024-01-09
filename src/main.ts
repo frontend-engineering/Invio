@@ -92,6 +92,7 @@ export default class InvioPlugin extends Plugin {
   ga: Analytics4;
   syncRunAbort: boolean | ((params: any) => void);
   updater: AutoUpdater;
+  client: RemoteClient
 
   isUnderWatch(file: TAbstractFile) {
     const rootDir = this.settings.localWatchDir;
@@ -101,6 +102,21 @@ export default class InvioPlugin extends Plugin {
       }
     }
     return false;
+  }
+
+  getClient() {
+    if (!this.client) {
+      this.client = new RemoteClient(
+        this.settings.serviceType,
+        this.settings.s3,
+        this.settings.hostConfig,
+        this.settings.useHost,
+        this.settings.localWatchDir,
+        this.app.vault.getName(),
+        () => this.saveSettings()
+      );
+    }
+    return this.client
   }
 
   async viewFileDiff(filePath: string, diffType: TDiffType) {
@@ -113,14 +129,7 @@ export default class InvioPlugin extends Plugin {
       new Notice(`${filePath} is not a valid file`);
       return;
     }
-    const client = new RemoteClient(
-      this.settings.serviceType,
-      this.settings.s3,
-      this.settings.hostConfig,
-      this.settings.useHost,
-      this.settings.localWatchDir,
-      this.app.vault.getName(),
-    );
+    const client = this.getClient()
     const remoteMD = await fetchRemoteFileMD(
       filePath,
       client,
@@ -379,15 +388,7 @@ export default class InvioPlugin extends Plugin {
 
       this.syncStatus = "getting_remote_files_list";
       const self = this;
-      const client = new RemoteClient(
-        this.settings.serviceType,
-        this.settings.s3,
-        this.settings.hostConfig,
-        this.settings.useHost,
-        this.settings.localWatchDir,
-        this.app.vault.getName(),
-        () => self.saveSettings()
-      );
+      const client = this.getClient()
 
       if (this.isSyncRunAborted()) {
         cancelAction();
@@ -716,8 +717,12 @@ export default class InvioPlugin extends Plugin {
             }
             // TODO: Get remote link, but need remote domain first
             let remoteLink  = this.getRemoteDomain();
-            const publishedKey = client.getUseHostSlugPath(pathName).replace(/\.md$/, '.html');
-            remoteLink += `/${publishedKey}`;
+            const localDirPrefixReg = new RegExp(`^${this.settings.localWatchDir}/`)
+            const publishedKey = client.getUseHostSlugPath(pathName)
+              .replace(/\.md$/, '.html')
+              .replace(localDirPrefixReg, '/');
+
+            remoteLink += publishedKey;
 
             view?.update(pathName, { syncStatus: 'sync-done', remoteLink });
             view?.info(`${i}/${totalCount} - file ${pathName} sync done`);
@@ -784,7 +789,12 @@ export default class InvioPlugin extends Plugin {
           } else if (status === 'DONE') {
             log.info('set file DONE publishing', pathName);
             const domain = this.getRemoteDomain();
-            view?.update(pathName, { syncStatus: 'done', remoteLink: `${domain}/${meta}` })
+            let key = meta;
+            const slug = client.getUseHostSlugPath(this.settings.localWatchDir)
+            if (meta.startsWith(slug)) {
+              key = key.replace(new RegExp(`^${slug}/`), '/')
+            }
+            view?.update(pathName, { syncStatus: 'done', remoteLink: `${domain}${key}` })
           } else if (status === 'FAIL') {
             view?.update(pathName, { syncStatus: 'fail' })
           }
@@ -1061,8 +1071,14 @@ export default class InvioPlugin extends Plugin {
                 .setTitle(`${Menu_Tab}${t('menu_share_folder')}`)
                 .setIcon("document")
                 .onClick(async () => {
-                  await InvioSettingTab.exportSettings(this)
-                  this.ga.trace('share_settings')
+                  if (this.settings.useHost) {
+                    // TODO: Show share progress
+                    const link = this.getClient().getUseHostSlug()
+                    open(`https://app.turbosite.cloud/${link}`)
+                  } else {
+                    await InvioSettingTab.exportSettings(this)
+                  }
+                  this.ga.trace('share_settings', { useHost: this.settings.useHost })
                 });
             })
           }
@@ -1437,14 +1453,7 @@ export default class InvioPlugin extends Plugin {
       return;
     }
     // TODO: Get remote link, but need remote domain first
-    const client = new RemoteClient(
-      this.settings.serviceType,
-      this.settings.s3,
-      this.settings.hostConfig,
-      this.settings.useHost,
-      this.settings.localWatchDir,
-      this.app.vault.getName(),
-    );
+    const client = this.getClient()
     // Check remote link
     const remoteContents = await client.listFromRemote(pathName?.split('/').slice(0, -1).join('/'), RemoteSrcPrefix);
     const existed = remoteContents.find(item => item.key === (RemoteSrcPrefix + pathName).replace('//', '/'))
