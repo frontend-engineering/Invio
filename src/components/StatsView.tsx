@@ -3,13 +3,13 @@ import { throttle } from 'lodash';
 import classnames from 'classnames';
 import useStore, { LogType } from './store';
 import styles from './StatsView.module.css';
-import { AlertTriangle, CheckCircle, ArrowDownUp, Activity, LineChart, ListChecks, Siren, FileType, ScrollText, Info, AlertCircle, XCircle, ChevronRight, Terminal, RedoDot, UploadCloud, DownloadCloud } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ArrowDownUp, Activity, LineChart, ListChecks, Siren, FileType, Cog, ScrollText, Info, AlertCircle, XCircle, ChevronRight, Terminal, RedoDot, UploadCloud, DownloadCloud } from 'lucide-react';
 import { log } from '../moreOnLog'
 import { Utils } from '../utils/utils';
 import { Notice } from "obsidian";
 import Logo from './InvioLogo';
 import InvioPlugin from "src/main";
-
+import { CheckSettingsModal } from './CheckSettingsModal';
 const { useEffect, useRef } = React
 
 const getIconByStatus = (status: string) => {
@@ -107,13 +107,22 @@ export const StatsViewComponent = (props: { plugin: InvioPlugin }) => {
       ''
   }
 
+  const openSettings = () => {
+    const modal = new CheckSettingsModal(props.plugin.app, props.plugin);
+    modal.open();
+}
+
   const syncList = getSyncJobList();
   const pubList = getPubJobList();
   const finished = getFinishedJobList();
   const failList = getFailJobList();
 
   return <>
-    <h3 className={styles['header']}><Logo className={styles['icon']} />Invio Action Report</h3>
+    <h4 className={styles['header']}>
+        <Logo className={styles['icon']} />
+        Invio Action Report
+        <Cog className={styles['settings']} onClick={openSettings} />
+    </h4>
     {(pubList.length > 0) || (syncList.length > 0) ? <h4 className={styles['subHeader']}><Activity className={styles['icon']} />Working Job</h4> : null}
     {syncList?.length > 0 ? <h6 className={styles['subHeader']}><ArrowDownUp className={styles['icon']} />Syncing</h6> : null}
     {(syncList?.length > 0) ? syncList.map(job => (
