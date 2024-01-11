@@ -37,7 +37,7 @@
   "syncrun_step8": "8/{{maxSteps}} Invio 已完成同步！",
   "syncrun_abort": "{{manifestID}}-{{theDate}}：中断同步，同步来源={{triggerSource}}，出错阶段={{syncStatus}}",
 
-  "protocol_saveqr": " {{manifestName}} 新的非 oauth2 设置保存完成。请重启插件设置页使之生效。",
+  "protocol_saver": " {{manifestName}} 新的非 oauth2 设置保存完成。请重启插件设置页使之生效。",
   "protocol_callbacknotsupported": "您的 uri callback 暂不支持： {{params}}",
   "protocol_dropbox_connecting": "正在连接 Dropbox……\n请不要关闭此弹窗。",
   "protocol_dropbox_connect_succ": "好！我们作为用户 {{username}} 连接上了 Dropbox！",

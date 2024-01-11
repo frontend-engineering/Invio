@@ -54,8 +54,12 @@
     align-items: center;
     padding: 4px 6px;
     /* border: 1px solid var(--interactive-accent); */
-    box-shadow: 0 0 2px 1px var(--interactive-accent);
     border-radius: 4px;
+    box-shadow: none;
+    border: 1px solid #ffffff45;
+}
+.extra-action > .btn:hover {
+    border: 1px solid #ffffff; 
 }
 .scroll-container {
     overflow-y: scroll;

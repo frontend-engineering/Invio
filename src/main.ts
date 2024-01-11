@@ -1193,11 +1193,10 @@ export default class InvioPlugin extends Plugin {
         new Notice(parsed.message);
       } else {
         const copied = cloneDeep(parsed.result);
-        // new Notice(JSON.stringify(copied))
         this.settings = Object.assign({}, this.settings, copied);
         this.saveSettings();
         new Notice(
-          t("protocol_saveqr", {
+          t("protocol_saver", {
             manifestName: this.manifest.name,
           })
         );
@@ -1212,7 +1211,8 @@ export default class InvioPlugin extends Plugin {
         const { token, user, name, slug } = inputParams;
         const dir = name
         if (await app.vault.adapter.exists(dir)) {
-          new Notice(`Local folder ${dir} existed, import aborted`)
+          new Notice(`Local folder ${dir} existed`)
+          this.switchWorkingDir(dir)
           return;
         }
         if (!(dir || (typeof dir === 'string'))) {

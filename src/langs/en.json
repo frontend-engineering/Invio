@@ -37,7 +37,7 @@
   "syncrun_step8": "8/{{maxSteps}} Invio finish!",
   "syncrun_abort": "{{manifestID}}-{{theDate}}: abort sync, triggerSource={{triggerSource}}, error while {{syncStatus}}",
 
-  "protocol_saveqr": "New not-oauth2 settings for {{manifestName}} saved. Reopen the plugin Settings to the effect.",
+  "protocol_saver": "New not-oauth2 settings for {{manifestName}} saved. Reopen the plugin Settings to the effect.",
   "protocol_callbacknotsupported": "Your uri call a callback that's not supported yet: {{params}}",
   "protocol_dropbox_connecting": "Connecting to Dropbox...\nPlease DO NOT close this modal.",
   "protocol_dropbox_connect_succ": "Good! We've connected to Dropbox as user {{username}}!",
