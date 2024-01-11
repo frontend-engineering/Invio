@@ -113,7 +113,10 @@ export const PendingStatsViewComponent = (props: { plugin: InvioPlugin }) => {
                 {
                     treeToLocalData?.length > 0 ?
                         <>
-                            <div className={styles['subHeader']}>Online Changed Files</div>
+                            <div className={styles['subHeader']}>
+                                <DownloadCloud className={styles['icon']} />
+                                Online Changed Files
+                            </div>
                             <Tree
                                 checkable
                                 showLine
@@ -137,6 +140,7 @@ export const PendingStatsViewComponent = (props: { plugin: InvioPlugin }) => {
                     treeToRemoteData?.length > 0 ?
                     <>
                         <div className={styles['subHeader']}>
+                            <UploadCloud className={styles['icon']} />
                             Local Changed Files
                         </div>
                         <Tree

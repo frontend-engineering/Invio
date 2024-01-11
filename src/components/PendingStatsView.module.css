@@ -16,6 +16,14 @@
 .sub-header {
     margin: 8px;
     font-weight: bold;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.sub-header > .icon {
+    margin-right: 6px;
 }
 
 .header > .icon {

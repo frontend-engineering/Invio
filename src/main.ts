@@ -105,17 +105,15 @@ export default class InvioPlugin extends Plugin {
   }
 
   getClient() {
-    if (!this.client) {
-      this.client = new RemoteClient(
-        this.settings.serviceType,
-        this.settings.s3,
-        this.settings.hostConfig,
-        this.settings.useHost,
-        this.settings.localWatchDir,
-        this.app.vault.getName(),
-        () => this.saveSettings()
-      );
-    }
+    this.client = new RemoteClient(
+      this.settings.serviceType,
+      this.settings.s3,
+      this.settings.hostConfig,
+      this.settings.useHost,
+      this.settings.localWatchDir,
+      this.app.vault.getName(),
+      () => this.saveSettings()
+    );
     return this.client
   }
 
