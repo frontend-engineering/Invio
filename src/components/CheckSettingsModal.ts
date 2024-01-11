@@ -5,6 +5,8 @@ import type { TransItemType } from "../i18n";
 import svg from '../utils/svg';
 import { InvioSettingTab } from '../settings'
 import { RemoteClient } from "../remote";
+import { log } from "../moreOnLog";
+import Utils2 from '../utils';
 
 const wrapTextWithPasswordHide = (text: TextComponent) => {
 	const hider = text.inputEl.insertAdjacentElement("afterend", createSpan()) as HTMLSpanElement;
@@ -158,119 +160,194 @@ export class CheckSettingsModal extends Modal {
       }
 
       if (this.detailed) {
-        const s3Div = contentEl.createEl("div", { cls: 'settings-config-section' });
-        s3Div.createEl('h2', { text: t('settings_host_self_settings'), cls: 'settings-pub-header' });
-
-        new Setting(s3Div)
-        .setName(t("settings_s3_endpoint"))
-        .setDesc(t("settings_s3_endpoint"))
-        .addText((text) =>
-          text
-            .setPlaceholder("")
-            .setValue(this.plugin.settings.s3.s3Endpoint)
-            .onChange(async (value) => {
-              this.plugin.settings.s3.s3Endpoint = value.trim();
+        const useHostDiv = contentEl.createEl("div");
+        useHostDiv.createEl("h2", { text: t('settings_host') });
+        new Setting(useHostDiv)
+          .setName(t('settings_host_switch_title'))
+          .setDesc(t('settings_host_switch_desc'))
+          .addToggle(tog => {
+            tog.setValue(this.plugin.settings.useHost)
+            .onChange(async (val) => {
+              this.plugin.settings.useHost = val;
               await this.plugin.saveSettings();
+              if (this.plugin.settings.useHost) {
+                await this.plugin.enableHostService()
+                  .catch(err => {
+                    new Notice(t('settings_host_enable_error')); 
+                  })
+                  .finally(() => {
+                    this.close();
+                    this.open();
+                  })
+              } else {
+                await this.plugin.disableHostService();
+                this.close();
+                this.open();
+              }
             })
-        );
-
-      new Setting(s3Div)
-        .setName(t("settings_s3_region"))
-        .setDesc(t("settings_s3_region_desc"))
-        .addText((text) =>
-          text
-            .setPlaceholder("")
-            .setValue(`${this.plugin.settings.s3.s3Region}`)
-            .onChange(async (value) => {
-              this.plugin.settings.s3.s3Region = value.trim();
-              await this.plugin.saveSettings();
-            })
-        );
-
-      new Setting(s3Div)
-        .setName(t("settings_s3_accesskeyid"))
-        .setDesc(t("settings_s3_accesskeyid_desc"))
-        .addText((text) => {
-          wrapTextWithPasswordHide(text);
-          text
-            .setPlaceholder("")
-            .setValue(`${this.plugin.settings.s3.s3AccessKeyID}`)
-            .onChange(async (value) => {
-              this.plugin.settings.s3.s3AccessKeyID = value.trim();
-              await this.plugin.saveSettings();
-            });
-        });
-
-      new Setting(s3Div)
-        .setName(t("settings_s3_secretaccesskey"))
-        .setDesc(t("settings_s3_secretaccesskey_desc"))
-        .addText((text) => {
-          wrapTextWithPasswordHide(text);
-          text
-            .setPlaceholder("")
-            .setValue(`${this.plugin.settings.s3.s3SecretAccessKey}`)
-            .onChange(async (value) => {
-              this.plugin.settings.s3.s3SecretAccessKey = value.trim();
-              await this.plugin.saveSettings();
-            });
-        });
-
-      new Setting(s3Div)
-        .setName(t("settings_s3_bucketname"))
-        .setDesc(t("settings_s3_bucketname"))
-        .addText((text) =>
-          text
-            .setPlaceholder("")
-            .setValue(`${this.plugin.settings.s3.s3BucketName}`)
-            .onChange(async (value) => {
-              this.plugin.settings.s3.s3BucketName = value.trim();
-              await this.plugin.saveSettings();
-            })
-        );
-
-        let remoteDomain = `${this.plugin.settings.remoteDomain}`;
-        new Setting(s3Div)
-          .setName(t("settings_domain"))
-          .setDesc(t("settings_domain_desc"))
-          .addText((text) => {
-            text
-              .setPlaceholder("https://docs.google.com")
-              .setValue(`${this.plugin.settings.remoteDomain || ''}`)
-              .onChange(async (value) => {
-                remoteDomain = value.trim();
-              });
           })
-          .addButton(async (button) => {
-            button.setButtonText(t("confirm"));
-            button.onClick(async () => {
-              this.plugin.settings.remoteDomain = remoteDomain
-              await this.plugin.saveSettings();
-              console.log('new domain: ', t("settings_domain_saved") + " " + remoteDomain)
-              new Notice(t("settings_domain_saved") + " " + remoteDomain)
-            });
-          });
+
+          if (this.plugin.settings.useHost) {
+            const hostingDiv = contentEl.createEl("div", { cls: 'settings-config-section' });
+            hostingDiv.createEl('h2', { text: t('settings_host_auto_settings'), cls: 'settings-pub-header' });
+            // const accountDiv = hostingDiv.createDiv('account');
+            // accountDiv.innerText = 'goto account';
+            const accountDiv = new Setting(hostingDiv)
+              .setName(t('settings_host_auto_name'))
+              .setDesc(t('settings_host_auto_desc'));
+
+            accountDiv.addButton(async (button) => {
+              button.setButtonText(t('settings_host_auto_account'));
+              button.onClick(async () => {
+                log.info('goto account page...');
+                await Utils2.gotoMainSite();
+                // await (window as any).electron.remote.shell.openPath('https://app.turbosite.cloud');
+              });
+            })
+            const hostingEl = new Setting(hostingDiv)
+              .setName(t('settings_host_auto_auth'))
+              .setDesc(t('settings_host_auto_auth_desc'));
+
+            if (this.plugin.settings.hostConfig?.token) {
+              hostingEl.addText((text) => {
+                text
+                  .setPlaceholder("")
+                  .setValue(this.plugin.settings.hostConfig?.user?.name)
+              })
+              .addButton(async (button) => {
+                button.setButtonText(t('settings_host_auto_logout'));
+                button.onClick(async () => {
+                  log.info('Log out... ', this.plugin.settings.hostConfig?.token);
+                  this.plugin.settings.hostConfig.token = null;
+                  await this.plugin.saveSettings();
+                  this.close();
+                  this.open();
+                });
+              })
+            } else {
+              hostingEl.addButton(async (button) => {
+                button.setButtonText(t('settings_host_auto_login'));
+                button.onClick(async () => {
+                  log.info('start authing: ');
+                  Utils2.gotoAuth();
+                });
+              });
+            }  
+          } else {
+            const s3Div = contentEl.createEl("div", { cls: 'settings-config-section' });
+            s3Div.createEl('h2', { text: t('settings_host_self_settings'), cls: 'settings-pub-header' });
+
+            new Setting(s3Div)
+            .setName(t("settings_s3_endpoint"))
+            .setDesc(t("settings_s3_endpoint"))
+            .addText((text) =>
+              text
+                .setPlaceholder("")
+                .setValue(this.plugin.settings.s3.s3Endpoint)
+                .onChange(async (value) => {
+                  this.plugin.settings.s3.s3Endpoint = value.trim();
+                  await this.plugin.saveSettings();
+                })
+            );
 
           new Setting(s3Div)
-            .setName(t("settings_checkonnectivity"))
-            .setDesc(t("settings_checkonnectivity_desc"))
-            .addButton(async (button) => {
-              button.setButtonText(t("settings_checkonnectivity_button"));
-              button.onClick(async () => {
-                new Notice(t("settings_checkonnectivity_checking"));
-                const client = new RemoteClient("s3", this.plugin.settings.s3);
-                const errors = { msg: "" };
-                const res = await client.checkConnectivity((err: any) => {
-                  errors.msg = err;
+            .setName(t("settings_s3_region"))
+            .setDesc(t("settings_s3_region_desc"))
+            .addText((text) =>
+              text
+                .setPlaceholder("")
+                .setValue(`${this.plugin.settings.s3.s3Region}`)
+                .onChange(async (value) => {
+                  this.plugin.settings.s3.s3Region = value.trim();
+                  await this.plugin.saveSettings();
+                })
+            );
+
+          new Setting(s3Div)
+            .setName(t("settings_s3_accesskeyid"))
+            .setDesc(t("settings_s3_accesskeyid_desc"))
+            .addText((text) => {
+              wrapTextWithPasswordHide(text);
+              text
+                .setPlaceholder("")
+                .setValue(`${this.plugin.settings.s3.s3AccessKeyID}`)
+                .onChange(async (value) => {
+                  this.plugin.settings.s3.s3AccessKeyID = value.trim();
+                  await this.plugin.saveSettings();
                 });
-                if (res) {
-                  new Notice(t("settings_s3_connect_succ"));
-                } else {
-                  new Notice(t("settings_s3_connect_fail"));
-                  new Notice(errors.msg);
-                }
-              });
             });
-      }
+
+          new Setting(s3Div)
+            .setName(t("settings_s3_secretaccesskey"))
+            .setDesc(t("settings_s3_secretaccesskey_desc"))
+            .addText((text) => {
+              wrapTextWithPasswordHide(text);
+              text
+                .setPlaceholder("")
+                .setValue(`${this.plugin.settings.s3.s3SecretAccessKey}`)
+                .onChange(async (value) => {
+                  this.plugin.settings.s3.s3SecretAccessKey = value.trim();
+                  await this.plugin.saveSettings();
+                });
+            });
+
+          new Setting(s3Div)
+            .setName(t("settings_s3_bucketname"))
+            .setDesc(t("settings_s3_bucketname"))
+            .addText((text) =>
+              text
+                .setPlaceholder("")
+                .setValue(`${this.plugin.settings.s3.s3BucketName}`)
+                .onChange(async (value) => {
+                  this.plugin.settings.s3.s3BucketName = value.trim();
+                  await this.plugin.saveSettings();
+                })
+            );
+
+            let remoteDomain = `${this.plugin.settings.remoteDomain}`;
+            new Setting(s3Div)
+              .setName(t("settings_domain"))
+              .setDesc(t("settings_domain_desc"))
+              .addText((text) => {
+                text
+                  .setPlaceholder("https://docs.google.com")
+                  .setValue(`${this.plugin.settings.remoteDomain || ''}`)
+                  .onChange(async (value) => {
+                    remoteDomain = value.trim();
+                  });
+              })
+              .addButton(async (button) => {
+                button.setButtonText(t("confirm"));
+                button.onClick(async () => {
+                  this.plugin.settings.remoteDomain = remoteDomain
+                  await this.plugin.saveSettings();
+                  console.log('new domain: ', t("settings_domain_saved") + " " + remoteDomain)
+                  new Notice(t("settings_domain_saved") + " " + remoteDomain)
+                });
+              });
+
+              new Setting(s3Div)
+                .setName(t("settings_checkonnectivity"))
+                .setDesc(t("settings_checkonnectivity_desc"))
+                .addButton(async (button) => {
+                  button.setButtonText(t("settings_checkonnectivity_button"));
+                  button.onClick(async () => {
+                    new Notice(t("settings_checkonnectivity_checking"));
+                    const client = new RemoteClient("s3", this.plugin.settings.s3);
+                    const errors = { msg: "" };
+                    const res = await client.checkConnectivity((err: any) => {
+                      errors.msg = err;
+                    });
+                    if (res) {
+                      new Notice(t("settings_s3_connect_succ"));
+                    } else {
+                      new Notice(t("settings_s3_connect_fail"));
+                      new Notice(errors.msg);
+                    }
+                  });
+                });
+          }
+        }
 
       new Setting(contentEl)
         .addButton((button) => {
