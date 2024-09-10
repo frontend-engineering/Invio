@@ -716,12 +716,13 @@ export default class InvioPlugin extends Plugin {
             // TODO: Get remote link, but need remote domain first
             let remoteLink  = this.getRemoteDomain();
             const localDirPrefixReg = new RegExp(`^${this.settings.localWatchDir}/`)
-            const publishedKey = client.getUseHostSlugPath(pathName)
-              .replace(/\.md$/, '.html')
-              .replace(localDirPrefixReg, '/');
+            let publishedKey = client.getUseHostSlugPath(pathName)
+              .replace(/\.md$/, '.html');
 
-            remoteLink += publishedKey;
-
+            if (this.settings.useHost) {
+              publishedKey = publishedKey.replace(localDirPrefixReg, '/');
+            }
+            remoteLink += ((publishedKey?.startsWith('/') ? '' : '/') + publishedKey);
             view?.update(pathName, { syncStatus: 'sync-done', remoteLink });
             view?.info(`${i}/${totalCount} - file ${pathName} sync done`);
           },
@@ -789,10 +790,14 @@ export default class InvioPlugin extends Plugin {
             const domain = this.getRemoteDomain();
             let key = meta;
             const slug = client.getUseHostSlugPath(this.settings.localWatchDir)
-            if (meta.startsWith(slug)) {
-              key = key.replace(new RegExp(`^${slug}/`), '/')
+            if (this.settings.useHost) {
+              if (meta.startsWith(slug)) {
+                key = key.replace(new RegExp(`^${slug}/`), '/')
+              }
             }
-            view?.update(pathName, { syncStatus: 'done', remoteLink: `${domain}${key}` })
+
+            const remoteLink = domain + `${key?.startsWith('/') ? '' : '/'}` + key
+            view?.update(pathName, { syncStatus: 'done', remoteLink: remoteLink })
           } else if (status === 'FAIL') {
             view?.update(pathName, { syncStatus: 'fail' })
           }
