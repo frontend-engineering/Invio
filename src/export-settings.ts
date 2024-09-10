@@ -74,7 +74,7 @@ export const DEFAULT_EXP_SETTINGS: ExportSettingsData =
 	addDarkModeToggle: true,
 	hideSearch: false,
 	includeOutline: true,
-	includeGraphView: true,
+	includeGraphView: false,
 	includeFileTree: true,
 
 	// Main Export Options
