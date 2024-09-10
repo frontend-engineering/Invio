@@ -246,7 +246,7 @@ export class LinkTree
 		}
 	}
 
-	public makeLinksRemote(dirRoot: string, remoteRoot?: string)
+	public makeLinksRemote(dirRoot: string, remoteRoot?: string, remoteDomain?: string)
 	{
 		for (let child of this.children)
 		{
@@ -255,7 +255,7 @@ export class LinkTree
 				href = href.replace(dirRoot, remoteRoot);
 			}
 			// child.href = Path.toWebStyle(href) || href;
-			child.href = href;
+			child.href = (remoteDomain || '') + '/' + href;
 			child.makeLinksRemote(dirRoot, remoteRoot);
 		}
 	}

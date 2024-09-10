@@ -131,7 +131,7 @@ export class HTMLGenerator {
 			if (rootDir.asString !== rootPath.asString) {
 				const remoteRoot = rootPath.asString;
 				const prefix = remoteRoot.startsWith('/') ? '' : '/';
-				tree.makeLinksRemote(rootDir.asString, prefix + remoteRoot);
+				tree.makeLinksRemote(rootDir.asString, prefix + remoteRoot, remoteDomain);
 			}
 
 			let fileTree: HTMLDivElement = this.generateHTMLTree(tree, usingDocument, pageTitle, "file-tree", true, 1, 1, false);

@@ -623,6 +623,7 @@ function printAsPNG() {
 }
 
 function setupPrintBtn(setupOnNode) {
+	if (typeof setupOnNode.getElementById !== 'function') return;
 	(setupOnNode || document).getElementById("print_btn")?.addEventListener('click', e => {
 		e.preventDefault();
 		console.log('print image...');
