@@ -14,6 +14,7 @@ export class RemoteClient {
   readonly serviceType: SUPPORTED_SERVICES_TYPE;
   readonly s3Config?: S3Config;
   readonly hostConfig?: THostConfig;
+  readonly remoteDomain?: string;
   readonly useHost?: boolean;
   readonly localWatchDir?: string;
   constructor(
@@ -21,6 +22,7 @@ export class RemoteClient {
     s3Config?: S3Config,
     hostConfig?: THostConfig,
     useHost?: boolean,
+    remoteDomain?: string,
     localWatchDir?: string,
     vaultName?: string,
     saveUpdatedConfigFunc?: () => Promise<any>
@@ -28,6 +30,7 @@ export class RemoteClient {
     this.serviceType = serviceType;
     this.useHost = useHost;
     this.hostConfig = hostConfig;
+    this.remoteDomain = remoteDomain;
     this.localWatchDir = localWatchDir;
     // the client may modify the config inplace,
     // so we use a ref not copy of config here

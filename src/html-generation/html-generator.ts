@@ -128,7 +128,7 @@ export class HTMLGenerator {
 			const rootDir = file.exportPath.getRootDirFromString(); 
 			console.log('file.exportPath: ', file.exportPath, file.exportPath.asString, rootDir);
 
-			if (rootDir.asString !== rootPath.asString) {
+			if (rootDir !== rootPath) {
 				const remoteRoot = rootPath.asString;
 				const prefix = remoteRoot.startsWith('/') ? '' : '/';
 				tree.makeLinksRemote(rootDir.asString, prefix + remoteRoot, remoteDomain);

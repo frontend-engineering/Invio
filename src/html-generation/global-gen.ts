@@ -255,8 +255,8 @@ export class LinkTree
 				href = href.replace(dirRoot, remoteRoot);
 			}
 			// child.href = Path.toWebStyle(href) || href;
-			child.href = (remoteDomain || '') + '/' + href;
-			child.makeLinksRemote(dirRoot, remoteRoot);
+			child.href = (remoteDomain || '') + (href.startsWith('/') ? '' : '/') + href;
+			child.makeLinksRemote(dirRoot, remoteRoot, remoteDomain);
 		}
 	}
 }

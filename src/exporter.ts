@@ -42,7 +42,7 @@ export const exportFile = async (
     try
     {
         exportedFile = new ExportFile(file, exportToPath.directory.absolute(), exportFromPath.directory, true, exportToPath.fullName, false);
-        let remoteCOSDomain;
+        let remoteCOSDomain = remoteClient?.remoteDomain;
         if (remoteClient?.useHost) {
             // 默认已经verify过COS数据了
             const { s3BucketName: bucket, s3Endpoint: endpoint } = remoteClient.s3Config;
