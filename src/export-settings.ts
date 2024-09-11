@@ -33,6 +33,9 @@ export interface ExportSettingsData
 	exportPreset: string;
 	openAfterExport: boolean;
 
+	// 生成默认首页
+	generateIndexPage: boolean;
+
 	// Graph View Settings
 	graphAttractionForce: number;
 	graphLinkLength: number;
@@ -80,6 +83,9 @@ export const DEFAULT_EXP_SETTINGS: ExportSettingsData =
 	// Main Export Options
 	exportPreset: '',
 	openAfterExport: false,
+
+	//
+	generateIndexPage: true,
 
 	// Graph View Settings
 	graphAttractionForce: 1,

@@ -143,7 +143,12 @@ export class HTMLGenerator {
 			const dataNode = this.generateRootDirNode(file, prefix, usingDocument);
 			leftSidebar.appendChild(dataNode);
 			file.downloads.push(new Downloadable('_common-left-tree.html', fileTree.outerHTML, rootDir));
+			// TODO: 摆脱includeFileTree限制，定制优化index首页UI样式
+			if (InvioSettingTab.settings.generateIndexPage) {
+				file.downloads.push(new Downloadable('index.html', fileTree.outerHTML, rootDir));	
+			}
 		}
+
 
 		await this.appendFooter(file);
 		await this.fillInHead(file, rootPath, remoteDomain);
