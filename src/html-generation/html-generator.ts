@@ -373,6 +373,13 @@ export class HTMLGenerator {
 
 		documentContainer.appendChild(middleContent);
 
+		const tmpDiv = document.createElement('div');
+		tmpDiv.innerHTML = WMS_FOOTER;
+		const footerStyle = document.createElement('style');
+		footerStyle.innerHTML = WMS_FOOTER_STYLE;
+		documentContainer.appendChild(footerStyle);
+		documentContainer.appendChild(tmpDiv.firstChild);
+
 		rightSidebar.classList.add("sidebar");
 		rightSidebar.appendChild(rightContent);
 		// rightContent.appendChild(rightSidebarScroll);
