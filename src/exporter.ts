@@ -4,7 +4,7 @@ import { MarkdownView, Notice, TFile, TFolder } from 'obsidian';
 // modules that are part of the plugin
 import { InvioSettingTab } from './settings';
 import { Utils } from './utils/utils';
-import { HTMLGenerator } from './html-generation/html-generator';
+import { HTMLGenerator, ICustomPageSettings } from './html-generation/html-generator';
 import { Path } from './utils/path';
 import { ExportFile } from './html-generation/export-file';
 import { AssetHandler } from './html-generation/asset-handler';
@@ -21,7 +21,8 @@ export const exportFile = async (
     exportToPath: Path | undefined = undefined,
     rootPath: Path | undefined,
     view: StatsView,
-    remoteClient?: RemoteClient
+    remoteClient?: RemoteClient,
+    settings?: InvioPluginSettings
 ) : Promise<ExportFile | undefined> => {
     if(file.extension != "md")
     {
@@ -48,7 +49,8 @@ export const exportFile = async (
             const { s3BucketName: bucket, s3Endpoint: endpoint } = remoteClient.s3Config;
             remoteCOSDomain = `https://${bucket}.${endpoint}/`;
         }
-        await HTMLGenerator.generateWebpage(exportedFile, rootPath, view, remoteCOSDomain);
+        const customPageSettings: ICustomPageSettings = { footer: settings.customFooter, style: settings.customStyle };
+        await HTMLGenerator.generateWebpage(exportedFile, rootPath, view, remoteCOSDomain, customPageSettings);
     }
     catch (e)
     {
@@ -114,7 +116,7 @@ export const publishFiles = async (
         // RenderLog.progress(i++, path.length, "Exporting Docs", "Exporting: " + file.path, "var(--color-accent)");
         view?.info("Exporting: " + file.path);
 
-        const exportedFile = await exportFile(file, new Path(path), htmlFilePath, new Path(client.getUseHostSlug()), view, client);
+        const exportedFile = await exportFile(file, new Path(path), htmlFilePath, new Path(client.getUseHostSlug()), view, client, settings);
         if (exportedFile) {
             log.info('exported file downloads: ', exportedFile.downloads);
             externalFiles.push(...exportedFile.downloads.map((d: Downloadable) => {

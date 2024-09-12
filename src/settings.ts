@@ -80,6 +80,8 @@ const DEFAULT_SETTINGS: InvioPluginSettings = {
   lang: "auto",
   logToDB: false,
   skipSizeLargerThan: -1,
+  customFooter: '',
+  customStyle: '',
 };
 
 export const getDEFAULT_SETTINGS = (): InvioPluginSettings => {
@@ -108,6 +110,8 @@ export const getDEFAULT_SETTINGS = (): InvioPluginSettings => {
     lang: "auto",
     logToDB: false,
     skipSizeLargerThan: -1,
+    customFooter: '',
+    customStyle: '',
   });
 }
 
@@ -1021,6 +1025,32 @@ export class InvioSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           });
       });
+
+    new Setting(basicDiv)
+      .setName(t("settings_customfooter"))
+      .setDesc(t("settings_customfooter_desc"))
+      .addTextArea((text) =>
+        text
+          .setPlaceholder("")
+          .setValue(`${this.plugin.settings.customFooter}`)
+          .onChange(async (value) => {
+            this.plugin.settings.customFooter = value.trim();
+            await this.plugin.saveSettings();
+          })
+      ); 
+    
+    new Setting(basicDiv)
+      .setName(t("settings_customstyle"))
+      .setDesc(t("settings_customstyle_desc"))
+      .addTextArea((text) =>
+        text
+          .setPlaceholder("")
+          .setValue(`${this.plugin.settings.customStyle}`)
+          .onChange(async (value) => {
+            this.plugin.settings.customStyle = value.trim();
+            await this.plugin.saveSettings();
+          })
+      ); 
 
     //////////////////////////////////////////////////
     // below for advanced settings

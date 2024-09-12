@@ -112,6 +112,9 @@ export interface InvioPluginSettings {
   logToDB?: boolean;
   skipSizeLargerThan?: number;
 
+  customFooter?: string;
+  customStyle?: string;
+
   /**
    * @deprecated
    */

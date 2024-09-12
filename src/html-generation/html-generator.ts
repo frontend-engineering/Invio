@@ -10,8 +10,11 @@ import { log } from "../moreOnLog";
 import { StatsView } from "src/statsView";
 import InvioPlugin from "src/main";
 import { Utils } from "src/utils/utils";
-import { WMS_FOOTER, WMS_FOOTER_STYLE } from './wms-footer';
 
+export interface ICustomPageSettings {
+	footer?: string;
+	style?: string;
+}
 const LogoSVGDefault = `<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="svg238067" height="768px" width="1024px" version="1.1" viewBox="0 0 100 100" class="svg-icon invio-sync-wait"><g fill-rule="evenodd" style="transform: scale3d(0.89, 0.99, 1.5);"><path d="M27 97.93A56.08 56.08 0 0 1 9.29 19.08 55.77 55.77 0 0 0 23.59 50l.07.07c.53.58 1.06 1.14 1.62 1.7s1.12 1.09 1.72 1.62L45.54 72a14.93 14.93 0 0 1 4.53 10.93v1.59a15.12 15.12 0 0 1-8 13.52A15.09 15.09 0 0 1 27 97.93z" style="fill: var(--icon-color);"></path><path d="M23.59 50a55.77 55.77 0 0 1-14.3-30.92A56.46 56.46 0 0 1 27 2.08 15.08 15.08 0 0 1 42.11 2a15.12 15.12 0 0 1 8 13.52v1.59A15 15 0 0 1 45.55 28l-22 22z" fill="#999999" opacity=".8"></path><path d="M85.16 2.08a56.08 56.08 0 0 1 17.67 78.84A55.77 55.77 0 0 0 88.53 50l-.08-.07c-.52-.58-1.06-1.14-1.62-1.7s-1.12-1.09-1.69-1.62L66.58 28a14.93 14.93 0 0 1-4.53-10.93v-1.55A15.12 15.12 0 0 1 70 2a15.08 15.08 0 0 1 15.15.08z" style="fill: var(--icon-color);"></path><path d="M88.53 50a55.77 55.77 0 0 1 14.3 30.92 56.35 56.35 0 0 1-17.67 17 15.46 15.46 0 0 1-23.11-13.44v-1.59A15 15 0 0 1 66.57 72l22-22z" fill="#999999" opacity=".8"></path></g></svg>`
 
 export interface IMetaConfig {
@@ -77,11 +80,12 @@ export class HTMLGenerator {
 		rootPath: Path,
 		view: StatsView,
 		remoteDomain?: string, // website assets file's host domain
+		customPageSettings?: ICustomPageSettings
 	): Promise<ExportFile> {
 		await this.getDocumentHTML(file, rootPath, false, view, remoteDomain);
 		let usingDocument = file.document;
 
-		let sidebars = this.generateSideBars(file.contentElement, file);
+		let sidebars = this.generateSideBars(file.contentElement, file, customPageSettings);
 		this.generateSideBarBtns(file, sidebars);
 		let rightSidebar = sidebars.right;
 		let leftSidebar = sidebars.left;
@@ -146,6 +150,7 @@ export class HTMLGenerator {
 			file.downloads.push(new Downloadable('_common-left-tree.html', fileTree.outerHTML, rootDir));
 			// TODO: 摆脱includeFileTree限制，定制优化index首页UI样式
 			if (InvioSettingTab.settings.generateIndexPage) {
+				const customFooter = customPageSettings.footer ? `<div class="tree-footer">${customPageSettings.footer}</div>` : ''
 				const indexPageHTML = `<!DOCTYPE html><html lang="zh"><head>
 				<title>${prefix}</title>
 				<style>
@@ -171,9 +176,9 @@ export class HTMLGenerator {
 					display: none;
 				}
 				.tree-scroll-area>.tree-item>.tree-item-contents { padding: 1rem; text-align: center; }
-				${WMS_FOOTER_STYLE}
+				${customPageSettings.style || ''}
 				</style>
-				</head><body>${fileTree.outerHTML}<div class="tree-footer">${WMS_FOOTER}</div></body></html>`;
+				</head><body>${fileTree.outerHTML}${customFooter}</body></html>`;
 				file.downloads.push(new Downloadable('index.html', indexPageHTML, rootDir));	
 			}
 		}
@@ -331,7 +336,7 @@ export class HTMLGenerator {
 		}
 	}
 
-	private static generateSideBars(middleContent: HTMLElement, file: ExportFile): { container: HTMLElement, left: HTMLElement, leftScroll: HTMLElement, right: HTMLElement, rightScroll: HTMLElement, center: HTMLElement } {
+	private static generateSideBars(middleContent: HTMLElement, file: ExportFile, customPageSettings: ICustomPageSettings): { container: HTMLElement, left: HTMLElement, leftScroll: HTMLElement, right: HTMLElement, rightScroll: HTMLElement, center: HTMLElement } {
 		let docEl = file.document;
 
 		/*
@@ -373,12 +378,16 @@ export class HTMLGenerator {
 
 		documentContainer.appendChild(middleContent);
 
-		const tmpDiv = document.createElement('div');
-		tmpDiv.innerHTML = WMS_FOOTER;
-		const footerStyle = document.createElement('style');
-		footerStyle.innerHTML = WMS_FOOTER_STYLE;
-		documentContainer.appendChild(footerStyle);
-		documentContainer.appendChild(tmpDiv.firstChild);
+		if (customPageSettings?.style) {
+			const footerStyle = document.createElement('style');
+			footerStyle.innerHTML = customPageSettings.style;
+			documentContainer.appendChild(footerStyle);
+		}
+		if (customPageSettings?.footer) {
+			const tmpDiv = document.createElement('div');
+			tmpDiv.innerHTML = customPageSettings.footer;
+			documentContainer.appendChild(tmpDiv.firstChild);
+		}
 
 		rightSidebar.classList.add("sidebar");
 		rightSidebar.appendChild(rightContent);

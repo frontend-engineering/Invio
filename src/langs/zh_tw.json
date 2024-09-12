@@ -170,6 +170,11 @@
   "settings_skiplargefiles_desc": "跳過大於某一個閾值的檔案。這裡 1 MB = 10^6 bytes。",
   "settings_skiplargefiles_notset": "（不設定）",
 
+  "settings_customfooter": "自定义Footer",
+  "settings_customfooter_desc": "Html格式的自定义Footer",
+  "settings_customstyle": "自定义样式",
+  "settings_customstyle_desc": "自定义Css样式",
+
   "settings_checkonnectivity": "檢查可否連線",
   "settings_checkonnectivity_desc": "檢查可否連線。",
   "settings_checkonnectivity_button": "檢查",
