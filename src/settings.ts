@@ -82,6 +82,7 @@ const DEFAULT_SETTINGS: InvioPluginSettings = {
   skipSizeLargerThan: -1,
   customFooter: '',
   customStyle: '',
+  customScript: '',
 };
 
 export const getDEFAULT_SETTINGS = (): InvioPluginSettings => {
@@ -112,6 +113,7 @@ export const getDEFAULT_SETTINGS = (): InvioPluginSettings => {
     skipSizeLargerThan: -1,
     customFooter: '',
     customStyle: '',
+    customScript: '',
   });
 }
 
@@ -1048,6 +1050,19 @@ export class InvioSettingTab extends PluginSettingTab {
           .setValue(`${this.plugin.settings.customStyle}`)
           .onChange(async (value) => {
             this.plugin.settings.customStyle = value.trim();
+            await this.plugin.saveSettings();
+          })
+      ); 
+    
+    new Setting(basicDiv)
+      .setName(t("settings_customscript"))
+      .setDesc(t("settings_customscript_desc"))
+      .addTextArea((text) =>
+        text
+          .setPlaceholder("")
+          .setValue(`${this.plugin.settings.customScript}`)
+          .onChange(async (value) => {
+            this.plugin.settings.customScript = value.trim();
             await this.plugin.saveSettings();
           })
       ); 

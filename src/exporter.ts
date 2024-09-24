@@ -49,7 +49,7 @@ export const exportFile = async (
             const { s3BucketName: bucket, s3Endpoint: endpoint } = remoteClient.s3Config;
             remoteCOSDomain = `https://${bucket}.${endpoint}/`;
         }
-        const customPageSettings: ICustomPageSettings = { footer: settings.customFooter, style: settings.customStyle };
+        const customPageSettings: ICustomPageSettings = { script: settings.customScript, footer: settings.customFooter, style: settings.customStyle };
         await HTMLGenerator.generateWebpage(exportedFile, rootPath, view, remoteCOSDomain, customPageSettings);
     }
     catch (e)

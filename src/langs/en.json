@@ -177,6 +177,9 @@
   "settings_customstyle": "Custom Style",
   "settings_customstyle_desc": "Costom style css contents.",
 
+  "settings_customscript": "Custom Script",
+  "settings_customscript_desc": "Costom script inject to html header.",
+  
   "settings_checkonnectivity": "Check Connectivity",
   "settings_checkonnectivity_desc": "Check connectivity.",
   "settings_checkonnectivity_button": "Check",

@@ -114,6 +114,7 @@ export interface InvioPluginSettings {
 
   customFooter?: string;
   customStyle?: string;
+  customScript?: string;
 
   /**
    * @deprecated

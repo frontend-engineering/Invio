@@ -176,6 +176,9 @@
   "settings_customstyle": "自定义样式",
   "settings_customstyle_desc": "自定义Css样式",
 
+  "settings_customscript": "自定义Script",
+  "settings_customscript_desc": "要插入html header中的script内容，支持script函数或者外链如https://docs.webinfra.cloud/demo.js",
+  
   "settings_checkonnectivity": "检查可否连接",
   "settings_checkonnectivity_desc": "检查可否连接。",
   "settings_checkonnectivity_button": "检查",
