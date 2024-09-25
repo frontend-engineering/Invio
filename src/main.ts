@@ -770,6 +770,7 @@ export default class InvioPlugin extends Plugin {
         if (triggerSource === 'force') {
           pubPathList.push(...allFiles.map(file => file.path));
           pubPathList = pubPathList
+            .filter(p => !p.endsWith('.conflict.md'))
             .filter((p, idx) => pubPathList.indexOf(p) === idx)
         }
         if (pubPathList?.length === 0) {

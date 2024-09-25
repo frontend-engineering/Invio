@@ -466,7 +466,8 @@
 .document-container
 {
     flex-basis: var(--content-width);
-    padding-bottom: 260px;
+    display: flex;
+    flex-direction: column;
 }
 
 .markdown-reading-view
@@ -481,7 +482,7 @@
     display: flex;
     width: 100%;
     max-width: 100%;
-    padding-bottom: 30em;
+    padding-bottom: 16em;
     align-items: flex-start;
     justify-content: center;
 }
