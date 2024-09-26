@@ -87,7 +87,7 @@ export class HTMLGenerator {
 		let usingDocument = file.document;
 
 		let sidebars = this.generateSideBars(file.contentElement, file, customPageSettings);
-		this.generateSideBarBtns(file, sidebars);
+		this.generateSideBarBtns(file, sidebars, remoteDomain);
 		let rightSidebar = sidebars.right;
 		let leftSidebar = sidebars.left;
 		usingDocument.body.appendChild(sidebars.container);
@@ -401,31 +401,38 @@ export class HTMLGenerator {
 		return { container: pageContainer, left: leftContent, leftScroll: leftSidebarScroll, right: rightContent, rightScroll: rightSidebarScroll, center: documentContainer };
 	}
 
-	private static generateSideBarBtns(file: ExportFile, {left, right, container}: {left: HTMLElement, right: HTMLElement, container: HTMLElement}): {leftBtn: HTMLElement, rightBtn: HTMLElement, mobileSideBarBtns: HTMLElement}
+	private static generateSideBarBtns(file: ExportFile, {left, right, container}: {left: HTMLElement, right: HTMLElement, container: HTMLElement}, remoteDomain: string): {leftBtn: HTMLElement, midBtn: HTMLElement, rightBtn: HTMLElement, mobileSideBarBtns: HTMLElement}
 	{
 		const docEl = file.document;
 		/*
 		- div.sidebar-mobile-btns
 			- a.sidebar-mobile-btn--left
+			- a.sidebar-mobile-btn--mid
 			- a.sidebar-mobile-btn--right
 		*/
 
 		let mobileSideBarBtns = docEl.createElement("div");
 		const leftBtn = docEl.createElement("a");
+		const midBtn = docEl.createElement("a");
 		const rightBtn = docEl.createElement("a");
 
 		mobileSideBarBtns.setAttribute("class", "sidebar-mobile-btns");
 		leftBtn.setAttribute("class", "sidebar-mobile-btn--left");
+		midBtn.setAttribute("class", "sidebar-mobile-btn--mid");
 		rightBtn.setAttribute("class", "sidebar-mobile-btn--right");
 
 		setIcon(leftBtn, "sidebar-left");
+		setIcon(midBtn, "home");
 		setIcon(rightBtn, "sidebar-right");
 
+		midBtn.setAttribute('href', remoteDomain || './')
+
 		mobileSideBarBtns.appendChild(leftBtn);
+		mobileSideBarBtns.appendChild(midBtn);
 		mobileSideBarBtns.appendChild(rightBtn);
 		container.appendChild(mobileSideBarBtns);
 
-		return {leftBtn, rightBtn, mobileSideBarBtns};
+		return {leftBtn, midBtn, rightBtn, mobileSideBarBtns};
 	}
 
 	private static getRelativePaths(file: ExportFile, root?: Path): { mediaPath: Path, jsPath: Path, cssPath: Path, rootPath: Path } {
